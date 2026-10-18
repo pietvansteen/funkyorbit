@@ -37,12 +37,12 @@ services:
       - ./likes:/app:ro
       - ./data:/data
 
-  # Optional: Cloudflare Tunnel, so funkyorbit.nl works without opening any ports.
-  # Put your token in a .env file as TUNNEL_TOKEN=... and remove the #.
-  # tunnel:
-  #   image: cloudflare/cloudflared:latest
-  #   restart: unless-stopped
-  #   command: tunnel --no-autoupdate run
-  #   environment:
-  #     TUNNEL_TOKEN: ${TUNNEL_TOKEN}
-  #   depends_on: [web]
+  # Cloudflare Tunnel: makes funkyorbit.nl reachable without opening any ports.
+  # The token goes in a .env file next to this file: TUNNEL_TOKEN=...
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on: [web]

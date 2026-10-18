@@ -17,7 +17,7 @@ visitors ──like──> likes API ──> data/likes.db ──────┘
 | `likes/likes.py` | Small API that stores likes in SQLite (one like per visitor per video, via a cookie) |
 | `web/nginx.conf` | Web server: serves the site and `data.json`, and forwards `/api/` to the likes API |
 | `docker-compose.yml` | Everything together for the Synology (Container Manager) |
-| `data/` | Created on the NAS; not in git |
+| `data/` | Filled on the NAS; its contents are not in git |
 
 No pip packages needed: everything runs on standard Python.
 
@@ -36,18 +36,18 @@ The Sheet must be readable via its link: **Share → General access → Anyone w
 ## Installing on the Synology DS1621+
 
 1. Install **Container Manager** and **Git Server** (for the `git` command over SSH) from the Package Center.
-2. Clone this repo, for example to `/volume1/docker/funkyorbit`. The repo is public, so no token is needed:
+2. Clone this repo into the `docker` shared folder (on PieNas that is `/volume2/docker/funkyorbit`). The repo is public, so no token is needed:
    ```sh
-   cd /volume1/docker
+   cd /volume2/docker
    git clone https://github.com/pietvansteen/funkyorbit.git
    ```
-3. Container Manager → **Project → Create** → choose the folder `/volume1/docker/funkyorbit` → it finds `docker-compose.yml` → **Start**.
+3. Container Manager → **Project → Create** → choose the folder `/volume2/docker/funkyorbit` → it finds `docker-compose.yml` → skip the Web Station portal → **Start**.
 4. Open `http://<nas-ip>:8088`. After the first sync (within a few seconds) the progress shows up.
 5. Logs: Container Manager → Project → funkyorbit → sync. Every hour you'll see a line like `OK: 15/911 patterns, 2 videos`.
 
 ### Updating after a code change
 ```sh
-cd /volume1/docker/funkyorbit && git pull
+cd /volume2/docker/funkyorbit && git pull
 ```
 Changes in `site/` are visible right away. After a change in `sync.py` or `likes.py`: restart the project in Container Manager.
 
@@ -57,9 +57,8 @@ This way you don't have to open any ports on your router, and your home IP stays
 
 1. Put funkyorbit.nl on Cloudflare (free plan): add the domain and change the nameservers at your registrar.
 2. Cloudflare dashboard → **Zero Trust → Networks → Tunnels → Create tunnel** (type *Cloudflared*). Copy the token.
-3. In the project folder, create a `.env` file containing `TUNNEL_TOKEN=<token>`.
-4. In `docker-compose.yml`, remove the `#` in front of the `tunnel` service and restart the project.
-5. In the tunnel: **Public hostname** `funkyorbit.nl` → service `http://web:80`.
+3. In the project folder on the NAS, create a `.env` file containing `TUNNEL_TOKEN=<token>` and restart the project. The tunnel now shows as *Connected* in Cloudflare.
+4. In the tunnel: **Public hostname** `funkyorbit.nl` (and `www`) → type HTTP, URL `web:80`.
 
 ## Testing locally without Google
 
