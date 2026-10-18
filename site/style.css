@@ -40,6 +40,8 @@ body {
   font: 16px/1.55 var(--f-body);
   -webkit-font-smoothing: antialiased;
 }
+/* keep [hidden] working on elements that set their own display (e.g. .cats) */
+[hidden] { display: none !important; }
 .wrap {
   max-width: var(--max);
   margin: 0 auto;
