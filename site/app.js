@@ -97,6 +97,13 @@
         <div class="cats" id="${id}" ${open ? "" : "hidden"}>${cats}</div>
       </div>`;
     }).join("");
+
+    const catSum = d.groups.reduce((n, g) => n + g.total, 0);
+    const extra = catSum - d.total;
+    $("#groups-note").hidden = extra <= 0;
+    $("#groups-note").textContent = extra > 0
+      ? `${extra} patronen passen in twee categorieën en staan daarom dubbel in dit overzicht. In totaal zijn het ${fmt.format(d.total)} unieke patronen.`
+      : "";
   }
 
   // ---------- videofeed ----------
