@@ -39,7 +39,7 @@ De Sheet moet leesbaar zijn via de link: **Delen → Algemene toegang → Iedere
 2. Clone deze repo naar bijvoorbeeld `/volume1/docker/funkyorbit`:
    ```sh
    cd /volume1/docker
-   git clone https://github.com/<jouw-account>/funkyorbit.git
+   git clone https://github.com/pietvansteen/funkyorbit.git
    ```
 3. Container Manager → **Project → Maken** → kies de map `/volume1/docker/funkyorbit` → hij vindt `docker-compose.yml` → **Starten**.
 4. Kijk op `http://<ip-van-de-nas>:8088`. Na de eerste sync (binnen een paar seconden) staat de voortgang erop.
