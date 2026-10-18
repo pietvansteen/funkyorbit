@@ -1,4 +1,4 @@
-/* Layout: één smalle kolom; voortgang bovenaan, groepen als uitklapbare rijen, daaronder de videofeed. */
+/* Layout: one narrow column; progress at the top, groups as expandable rows, the video feed below. */
 :root {
   --paper: #f2f4f8;
   --surface: #ffffff;
@@ -7,7 +7,7 @@
   --line: #d9deea;
   --club: #d1256c;       /* accent: passes, likes */
   --club-soft: #fbe3ed;
-  --orbit: #128f82;      /* voortgang */
+  --orbit: #128f82;      /* progress */
   --orbit-soft: #d6efeb;
   --track: #e3e7f0;
   --star: #e2a412;
@@ -56,14 +56,14 @@ a { color: inherit; }
   text-transform: uppercase; color: var(--muted);
 }
 
-/* ---------- kop ---------- */
+/* ---------- header ---------- */
 .top { padding-block: 28px 8px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .brand svg { flex: none; }
 .brand b { font: 600 18px/1 var(--f-display); letter-spacing: -.01em; }
 .updated { font-size: 13px; color: var(--muted); }
 
-/* ---------- voortgang ---------- */
+/* ---------- progress ---------- */
 .hero { padding-block: 32px 40px; display: grid; gap: 22px; }
 .hero h1 {
   font: 500 clamp(40px, 8vw, 84px)/1 var(--f-display);
@@ -85,7 +85,7 @@ a { color: inherit; }
 .facts dt { order: 2; font-size: 13px; color: var(--muted); }
 .facts dd { order: 1; margin: 0; font: 500 22px/1.2 var(--f-display); font-variant-numeric: tabular-nums; }
 
-/* ---------- groepen ---------- */
+/* ---------- groups ---------- */
 .section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .section-head h2 { font: 500 24px/1.2 var(--f-display); letter-spacing: -.01em; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -149,7 +149,7 @@ a { color: inherit; }
 .when { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .meta-bottom { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 
-/* siteswap: elke worp een eigen vakje, oneven worpen (passes) in clubkleur */
+/* siteswap: each throw in its own box, odd throws (passes) in the club colour */
 .ss { display: flex; flex-wrap: wrap; gap: 3px; font-family: var(--f-mono); font-weight: 600; }
 .ss b { min-width: 1.45em; padding: 2px 0; text-align: center; border-radius: 5px; background: var(--track); font-weight: 600; }
 .ss b.p { background: var(--club-soft); color: var(--club); }
@@ -174,7 +174,7 @@ a { color: inherit; }
 .legend { display: flex; gap: 14px; align-items: center; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
 .legend .ss { font-size: 12px; }
 
-/* ---------- lijst zonder video ---------- */
+/* ---------- list without video ---------- */
 .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 40px; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }

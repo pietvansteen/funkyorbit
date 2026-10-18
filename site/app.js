@@ -1,13 +1,13 @@
-/* Funky Orbit — leest data.json (door de sync elk uur ververst) en de likes-API. */
+/* Funky Orbit — reads data.json (refreshed hourly by the sync) and the likes API. */
 (function () {
   "use strict";
 
-  const PREVIEW = !!window.FUNKY_PREVIEW; // in de preview geen YouTube-embeds en geen API
+  const PREVIEW = !!window.FUNKY_PREVIEW; // no YouTube embeds and no API in the preview
   const $ = (sel, el = document) => el.querySelector(sel);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const fmt = new Intl.NumberFormat("nl-NL");
+  const fmt = new Intl.NumberFormat("en-GB");
 
-  // ---------- bezoeker-ID (cookie + localStorage), voor "één like per bezoeker" ----------
+  // ---------- visitor ID (cookie + localStorage), for "one like per visitor" ----------
   function visitorId() {
     let id = null;
     const m = document.cookie.match(/(?:^|;\s*)fo_visitor=([A-Za-z0-9-]{8,64})/);
@@ -22,9 +22,9 @@
   }
   const VISITOR = visitorId();
 
-  // ---------- opmaakhulpjes ----------
+  // ---------- formatting helpers ----------
   function siteswap(ss, size) {
-    // Bij passen met 2 jongleurs (globale notatie) zijn oneven worpen passes.
+    // When passing with 2 jugglers (global notation), odd throws are passes.
     const cells = [...ss].map((ch) => {
       const v = parseInt(ch, 36);
       const pass = !isNaN(v) && v % 2 === 1;
@@ -34,15 +34,15 @@
   }
 
   function stars(r) {
-    if (r == null) return `<span class="unrated">nog geen beoordeling</span>`;
+    if (r == null) return `<span class="unrated">not rated yet</span>`;
     const pct = Math.max(0, Math.min(100, (r / 5) * 100));
-    return `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${String(r).replace(".", ",")} van 5 sterren" title="${String(r).replace(".", ",")} / 5"></span>`;
+    return `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${r} out of 5 stars" title="${r} / 5"></span>`;
   }
 
   function when(p) {
     if (!p.date) return "";
     const d = new Date(p.date + "T12:00:00");
-    const day = d.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    const day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
     return p.time ? `${day} · ${p.time}` : day;
   }
 
@@ -51,31 +51,31 @@
     return i > 0 ? [name.slice(0, i), name.slice(i + 3)] : [name, ""];
   }
 
-  // ---------- voortgang ----------
+  // ---------- progress ----------
   function renderHero(d) {
     const pct = d.total ? (d.done / d.total) * 100 : 0;
     $("#hero").innerHTML = `
       <span class="label">Project Funky Orbit · passing patterns</span>
-      <h1 class="num">${fmt.format(d.done)}<span class="of">van ${fmt.format(d.total)} patronen</span></h1>
-      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${d.total}" aria-valuenow="${d.done}" aria-label="Totale voortgang"><i style="width:${pct}%"></i></div>
-      <p><strong>${pct.toLocaleString("nl-NL", { maximumFractionDigits: 1 })}%</strong> gegooid. We werken ons door een lijst van ${fmt.format(d.total)} club-passingpatronen voor twee jongleurs: zaps, standaardpatronen en sync. Elk patroon dat lukt komt in de lijst, en zo veel mogelijk ook op video.</p>
+      <h1 class="num">${fmt.format(d.done)}<span class="of">of ${fmt.format(d.total)} patterns</span></h1>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${d.total}" aria-valuenow="${d.done}" aria-label="Total progress"><i style="width:${pct}%"></i></div>
+      <p><strong>${pct.toLocaleString("en-GB", { maximumFractionDigits: 1 })}%</strong> thrown. We are working our way through a list of ${fmt.format(d.total)} club passing patterns for two jugglers: zaps, standard patterns and sync. Every pattern we land goes on the list, and as many as possible on video too.</p>
       <dl class="facts">
-        <div><dt>video's</dt><dd>${d.stats.videos}</dd></div>
-        <div><dt>oefendagen</dt><dd>${d.stats.recordingDays}</dd></div>
-        <div><dt>gem. beoordeling</dt><dd>${d.stats.averageRating != null ? String(d.stats.averageRating).replace(".", ",") + " ★" : "–"}</dd></div>
-        <div><dt>laatste sessie</dt><dd>${d.stats.lastDate ? new Date(d.stats.lastDate + "T12:00:00").toLocaleDateString("nl-NL", { day: "numeric", month: "short" }) : "–"}</dd></div>
+        <div><dt>videos</dt><dd>${d.stats.videos}</dd></div>
+        <div><dt>practice days</dt><dd>${d.stats.recordingDays}</dd></div>
+        <div><dt>avg. rating</dt><dd>${d.stats.averageRating != null ? d.stats.averageRating + " ★" : "–"}</dd></div>
+        <div><dt>last session</dt><dd>${d.stats.lastDate ? new Date(d.stats.lastDate + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "–"}</dd></div>
       </dl>`;
   }
 
-  let groupFilter = "Alles";
+  let groupFilter = "All";
   const openGroups = new Set();
 
   function renderGroups(d) {
-    const families = ["Alles", ...new Set(d.groups.map((g) => splitGroup(g.name)[0]))];
+    const families = ["All", ...new Set(d.groups.map((g) => splitGroup(g.name)[0]))];
     $("#chips").innerHTML = families.map((f) =>
       `<button type="button" class="chip" aria-pressed="${f === groupFilter}" data-f="${esc(f)}">${esc(f)}</button>`).join("");
 
-    const shown = d.groups.filter((g) => groupFilter === "Alles" || splitGroup(g.name)[0] === groupFilter);
+    const shown = d.groups.filter((g) => groupFilter === "All" || splitGroup(g.name)[0] === groupFilter);
     $("#groups").innerHTML = shown.map((g) => {
       const [fam, sub] = splitGroup(g.name);
       const open = openGroups.has(g.name);
@@ -102,11 +102,11 @@
     const extra = catSum - d.total;
     $("#groups-note").hidden = extra <= 0;
     $("#groups-note").textContent = extra > 0
-      ? `${extra} patronen passen in twee categorieën en staan daarom dubbel in dit overzicht. In totaal zijn het ${fmt.format(d.total)} unieke patronen.`
+      ? `${extra} patterns fit in two categories, so they are counted twice in this overview. In total there are ${fmt.format(d.total)} unique patterns.`
       : "";
   }
 
-  // ---------- videofeed ----------
+  // ---------- video feed ----------
   let likes = { counts: {}, liked: new Set() };
 
   function heart() {
@@ -116,7 +116,7 @@
   function likeButton(id) {
     const on = likes.liked.has(id);
     const n = likes.counts[id] || 0;
-    return `<button type="button" class="like" data-like="${id}" aria-pressed="${on}" aria-label="${on ? "Like intrekken" : "Like geven"}">${heart()}<span>${n}</span></button>`;
+    return `<button type="button" class="like" data-like="${id}" aria-pressed="${on}" aria-label="${on ? "Remove like" : "Like this video"}">${heart()}<span>${n}</span></button>`;
   }
 
   function player(p) {
@@ -125,14 +125,14 @@
     const poster = `<div class="poster">${esc(p.siteswap)}<small>${esc(p.name || p.family)}</small></div>`;
     const img = PREVIEW ? "" : `<img src="https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">`;
     const btn = PREVIEW
-      ? `<a class="play" href="${url}" target="_blank" rel="noopener" aria-label="Bekijk ${esc(p.siteswap)} op YouTube">${play}</a>`
-      : `<button type="button" class="play" data-play="${p.youtubeId}" aria-label="Speel video van ${esc(p.siteswap)} af">${play}</button>`;
+      ? `<a class="play" href="${url}" target="_blank" rel="noopener" aria-label="Watch ${esc(p.siteswap)} on YouTube">${play}</a>`
+      : `<button type="button" class="play" data-play="${p.youtubeId}" aria-label="Play video of ${esc(p.siteswap)}">${play}</button>`;
     return `<div class="player ${p.isShort ? "" : "wide"}">${poster}${img}${btn}</div>`;
   }
 
   function renderFeed(d) {
     const vids = d.patterns.filter((p) => p.youtubeId);
-    $("#feed-count").textContent = `${vids.length} video${vids.length === 1 ? "" : "'s"}, nieuwste eerst`;
+    $("#feed-count").textContent = `${vids.length} video${vids.length === 1 ? "" : "s"}, newest first`;
     $("#feed").innerHTML = vids.length ? vids.map((p) => `
       <article class="card">
         ${player(p)}
@@ -144,7 +144,7 @@
           <span class="fam">${esc(p.family)}</span>
           <div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>
         </div>
-      </article>`).join("") : `<p class="empty">Nog geen video's. Kom snel terug!</p>`;
+      </article>`).join("") : `<p class="empty">No videos yet. Check back soon!</p>`;
 
     const rest = d.patterns.filter((p) => !p.youtubeId);
     $("#rest-wrap").hidden = !rest.length;
@@ -165,13 +165,13 @@
       if (!r.ok) throw new Error(r.status);
       const j = await r.json();
       likes = { counts: j.counts || {}, liked: new Set(j.liked || []) };
-    } catch (e) { /* zonder API gewoon zonder tellers */ }
+    } catch (e) { /* without the API, just no counters */ }
   }
 
   async function toggleLike(btn) {
     const id = btn.dataset.like;
     const on = !likes.liked.has(id);
-    // direct bijwerken, daarna bevestigen met de server
+    // update right away, then confirm with the server
     on ? likes.liked.add(id) : likes.liked.delete(id);
     likes.counts[id] = Math.max(0, (likes.counts[id] || 0) + (on ? 1 : -1));
     btn.outerHTML = likeButton(id);
@@ -212,7 +212,7 @@
     if (play) {
       const id = play.dataset.play;
       const box = play.parentElement;
-      box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0" title="YouTube-video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+      box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0" title="YouTube video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
     }
   });
 
@@ -223,12 +223,12 @@
     try {
       DATA = window.FUNKY_DATA || (await (await fetch("data.json", { cache: "no-cache" })).json());
     } catch (e) {
-      $("#hero").innerHTML = `<p class="empty">De voortgang kon niet geladen worden. Probeer het over een paar minuten opnieuw.</p>`;
+      $("#hero").innerHTML = `<p class="empty">Progress could not be loaded. Please try again in a few minutes.</p>`;
       return;
     }
     if (DATA.updated) {
       const u = new Date(DATA.updated);
-      $("#updated").textContent = "Bijgewerkt " + u.toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      $("#updated").textContent = "Updated " + u.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     }
     renderHero(DATA);
     renderGroups(DATA);

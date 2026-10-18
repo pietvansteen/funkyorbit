@@ -1,10 +1,10 @@
-# Funky Orbit op de Synology (Container Manager > Project > map met dit bestand)
+# Funky Orbit on the Synology (Container Manager > Project > folder containing this file)
 services:
   web:
     image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
-      - "8088:80"            # lokaal te bekijken op http://<nas-ip>:8088
+      - "8088:80"            # view locally at http://<nas-ip>:8088
     volumes:
       - ./site:/usr/share/nginx/html:ro
       - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
@@ -19,7 +19,7 @@ services:
       SHEET_ID: "1Qh2r1bgPZL8WfaWprVyHBpKyWuStGIyXX4Bdi4UFS1A"
       DONE_GID: "2105998367"
       PROGRESS_GID: "537922909"
-      INTERVAL: "3600"       # elk uur
+      INTERVAL: "3600"       # every hour
       OUT_FILE: /data/data.json
       TZ: Europe/Amsterdam
     volumes:
@@ -37,8 +37,8 @@ services:
       - ./likes:/app:ro
       - ./data:/data
 
-  # Optioneel: Cloudflare Tunnel, zodat funkyorbit.nl werkt zonder poorten open te zetten.
-  # Zet je token in een bestand .env als TUNNEL_TOKEN=... en haal de # weg.
+  # Optional: Cloudflare Tunnel, so funkyorbit.nl works without opening any ports.
+  # Put your token in a .env file as TUNNEL_TOKEN=... and remove the #.
   # tunnel:
   #   image: cloudflare/cloudflared:latest
   #   restart: unless-stopped

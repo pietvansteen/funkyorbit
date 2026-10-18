@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-Funky Orbit sync: haalt de tabbladen "Done" en "Progress" uit de Google Sheet
-en schrijft één data.json voor de website. Draait standaard elk uur.
+Funky Orbit sync: fetches the "Done" and "Progress" tabs from the Google Sheet
+and writes a single data.json for the website. Runs every hour by default.
 
-Alleen standaard-bibliotheek, geen pip nodig.
+Standard library only, no pip needed.
 
-Instellingen via environment variables (zie docker-compose.yml):
-  SHEET_ID        ID van de Google Sheet
-  DONE_GID        gid van het tabblad "Done"
-  PROGRESS_GID    gid van het tabblad "Progress"
-  OUT_FILE        pad van de uitvoer (standaard /data/data.json)
-  INTERVAL        seconden tussen twee syncs (standaard 3600); 0 = één keer
-  DONE_CSV / PROGRESS_CSV   optioneel: lokale CSV-bestanden i.p.v. Google (om te testen)
+Settings via environment variables (see docker-compose.yml):
+  SHEET_ID        ID of the Google Sheet
+  DONE_GID        gid of the "Done" tab
+  PROGRESS_GID    gid of the "Progress" tab
+  OUT_FILE        output path (default /data/data.json)
+  INTERVAL        seconds between two syncs (default 3600); 0 = run once
+  DONE_CSV / PROGRESS_CSV   optional: local CSV files instead of Google (for testing)
 """
 
 import csv
@@ -37,7 +37,7 @@ def log(msg):
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}", flush=True)
 
 
-# ---------------------------------------------------------------- ophalen
+# ---------------------------------------------------------------- fetching
 
 def fetch_csv(gid, local_file=None):
     if local_file:
@@ -49,8 +49,8 @@ def fetch_csv(gid, local_file=None):
         text = resp.read().decode("utf-8")
     if text.lstrip().lower().startswith("<!doctype html") or "<html" in text[:200].lower():
         raise RuntimeError(
-            "Google gaf een HTML-pagina terug in plaats van CSV. "
-            "Staat de Sheet op 'Iedereen met de link mag bekijken'?"
+            "Google returned an HTML page instead of CSV. "
+            "Is the Sheet shared as 'Anyone with the link can view'?"
         )
     return list(csv.reader(io.StringIO(text)))
 
@@ -90,7 +90,7 @@ FILE_TS = re.compile(r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})")
 
 
 def parse_datetime(date_str, file_name):
-    """Datum uit kolom 'date' (dd/mm/jjjj), tijd uit de DJI-bestandsnaam."""
+    """Date from the 'date' column (dd/mm/yyyy), time from the DJI file name."""
     date_iso, time_str = None, None
     m = FILE_TS.search(file_name or "")
     if m:
@@ -100,11 +100,11 @@ def parse_datetime(date_str, file_name):
     dm = re.match(r"(\d{1,2})[/-](\d{1,2})[/-](\d{4})", date_str or "")
     if dm:
         d, mo, y = dm.groups()
-        date_iso = f"{y}-{int(mo):02d}-{int(d):02d}"  # kolom 'date' is leidend
+        date_iso = f"{y}-{int(mo):02d}-{int(d):02d}"  # the 'date' column takes precedence
     return date_iso, time_str
 
 
-# ---------------------------------------------------------------- tabbladen verwerken
+# ---------------------------------------------------------------- parsing the tabs
 
 def parse_done(rows):
     if not rows:
@@ -127,6 +127,7 @@ def parse_done(rows):
     c_yt = col("youtube", "video")
     c_file = col("file name", "file", "bestand")
 
+    # Column names are matched by prefix; Dutch names are accepted as well.
     patterns = []
     for row in rows[1:]:
         siteswap = cell(row, c_pat)
@@ -147,14 +148,14 @@ def parse_done(rows):
             "youtubeId": youtube_id(yt_url),
             "isShort": "/shorts/" in yt_url,
         })
-    # nieuwste eerst
+    # newest first
     patterns.sort(key=lambda p: ((p["date"] or ""), (p["time"] or ""), int(p["nr"]) if p["nr"].isdigit() else 0), reverse=True)
     return patterns
 
 
 def parse_progress(rows):
-    """Een groep begint bij een rij met 'Total' en 'Done' in kolom B en C.
-    Daarna volgt elke rij met een naam en een getal een categorie."""
+    """A group starts at a row with 'Total' and 'Done' in columns B and C.
+    Every following row with a name and a number is a category."""
     groups, current = [], None
     for row in rows:
         a, b, c = cell(row, 0), cell(row, 1), cell(row, 2)
@@ -175,7 +176,7 @@ def parse_progress(rows):
 
 
 def parse_sheet_stats(rows):
-    """Het blok 'Statistics' in kolom G:H van Progress, als naam -> waarde."""
+    """The 'Statistics' block in columns G:H of Progress, as name -> value."""
     stats = {}
     for row in rows:
         key, val = cell(row, 6), cell(row, 7)
@@ -190,8 +191,8 @@ def build(done_rows, progress_rows):
     sheet_stats = parse_sheet_stats(progress_rows)
     rated = [p["rating"] for p in patterns if p["rating"] is not None]
     days = sorted({p["date"] for p in patterns if p["date"]})
-    # Het totaal uit 'All patterns' is leidend: sommige patronen tellen in
-    # meerdere categorieën mee, dus de som van de categorieën is iets hoger.
+    # The 'All patterns' total takes precedence: some patterns count in more
+    # than one category, so the sum of the categories is slightly higher.
     all_patterns = to_number(sheet_stats.get("All patterns", ""))
     return {
         "updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -224,17 +225,17 @@ def sync_once():
     progress_rows = fetch_csv(PROGRESS_GID, os.environ.get("PROGRESS_CSV"))
     data = build(done_rows, progress_rows)
     if not data["groups"]:
-        raise RuntimeError("Geen categorieën gevonden in het tabblad Progress; oude data blijft staan.")
+        raise RuntimeError("No categories found in the Progress tab; keeping the old data.")
     write_atomic(data, OUT_FILE)
-    log(f"OK: {data['done']}/{data['total']} patronen, {data['stats']['videos']} video's -> {OUT_FILE}")
+    log(f"OK: {data['done']}/{data['total']} patterns, {data['stats']['videos']} videos -> {OUT_FILE}")
 
 
 def main():
     while True:
         try:
             sync_once()
-        except Exception as e:  # oude data.json blijft gewoon staan
-            log(f"FOUT: {e}")
+        except Exception as e:  # the old data.json stays in place
+            log(f"ERROR: {e}")
             if INTERVAL == 0:
                 sys.exit(1)
         if INTERVAL == 0:
