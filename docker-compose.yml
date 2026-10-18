@@ -19,6 +19,7 @@ services:
       SHEET_ID: "1Qh2r1bgPZL8WfaWprVyHBpKyWuStGIyXX4Bdi4UFS1A"
       DONE_GID: "2105998367"
       PROGRESS_GID: "537922909"
+      COLORS_GID: "7701"
       INTERVAL: "3600"       # every hour
       OUT_FILE: /data/data.json
       TZ: Europe/Amsterdam

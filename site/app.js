@@ -23,12 +23,13 @@
   const VISITOR = visitorId();
 
   // ---------- formatting helpers ----------
-  function siteswap(ss, size) {
-    // When passing with 2 jugglers (global notation), odd throws are passes.
-    const cells = [...ss].map((ch) => {
-      const v = parseInt(ch, 36);
-      const pass = !isNaN(v) && v % 2 === 1;
-      return `<b class="${pass ? "p" : ""}" title="${pass ? "pass" : "self"} (${isNaN(v) ? ch : v})">${esc(ch)}</b>`;
+  const CLUB = { W: ["w", "white"], B: ["b", "blue"], O: ["o", "orange"], R: ["r", "pink"] };
+
+  function siteswap(ss, size, colors) {
+    // Each throw gets the colour of the club it throws, from the "Kleuren" tab of the Sheet.
+    const cells = [...ss].map((ch, i) => {
+      const c = colors && CLUB[colors[i]];
+      return `<b class="${c ? "c-" + c[0] : ""}"${c ? ` title="${c[1]} club"` : ""}>${esc(ch)}</b>`;
     });
     return `<span class="ss ${size}" aria-label="siteswap ${esc(ss)}">${cells.join("")}</span>`;
   }
@@ -58,7 +59,7 @@
       <span class="label">Project Funky Orbit · passing patterns</span>
       <h1 class="num">${fmt.format(d.done)}<span class="of">of ${fmt.format(d.total)} patterns</span></h1>
       <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${d.total}" aria-valuenow="${d.done}" aria-label="Total progress"><i style="width:${pct}%"></i></div>
-      <p><strong>${pct.toLocaleString("en-GB", { maximumFractionDigits: 1 })}%</strong> thrown. We are working our way through a list of ${fmt.format(d.total)} club passing patterns for two jugglers: zaps, standard patterns and sync. Every pattern we land goes on the list, and as many as possible on video too.</p>
+      <p><strong>${pct.toLocaleString("en-GB", { maximumFractionDigits: 1 })}%</strong> done. We, Piet &amp; Mees, are working our way through a list of ${fmt.format(d.total)} club passing patterns. The list was originally compiled by James Francis, and many jugglers have passed these patterns before us: Brook even did almost the whole list. Our goal is to juggle every pattern for at least 2 rounds (3 rounds for period 3) and to record it. Follow our progress here and cheer us on!</p>
       <dl class="facts">
         <div><dt>videos</dt><dd>${d.stats.videos}</dd></div>
         <div><dt>practice days</dt><dd>${d.stats.recordingDays}</dd></div>
@@ -67,43 +68,61 @@
       </dl>`;
   }
 
-  let groupFilter = "All";
-  const openGroups = new Set();
+  // Top level: Period 3 / 5 / 7 and Sync (from the Statistics block), each opening its groups.
+  let openTile = null;
+
+  function tileOf(groupName) {
+    if (groupName === "Sync" || groupName.startsWith("Sync ")) return "Sync";
+    const m = splitGroup(groupName)[1].match(/^Period \d+$/);
+    return m ? m[0] : "Other periods";
+  }
+
+  function tiles(d) {
+    const out = (d.summary || []).map((t) => ({ ...t }));
+    const names = new Set(out.map((t) => t.name));
+    for (const g of d.groups) {
+      const name = tileOf(g.name);
+      if (names.has(name)) continue;
+      let t = out.find((x) => x.name === name && x.fromGroups);
+      if (!t) { t = { name, total: 0, done: 0, fromGroups: true }; out.push(t); }
+      t.total += g.total; t.done += g.done;
+    }
+    return out;
+  }
 
   function renderGroups(d) {
-    const families = ["All", ...new Set(d.groups.map((g) => splitGroup(g.name)[0]))];
-    $("#chips").innerHTML = families.map((f) =>
-      `<button type="button" class="chip" aria-pressed="${f === groupFilter}" data-f="${esc(f)}">${esc(f)}</button>`).join("");
+    $("#tiles").innerHTML = tiles(d).map((t) => {
+      const p = t.total ? (t.done / t.total) * 100 : 0;
+      const open = openTile === t.name;
+      return `<button type="button" class="tile" data-tile="${esc(t.name)}" aria-expanded="${open}" aria-controls="detail">
+        <span class="t-name">${esc(t.name)}</span>
+        <span class="t-count"><b>${fmt.format(t.done)}</b> / ${fmt.format(t.total)}</span>
+        <span class="bar sm"><i class="${t.done ? "some" : ""}" style="width:${p}%"></i></span>
+        <svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      </button>`;
+    }).join("");
 
-    const shown = d.groups.filter((g) => groupFilter === "All" || splitGroup(g.name)[0] === groupFilter);
-    $("#groups").innerHTML = shown.map((g) => {
+    const detail = $("#detail");
+    detail.hidden = !openTile;
+    if (!openTile) { detail.innerHTML = ""; return; }
+    const shown = d.groups.filter((g) => tileOf(g.name) === openTile);
+    const blocks = shown.map((g) => {
       const [fam, sub] = splitGroup(g.name);
-      const open = openGroups.has(g.name);
-      const dots = Array.from({ length: g.total }, (_, i) => `<i class="${i < g.done ? "on" : ""}"></i>`).join("");
+      const title = shown.length > 1 || sub ? fam : g.name;
       const cats = g.categories.map((c) => {
         const p = c.total ? (c.done / c.total) * 100 : 0;
         return `<div class="cat"><span>${esc(c.name)}</span>
           <div class="bar sm"><i class="${c.done ? "some" : ""}" style="width:${p}%"></i></div>
           <span class="n"><b>${c.done}</b>/${c.total}</span></div>`;
       }).join("");
-      const id = "g-" + g.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-      return `<div class="group" open-state="${open ? 1 : 0}">
-        <button type="button" aria-expanded="${open}" aria-controls="${id}" data-g="${esc(g.name)}">
-          <span class="g-name">${esc(fam)}${sub ? `<small>${esc(sub)}</small>` : ""}</span>
-          <span class="g-count">${g.done} <span>/ ${g.total}</span>
-            <svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
-          <span class="dots" aria-hidden="true">${dots}</span>
-        </button>
-        <div class="cats" id="${id}" ${open ? "" : "hidden"}>${cats}</div>
-      </div>`;
+      return `<div class="block"><h3>${esc(title)} <span>${g.done} / ${g.total}</span></h3>${cats}</div>`;
     }).join("");
-
     const catSum = d.groups.reduce((n, g) => n + g.total, 0);
     const extra = catSum - d.total;
-    $("#groups-note").hidden = extra <= 0;
-    $("#groups-note").textContent = extra > 0
-      ? `${extra} patterns fit in two categories, so they are counted twice in this overview. In total there are ${fmt.format(d.total)} unique patterns.`
+    const note = extra > 0
+      ? `<p class="note">${extra} patterns fit in two categories, so they are counted twice in the category lists. In total there are ${fmt.format(d.total)} unique patterns.</p>`
       : "";
+    detail.innerHTML = blocks + note;
   }
 
   // ---------- video feed ----------
@@ -138,7 +157,7 @@
         ${player(p)}
         <div class="meta">
           <div class="meta-top">
-            <div class="title">${siteswap(p.siteswap, "lg")}${p.name ? `<span class="pname">${esc(p.name)}</span>` : ""}</div>
+            <div class="title">${siteswap(p.siteswap, "lg", p.colors)}${p.name ? `<span class="pname">${esc(p.name)}</span>` : ""}</div>
             ${likeButton(p.youtubeId)}
           </div>
           <span class="fam">${esc(p.family)}</span>
@@ -149,7 +168,7 @@
     const rest = d.patterns.filter((p) => !p.youtubeId);
     $("#rest-wrap").hidden = !rest.length;
     $("#rest").innerHTML = rest.map((p) => `<tr>
-      <td>${siteswap(p.siteswap, "sm")}</td><td>${esc(p.name)}</td><td>${esc(p.family)}</td>
+      <td>${siteswap(p.siteswap, "sm", p.colors)}</td><td>${esc(p.name)}</td><td>${esc(p.family)}</td>
       <td>${stars(p.rating)}</td><td class="num">${esc(when(p))}</td></tr>`).join("");
   }
 
@@ -195,14 +214,12 @@
 
   // ---------- events ----------
   document.addEventListener("click", (ev) => {
-    const chip = ev.target.closest("[data-f]");
-    if (chip) { groupFilter = chip.dataset.f; renderGroups(DATA); return; }
-    const g = ev.target.closest("[data-g]");
-    if (g) {
-      const name = g.dataset.g;
-      openGroups.has(name) ? openGroups.delete(name) : openGroups.add(name);
+    const tile = ev.target.closest("[data-tile]");
+    if (tile) {
+      const name = tile.dataset.tile;
+      openTile = openTile === name ? null : name;
       renderGroups(DATA);
-      const again = document.querySelector(`[data-g="${CSS.escape(name)}"]`);
+      const again = document.querySelector(`[data-tile="${CSS.escape(name)}"]`);
       if (again) again.focus();
       return;
     }

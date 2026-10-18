@@ -9,9 +9,10 @@ Settings via environment variables (see docker-compose.yml):
   SHEET_ID        ID of the Google Sheet
   DONE_GID        gid of the "Done" tab
   PROGRESS_GID    gid of the "Progress" tab
+  COLORS_GID      gid of the "Kleuren" tab (club colour code per siteswap)
   OUT_FILE        output path (default /data/data.json)
   INTERVAL        seconds between two syncs (default 3600); 0 = run once
-  DONE_CSV / PROGRESS_CSV   optional: local CSV files instead of Google (for testing)
+  DONE_CSV / PROGRESS_CSV / COLORS_CSV   optional: local CSV files instead of Google (for testing)
 """
 
 import csv
@@ -27,6 +28,7 @@ from datetime import datetime, timezone
 SHEET_ID = os.environ.get("SHEET_ID", "1Qh2r1bgPZL8WfaWprVyHBpKyWuStGIyXX4Bdi4UFS1A")
 DONE_GID = os.environ.get("DONE_GID", "2105998367")
 PROGRESS_GID = os.environ.get("PROGRESS_GID", "537922909")
+COLORS_GID = os.environ.get("COLORS_GID", "7701")
 OUT_FILE = os.environ.get("OUT_FILE", "/data/data.json")
 INTERVAL = int(os.environ.get("INTERVAL", "3600"))
 
@@ -175,6 +177,35 @@ def parse_progress(rows):
     return [g for g in groups if g["categories"]]
 
 
+def parse_colors(rows):
+    """Siteswap -> club colour code (W/B/O/R, one letter per throw) from the "Kleuren" tab."""
+    if not rows:
+        return {}
+    header = [h.strip().lower() for h in rows[0]]
+    try:
+        c_ss, c_code = header.index("siteswap"), header.index("kleurcode")
+    except ValueError:
+        return {}
+    colors = {}
+    for row in rows[1:]:
+        ss, code = cell(row, c_ss).lower(), cell(row, c_code).upper()
+        if ss and len(code) == len(ss) and set(code) <= set("WBOR"):
+            colors[ss] = code
+    return colors
+
+
+def parse_summary(rows):
+    """Period 3 / 5 / 7 and Sync from the 'Statistics' block (columns G:I of Progress)."""
+    summary = []
+    for row in rows:
+        key = cell(row, 6)
+        if re.fullmatch(r"Period \d+|Sync", key):
+            total, done = to_number(cell(row, 7)), to_number(cell(row, 8))
+            if total:
+                summary.append({"name": key, "total": int(total), "done": int(done or 0)})
+    return summary
+
+
 def parse_sheet_stats(rows):
     """The 'Statistics' block in columns G:H of Progress, as name -> value."""
     stats = {}
@@ -185,8 +216,11 @@ def parse_sheet_stats(rows):
     return stats
 
 
-def build(done_rows, progress_rows):
+def build(done_rows, progress_rows, color_rows=None):
     patterns = parse_done(done_rows)
+    colors = parse_colors(color_rows)
+    for p in patterns:
+        p["colors"] = colors.get(p["siteswap"].lower())
     groups = parse_progress(progress_rows)
     sheet_stats = parse_sheet_stats(progress_rows)
     rated = [p["rating"] for p in patterns if p["rating"] is not None]
@@ -198,6 +232,7 @@ def build(done_rows, progress_rows):
         "updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "total": int(all_patterns) if all_patterns else sum(g["total"] for g in groups),
         "done": len({p["siteswap"] for p in patterns}),
+        "summary": parse_summary(progress_rows),
         "groups": groups,
         "patterns": patterns,
         "stats": {
@@ -223,7 +258,12 @@ def write_atomic(data, path):
 def sync_once():
     done_rows = fetch_csv(DONE_GID, os.environ.get("DONE_CSV"))
     progress_rows = fetch_csv(PROGRESS_GID, os.environ.get("PROGRESS_CSV"))
-    data = build(done_rows, progress_rows)
+    try:
+        color_rows = fetch_csv(COLORS_GID, os.environ.get("COLORS_CSV"))
+    except Exception as e:  # colours are optional; the site falls back to plain boxes
+        log(f"WARNING: no club colours: {e}")
+        color_rows = None
+    data = build(done_rows, progress_rows, color_rows)
     if not data["groups"]:
         raise RuntimeError("No categories found in the Progress tab; keeping the old data.")
     write_atomic(data, OUT_FILE)

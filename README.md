@@ -27,7 +27,9 @@ No pip packages needed: everything runs on standard Python.
 `nr`, `date` (dd/mm/yyyy), `pattern` (siteswap), `known name`, `family`, `rating 1 to 5` (half stars allowed), `youtube` (link), `file name`.
 The **time** is taken from the DJI file name (`DJI_20260926131333...` → 13:13). Only rows with a YouTube link appear in the video feed; the rest are listed under "Thrown, video coming soon".
 
-**Progress**: every row with `Total | Done` in columns B and C starts a group (e.g. *Zaps - Period 7*); the rows below it are the categories. Adding groups or categories works automatically. The total at the top comes from *All patterns* in the Statistics block (columns G:H).
+**Kleuren**: the colour code per siteswap (`W`/`B`/`O`/`R` = white, blue, orange, pink, one letter per throw). Each digit on the site gets the colour of its club. Patterns without a code (e.g. sync) are shown in plain boxes.
+
+**Progress**: every row with `Total | Done` in columns B and C starts a group (e.g. *Zaps - Period 7*); the rows below it are the categories. Adding groups or categories works automatically. The total at the top comes from *All patterns* in the Statistics block (columns G:I); the category tiles (Period 3/5/7, Sync) come from the same block.
 
 ## One-time setup in Google Sheets
 

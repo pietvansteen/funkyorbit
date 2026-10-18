@@ -1,67 +1,66 @@
-Project Funky Orbit Progress
-
-Zaps - Period 3,Total,Done,To Do,%,,Statistics,Total
-5 club Zaps,3,0,3,,,All patterns,911
-6 club Zaps,3,0,3,
-7 club Zaps,3,0,3,
-8 club Zaps,1,0,1,
-
-Zaps - Period 5,Total,Done,To Do,%
-5 club Zaps,9,0,9,
-6 club Zaps,20,0,20,
-7 club Zaps,26,0,26,
-8 club Zaps,13,0,13,
-
-Zaps - Period 7,Total,Done,To Do,%
-5 club Zaps,63,1,62,
-6 club Zaps,98,3,95,
-6 club Zaps with triple,78,1,77,
-7 club Zaps,59,2,57,
-7 club Zaps with triple,139,2,137,
-
-Standard - Period 3,Total,Done,To Do,%
-7 club period 3,6,0,6,
-7 club popcorns,1,0,1,
-7 club triple pass,2,0,2,
-8 club period 3's,4,0,4,
-8 club with triple pass,2,0,2,
-9 club,2,0,2,
-9 club with triple pass,3,0,3,
-
-Standard - Period 5,Total,Done,To Do,%
-6 club period 5's,18,2,16,
-7 club popcorns,3,0,3,
-7 club period 5 - with zips,16,0,16,
-7 club period 5 - with holds,22,1,21,
-7 club triple pass,15,0,15,
-8 club period 5's,12,0,12,
-8 club period 5's - with holds,6,0,6,
-8 club with triple pass,25,0,25,
-9 club,5,0,5,
-9 club with triple pass,13,0,13,
-
-Standard - Period 7,Total,Done,To Do,%
-7 club popcorns,2,0,2,
-7 club period 7 - single passes & heffs,4,0,4,
-7 club period 7 - Whynot family,13,0,13,
-7 club period 7 - no triples,23,1,22,
-7 club period 7 - triples & 1 pass,36,1,35,
-7 club period 7 - triples > 1 pass,48,1,47,
-8 club period 7's,11,0,11,
-8 club period 7 - triple self,10,0,10,
-
-Standard - Other periods,Total,Done,To Do,%
-"7 club popcorns (4, 6 & 8 count)",4,0,4,
-
-Sync,Total,Done,To Do,%
-7 club sync PSS - 3 & 4 only,5,0,5,
-7 club sync PSS - plus 5 & 1's,16,0,16,
-7 club sync PSS - plus 5p's,7,0,7,
-7 club sync PPS - 3 & 4 only,5,0,5,
-7 club sync PPS - plus 5 & 1's,4,0,4,
-7 club sync PPS - plus 5p's,3,0,3,
-8 club sync PSS - no triple pass,15,0,15,
-8 club sync PSS - other,23,0,23,
-8 club sync PPS - no triple pass,6,0,6,
-8 club sync PPS - other,17,0,17,
-
+Project Funky Orbit Progress,,,,,,,,,,
+,,,,,,,,,,
+Zaps - Period 3,Total,Done,To Do,%,,Statistics,Total,Done,To Do,%
+5 club Zaps,3,0,3,0%,,All patterns,911,15,896,1.6%
+6 club Zaps,3,0,3,0%,,Period 3,29,0,29,0.0%
+7 club Zaps,3,0,3,0%,,Period 5,201,3,198,1.5%
+8 club Zaps,1,0,1,0%,,Period 7,581,12,569,2.1%
+,,,,,,Sync,96,0,96,0.0%
+Zaps - Period 5,Total,Done,To Do,%,,Patterns with Zaps,515,9,506,1.7%
+5 club Zaps,9,0,9,0%,,Patterns with triple self (a),446,6,440,1.3%
+6 club Zaps,20,0,20,0%,,Patterns with triple pass (b),60,0,60,0.0%
+7 club Zaps,26,0,26,0%,,,,,,
+8 club Zaps,13,0,13,0%,,Recording,Value,,,
+,,,,,,Videos recorded,15,,,
+Zaps - Period 7,Total,Done,To Do,%,,Unique patterns thrown,15,,,
+5 club Zaps,63,1,62,2%,,Recording days,5,,,
+6 club Zaps,98,3,95,3%,,Videos per recording day,3.0,,,
+6 club Zaps with triple,78,1,77,1%,,First recording,26/09/2026,,,
+7 club Zaps,59,2,57,3%,,Last recording,18/10/2026,,,
+7 club Zaps with triple,139,2,137,1%,,Days since last recording,1,,,
+,,,,,,Busiest date,26/09/2026,,,
+Standard - Period 3,Total,Done,To Do,%,,Videos on busiest date,4,,,
+7 club period 3,6,0,6,0%,,Average rating,2.9,,,
+7 club popcorns,1,0,1,0%,,Rated videos,8,,,
+7 club triple pass,2,0,2,0%,,,,,,
+8 club period 3's,4,0,4,0%,,Day of the week,Videos,,,
+8 club with triple pass,2,0,2,0%,,Monday,1,,,
+9 club,2,0,2,0%,,Tuesday,0,,,
+9 club with triple pass,3,0,3,0%,,Wednesday,0,,,
+,,,,,,Thursday,0,,,
+Standard - Period 5,Total,Done,To Do,%,,Friday,0,,,
+6 club period 5's,18,2,16,11%,,Saturday,6,,,
+7 club popcorns,3,0,3,0%,,Sunday,8,,,
+7 club period 5 - with zips,16,0,16,0%,,Busiest weekday,Sunday,,,
+7 club period 5 - with holds,22,1,21,5%,,,,,,
+7 club triple pass,15,0,15,0%,,Videos per club count,Videos,,,
+8 club period 5's,12,0,12,0%,,5 club,1,,,
+8 club period 5's - with holds,6,0,6,0%,,6 club,6,,,
+8 club with triple pass,25,0,25,0%,,7 club,8,,,
+9 club,5,0,5,0%,,8 club,0,,,
+9 club with triple pass,13,0,13,0%,,9 club,0,,,
+,,,,,,,,,,
+Standard - Period 7,Total,Done,To Do,%,,,,,,
+7 club popcorns,2,0,2,0%,,,,,,
+7 club period 7 - single passes & heffs,4,0,4,0%,,,,,,
+7 club period 7 - Whynot family,13,0,13,0%,,,,,,
+7 club period 7 - no triples,23,1,22,4%,,,,,,
+7 club period 7 - triples & 1 pass,36,1,35,3%,,,,,,
+7 club period 7 - triples > 1 pass,48,1,47,2%,,,,,,
+8 club period 7's,11,0,11,0%,,,,,,
+8 club period 7 - triple self,10,0,10,0%,,,,,,
+,,,,,,,,,,
+Standard - Other periods,Total,Done,To Do,%,,,,,,
+"7 club popcorns (4, 6 & 8 count)",4,0,4,0%,,,,,,
+,,,,,,,,,,
+Sync,Total,Done,To Do,%,,,,,,
+7 club sync PSS - 3 & 4 only,5,0,5,0%,,,,,,
+7 club sync PSS - plus 5 & 1's,16,0,16,0%,,,,,,
+7 club sync PSS - plus 5p's,7,0,7,0%,,,,,,
+7 club sync PPS - 3 & 4 only,5,0,5,0%,,,,,,
+7 club sync PPS - plus 5 & 1's,4,0,4,0%,,,,,,
+7 club sync PPS - plus 5p's,3,0,3,0%,,,,,,
+8 club sync PSS - no triple pass,15,0,15,0%,,,,,,
+8 club sync PSS - other,23,0,23,0%,,,,,,
+8 club sync PPS - no triple pass,6,0,6,0%,,,,,,
+8 club sync PPS - other,17,0,17,0%,,,,,,
