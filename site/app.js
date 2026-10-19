@@ -59,13 +59,15 @@
       <span class="label">Project Funky Orbit · passing patterns</span>
       <h1 class="num">${fmt.format(d.done)}<span class="of">of ${fmt.format(d.total)} patterns</span></h1>
       <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${d.total}" aria-valuenow="${d.done}" aria-label="Total progress"><i style="width:${pct}%"></i></div>
+      <div class="hero-body">
       <p><strong>${pct.toLocaleString("en-GB", { maximumFractionDigits: 1 })}%</strong> done. We, Piet &amp; Mees, are working our way through a list of ${fmt.format(d.total)} club passing patterns. The list was originally compiled by James Francis, and many jugglers have passed these patterns before us: Brook even did almost the whole list. Our goal is to juggle every pattern for at least 2 rounds (3 rounds for period 3) and to record it. Follow our progress here and cheer us on!</p>
       <dl class="facts">
         <div><dt>videos</dt><dd>${d.stats.videos}</dd></div>
         <div><dt>practice days</dt><dd>${d.stats.recordingDays}</dd></div>
         <div><dt>avg. rating</dt><dd>${d.stats.averageRating != null ? d.stats.averageRating + " ★" : "–"}</dd></div>
         <div><dt>last session</dt><dd>${d.stats.lastDate ? new Date(d.stats.lastDate + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "–"}</dd></div>
-      </dl>`;
+      </dl>
+      </div>`;
   }
 
   // Top level: Period 3 / 5 / 7 and Sync (from the Statistics block), each opening its groups.
