@@ -20,6 +20,9 @@ services:
       DONE_GID: "2105998367"
       PROGRESS_GID: "537922909"
       COLORS_GID: "7701"
+      FAMILIES_GID: "777000111"
+      SYNC_COLORS_GID: "7703"
+      DIFFICULTY_GID: "7710"
       INTERVAL: "3600"       # every hour
       OUT_FILE: /data/data.json
       TZ: Europe/Amsterdam

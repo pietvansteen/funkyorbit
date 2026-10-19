@@ -10,9 +10,12 @@ Settings via environment variables (see docker-compose.yml):
   DONE_GID        gid of the "Done" tab
   PROGRESS_GID    gid of the "Progress" tab
   COLORS_GID      gid of the "Kleuren" tab (club colour code per siteswap)
+  FAMILIES_GID    gid of the "Families" tab (every pattern with its family, in Sheet order)
+  SYNC_COLORS_GID gid of the "Kleuren sync" tab (colour code per sync pattern)
+  DIFFICULTY_GID  gid of the "Moeilijkheid" tab (difficulty score and stars per pattern)
   OUT_FILE        output path (default /data/data.json)
   INTERVAL        seconds between two syncs (default 3600); 0 = run once
-  DONE_CSV / PROGRESS_CSV / COLORS_CSV   optional: local CSV files instead of Google (for testing)
+  DONE_CSV / PROGRESS_CSV / COLORS_CSV / FAMILIES_CSV / SYNC_COLORS_CSV / DIFFICULTY_CSV   optional: local CSV files instead of Google (for testing)
 """
 
 import csv
@@ -29,6 +32,9 @@ SHEET_ID = os.environ.get("SHEET_ID", "1Qh2r1bgPZL8WfaWprVyHBpKyWuStGIyXX4Bdi4UF
 DONE_GID = os.environ.get("DONE_GID", "2105998367")
 PROGRESS_GID = os.environ.get("PROGRESS_GID", "537922909")
 COLORS_GID = os.environ.get("COLORS_GID", "7701")
+FAMILIES_GID = os.environ.get("FAMILIES_GID", "777000111")
+SYNC_COLORS_GID = os.environ.get("SYNC_COLORS_GID", "7703")
+DIFFICULTY_GID = os.environ.get("DIFFICULTY_GID", "7710")
 OUT_FILE = os.environ.get("OUT_FILE", "/data/data.json")
 INTERVAL = int(os.environ.get("INTERVAL", "3600"))
 
@@ -177,6 +183,22 @@ def parse_progress(rows):
     return [g for g in groups if g["categories"]]
 
 
+def rotations(seq):
+    return [(i, seq[i:] + seq[:i]) for i in range(len(seq))] or [(0, seq)]
+
+
+def color_for(colors, ss):
+    """Colour code for a siteswap, also when the Kleuren tab writes it in another rotation."""
+    ss = ss.lower()
+    if ss in colors:
+        return colors[ss]
+    for written, code in colors.get(("rot", min_rotation(ss)), []):
+        for i, rot in rotations(written):
+            if rot == ss:
+                return code[i:] + code[:i]
+    return None
+
+
 def parse_colors(rows):
     """Siteswap -> club colour code (W/B/O/R, one letter per throw) from the "Kleuren" tab."""
     if not rows:
@@ -191,7 +213,167 @@ def parse_colors(rows):
         ss, code = cell(row, c_ss).lower(), cell(row, c_code).upper()
         if ss and len(code) == len(ss) and set(code) <= set("WBOR"):
             colors[ss] = code
+            colors.setdefault(("rot", min_rotation(ss)), []).append((ss, code))
     return colors
+
+
+def header_index(row, *names):
+    header = [h.strip().lower() for h in row]
+    for n in names:
+        for i, h in enumerate(header):
+            if h.startswith(n):
+                return i
+    return None
+
+
+def min_rotation(ss):
+    """Canonical form of a vanilla siteswap: its smallest rotation (as the Sheet's match keys)."""
+    ss = ss.lower()
+    return min(ss[i:] + ss[:i] for i in range(len(ss))) if ss else ss
+
+
+SYNC_THROW = re.compile(r"[0-9a-oq-z]p?")
+
+
+def sync_key(a, b):
+    return f"{a.strip().lower()} {b.strip().lower()}"
+
+
+def sync_variants(a, b):
+    """Every way to write the same sync pattern: rotate both jugglers together, or swap them.
+    Yields (a, b, offset, swapped)."""
+    ta, tb = SYNC_THROW.findall(a.lower()), SYNC_THROW.findall(b.lower())
+    if len(ta) != len(tb):
+        yield "".join(ta), "".join(tb), 0, False
+        return
+    for swapped, (x, y) in ((False, (ta, tb)), (True, (tb, ta))):
+        for i in range(len(x)):
+            yield "".join(x[i:] + x[:i]), "".join(y[i:] + y[:i]), i, swapped
+
+
+def sync_canon(a, b):
+    return min(sync_key(x, y) for x, y, _, _ in sync_variants(a, b))
+
+
+def sync_lookup(table, a, b):
+    """Entry for a sync pattern in a table keyed by sync_canon, with its colours turned to match."""
+    entry = table.get(sync_canon(a, b))
+    if not entry:
+        return None
+    want = sync_key(a, b)
+    for x, y, i, swapped in sync_variants(entry["a"], entry["b"]):
+        if sync_key(x, y) == want:
+            out = dict(entry)
+            if entry.get("colors"):
+                ca, cb = entry["colors"][::-1] if swapped else entry["colors"]
+                out["colors"] = [ca[i:] + ca[:i], cb[i:] + cb[:i]]
+            return out
+    return entry
+
+
+def parse_sync_colors(rows):
+    """'Kleuren sync': juggler A, juggler B and a code like 'BOB OOO' (one letter per throw)."""
+    out = {}
+    if not rows:
+        return out
+    h = rows[0]
+    c_type, c_a, c_b, c_code = (header_index(h, n) for n in ("type", "jongleur a", "jongleur b", "kleurcode"))
+    for row in rows[1:]:
+        a, b, code = cell(row, c_a), cell(row, c_b), cell(row, c_code).upper()
+        if not (a and b):
+            continue
+        parts = code.split()
+        ok = (len(parts) == 2 and len(parts[0]) == len(SYNC_THROW.findall(a.lower()))
+              and len(parts[1]) == len(SYNC_THROW.findall(b.lower())))
+        out[sync_canon(a, b)] = {"a": a, "b": b, "type": cell(row, c_type),
+                                 "colors": [parts[0], parts[1]] if ok else None}
+    return out
+
+
+def parse_difficulty(rows):
+    """'Moeilijkheid': score and stars, keyed by min rotation (siteswaps) or 'a b' (sync)."""
+    out = {}
+    if not rows:
+        return out
+    h = rows[0]
+    c_pat, c_score, c_stars = (header_index(h, n) for n in ("patroon", "score", "sterren"))
+    for row in rows[1:]:
+        pat = cell(row, c_pat)
+        score, stars = to_number(cell(row, c_score)), to_number(cell(row, c_stars))
+        if not pat or score is None:
+            continue
+        if "|" in pat:
+            a, b = pat.split("|", 1)
+            key = sync_canon(a, b)
+        else:
+            key = min_rotation(pat)
+        out[key] = {"score": score, "stars": stars}
+    return out
+
+
+def parse_done_keys(rows):
+    """Match keys of everything in 'Done' (same keys as the Families tab)."""
+    if not rows:
+        return set()
+    c = header_index(rows[0], "match key")
+    return {cell(r, c).lower() for r in rows[1:] if cell(r, c)}
+
+
+def popcorn_count(notation):
+    """'(6x,a)(6,6)*' -> 4 count: two beats per bracket."""
+    return 2 * notation.count("(")
+
+
+def parse_all_patterns(fam_rows, colors, sync_colors, difficulty, done_keys):
+    """Every pattern from the Families tab (columns E:I), in Sheet order.
+    Patterns in two families appear twice, like in the Sheet."""
+    if not fam_rows:
+        return []
+    h = fam_rows[0]
+    c_pat, c_fam, c_key = (header_index(h, n) for n in ("pattern (auto)", "family (auto)", "unique key"))
+    c_named, c_name = header_index(h, "named siteswap"), header_index(h, "name")
+    if c_named is not None and c_name == c_named:
+        c_name = c_named + 1
+    names = {}
+    for row in fam_rows[1:]:
+        ss, name = cell(row, c_named), cell(row, c_name)
+        if ss and name and "(" not in ss:
+            names.setdefault(min_rotation(ss), []).append(name)
+    popcorns = [v for v in sync_colors.values() if v["type"].lower().startswith("popcorn")]
+
+    out = []
+    for row in fam_rows[1:]:
+        pat, fam, key = cell(row, c_pat), cell(row, c_fam), cell(row, c_key).lower()
+        if not pat or not fam:
+            continue
+        fl = fam.lower()
+        kind = "Sync" if "sync" in fl else "Zaps" if "zaps" in fl else "Standard"
+        item = {"family": fam, "kind": kind, "key": key, "done": key in done_keys}
+        if "(" in pat:
+            # sync popcorn in (x,y) notation: shown as juggler A | B from 'Kleuren sync'
+            n = popcorn_count(pat)
+            cands = [v for v in popcorns if len(SYNC_THROW.findall(v["a"].lower())) == n]
+            if len(cands) > 1:
+                cands = [v for v in cands if ("a" in pat.lower()) == ("5" in v["a"] + v["b"])] or cands
+            sc = cands[0] if cands else None
+            item.update(alt=pat)
+            if sc:
+                item.update(a=sc["a"], b=sc["b"], colors=sc["colors"])
+                item.update(difficulty.get(sync_canon(sc["a"], sc["b"]), {}))
+            else:
+                item.update(a=pat, b="", colors=None)
+        elif " " in pat:
+            a, b = pat.split(None, 1)
+            sc = sync_lookup(sync_colors, a, b) or {}
+            item.update(a=a, b=b, colors=sc.get("colors"))
+            item.update(difficulty.get(sync_canon(a, b), {}))
+        else:
+            mr = min_rotation(pat)
+            item.update(ss=pat, period=len(pat), colors=color_for(colors, pat),
+                        name="; ".join(names.get(mr, [])) or None)
+            item.update(difficulty.get(mr, {}))
+        out.append(item)
+    return out
 
 
 def parse_summary(rows):
@@ -216,11 +398,11 @@ def parse_sheet_stats(rows):
     return stats
 
 
-def build(done_rows, progress_rows, color_rows=None):
+def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_rows=None, difficulty_rows=None):
     patterns = parse_done(done_rows)
     colors = parse_colors(color_rows)
     for p in patterns:
-        p["colors"] = colors.get(p["siteswap"].lower())
+        p["colors"] = color_for(colors, p["siteswap"])
     groups = parse_progress(progress_rows)
     sheet_stats = parse_sheet_stats(progress_rows)
     rated = [p["rating"] for p in patterns if p["rating"] is not None]
@@ -233,6 +415,8 @@ def build(done_rows, progress_rows, color_rows=None):
         "total": int(all_patterns) if all_patterns else sum(g["total"] for g in groups),
         "done": len({p["siteswap"] for p in patterns}),
         "summary": parse_summary(progress_rows),
+        "all": parse_all_patterns(fam_rows, colors, parse_sync_colors(sync_color_rows),
+                                  parse_difficulty(difficulty_rows), parse_done_keys(done_rows)),
         "groups": groups,
         "patterns": patterns,
         "stats": {
@@ -258,16 +442,22 @@ def write_atomic(data, path):
 def sync_once():
     done_rows = fetch_csv(DONE_GID, os.environ.get("DONE_CSV"))
     progress_rows = fetch_csv(PROGRESS_GID, os.environ.get("PROGRESS_CSV"))
-    try:
-        color_rows = fetch_csv(COLORS_GID, os.environ.get("COLORS_CSV"))
-    except Exception as e:  # colours are optional; the site falls back to plain boxes
-        log(f"WARNING: no club colours: {e}")
-        color_rows = None
-    data = build(done_rows, progress_rows, color_rows)
+    optional = {}
+    # the other tabs are optional: without them the site falls back to plain boxes / no overview
+    for name, gid in (("COLORS", COLORS_GID), ("FAMILIES", FAMILIES_GID),
+                      ("SYNC_COLORS", SYNC_COLORS_GID), ("DIFFICULTY", DIFFICULTY_GID)):
+        try:
+            optional[name] = fetch_csv(gid, os.environ.get(f"{name}_CSV"))
+        except Exception as e:
+            log(f"WARNING: could not read {name.lower()} tab: {e}")
+            optional[name] = None
+    data = build(done_rows, progress_rows, optional["COLORS"], optional["FAMILIES"],
+                 optional["SYNC_COLORS"], optional["DIFFICULTY"])
     if not data["groups"]:
         raise RuntimeError("No categories found in the Progress tab; keeping the old data.")
     write_atomic(data, OUT_FILE)
-    log(f"OK: {data['done']}/{data['total']} patterns, {data['stats']['videos']} videos -> {OUT_FILE}")
+    log(f"OK: {data['done']}/{data['total']} patterns, {data['stats']['videos']} videos, "
+        f"{len(data['all'])} in overview -> {OUT_FILE}")
 
 
 def main():

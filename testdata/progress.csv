@@ -1,13 +1,13 @@
 Project Funky Orbit Progress,,,,,,,,,,
 ,,,,,,,,,,
 Zaps - Period 3,Total,Done,To Do,%,,Statistics,Total,Done,To Do,%
-5 club Zaps,3,0,3,0%,,All patterns,911,15,896,1.6%
+5 club Zaps,3,0,3,0%,,All patterns,913,15,898,1.6%
 6 club Zaps,3,0,3,0%,,Period 3,29,0,29,0.0%
-7 club Zaps,3,0,3,0%,,Period 5,201,3,198,1.5%
+7 club Zaps,3,0,3,0%,,Period 5,202,3,199,1.5%
 8 club Zaps,1,0,1,0%,,Period 7,581,12,569,2.1%
-,,,,,,Sync,96,0,96,0.0%
+,,,,,,Sync,101,0,101,0.0%
 Zaps - Period 5,Total,Done,To Do,%,,Patterns with Zaps,515,9,506,1.7%
-5 club Zaps,9,0,9,0%,,Patterns with triple self (a),446,6,440,1.3%
+5 club Zaps,9,0,9,0%,,Patterns with triple self (a),447,6,441,1.3%
 6 club Zaps,20,0,20,0%,,Patterns with triple pass (b),60,0,60,0.0%
 7 club Zaps,26,0,26,0%,,,,,,
 8 club Zaps,13,0,13,0%,,Recording,Value,,,
@@ -46,12 +46,9 @@ Standard - Period 7,Total,Done,To Do,%,,,,,,
 7 club period 7 - Whynot family,13,0,13,0%,,,,,,
 7 club period 7 - no triples,23,1,22,4%,,,,,,
 7 club period 7 - triples & 1 pass,36,1,35,3%,,,,,,
-7 club period 7 - triples > 1 pass,48,1,47,2%,,,,,,
+7 club period 7 - triples > 1 pass,47,1,46,2%,,,,,,
 8 club period 7's,11,0,11,0%,,,,,,
 8 club period 7 - triple self,10,0,10,0%,,,,,,
-,,,,,,,,,,
-Standard - Other periods,Total,Done,To Do,%,,,,,,
-"7 club popcorns (4, 6 & 8 count)",4,0,4,0%,,,,,,
 ,,,,,,,,,,
 Sync,Total,Done,To Do,%,,,,,,
 7 club sync PSS - 3 & 4 only,5,0,5,0%,,,,,,
@@ -60,6 +57,7 @@ Sync,Total,Done,To Do,%,,,,,,
 7 club sync PPS - 3 & 4 only,5,0,5,0%,,,,,,
 7 club sync PPS - plus 5 & 1's,4,0,4,0%,,,,,,
 7 club sync PPS - plus 5p's,3,0,3,0%,,,,,,
+"7 club sync popcorns (4, 6 & 8 count)",4,0,4,0%,,,,,,
 8 club sync PSS - no triple pass,15,0,15,0%,,,,,,
 8 club sync PSS - other,23,0,23,0%,,,,,,
 8 club sync PPS - no triple pass,6,0,6,0%,,,,,,

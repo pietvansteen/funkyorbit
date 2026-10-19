@@ -4,8 +4,7 @@
 
   const PREVIEW = !!window.FUNKY_PREVIEW; // no YouTube embeds and no API in the preview
   const $ = (sel, el = document) => el.querySelector(sel);
-  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const fmt = new Intl.NumberFormat("en-GB");
+  const { esc, fmt, siteswap, cyclicIncludes } = window.FO;
 
   // ---------- visitor ID (cookie + localStorage), for "one like per visitor" ----------
   function visitorId() {
@@ -23,17 +22,6 @@
   const VISITOR = visitorId();
 
   // ---------- formatting helpers ----------
-  const CLUB = { W: ["w", "white"], B: ["b", "blue"], O: ["o", "orange"], R: ["r", "pink"] };
-
-  function siteswap(ss, size, colors) {
-    // Each throw gets the colour of the club it throws, from the "Kleuren" tab of the Sheet.
-    const cells = [...ss].map((ch, i) => {
-      const c = colors && CLUB[colors[i]];
-      return `<b class="${c ? "c-" + c[0] : ""}"${c ? ` title="${c[1]} club"` : ""}>${esc(ch)}</b>`;
-    });
-    return `<span class="ss ${size}" aria-label="siteswap ${esc(ss)}">${cells.join("")}</span>`;
-  }
-
   function stars(r) {
     if (r == null) return `<span class="unrated">not rated yet</span>`;
     const pct = Math.max(0, Math.min(100, (r / 5) * 100));
@@ -157,9 +145,7 @@
   function matches(p, q) {
     if (!q) return true;
     // A siteswap is cyclic, so 6966 also finds 9666: search in the pattern written twice.
-    const ss = p.siteswap.toLowerCase();
-    const qs = q.replace(/\s+/g, "");
-    if (qs && qs.length <= ss.length && (ss + ss).includes(qs)) return true;
+    if (cyclicIncludes(p.siteswap, q.replace(/\s+/g, ""))) return true;
     return (p.name || "").toLowerCase().includes(q);
   }
 
@@ -277,8 +263,7 @@
       return;
     }
     if (DATA.updated) {
-      const u = new Date(DATA.updated);
-      $("#updated").textContent = "Updated " + u.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      $("#updated").textContent = window.FO.updated(DATA.updated);
     }
     query = new URLSearchParams(location.search).get("q") || "";
     $("#search").value = query;

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>All patterns · Project Funky Orbit</title>
+<meta name="description" content="Every club passing pattern on our list, coloured by club, with the ones we have already thrown marked.">
+<link rel="icon" href="/favicon.svg?v=20261019h" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
+<link rel="stylesheet" href="/style.css?v=20261019h">
+</head>
+<body>
+<header class="wrap top">
+  <a class="brand" href="/" aria-label="Funky Orbit, home">
+    <img src="/favicon.svg?v=20261019h" width="46" height="46" alt="">
+    <b>Funky Orbit</b>
+  </a>
+  <nav class="nav" aria-label="Pages">
+    <a href="/">Progress</a>
+    <a href="/patterns/" aria-current="page">All patterns</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero compact" aria-live="polite">
+    <span class="label">Project Funky Orbit by Piet &amp; Mees</span>
+    <h1 class="num" id="title">All patterns</h1>
+    <p id="intro">Loading the list…</p>
+  </section>
+
+  <div class="toolbar" role="search">
+    <label class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <input type="search" id="q" placeholder="Search by siteswap or name, e.g. 975 or dragon" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search patterns by siteswap or name">
+    </label>
+    <div class="colors" role="group" aria-label="Only patterns with these club colours">
+      <button type="button" class="chip" data-c="W" aria-pressed="false"><i class="sw c-w"></i>white</button>
+      <button type="button" class="chip" data-c="B" aria-pressed="false"><i class="sw c-b"></i>blue</button>
+      <button type="button" class="chip" data-c="O" aria-pressed="false"><i class="sw c-o"></i>orange</button>
+      <button type="button" class="chip" data-c="R" aria-pressed="false"><i class="sw c-r"></i>pink</button>
+      <button type="button" class="reset" id="reset" hidden>Reset</button>
+    </div>
+    <span class="label" id="count" aria-live="polite"></span>
+  </div>
+
+  <div id="list"></div>
+  <p class="empty" id="none" hidden></p>
+</main>
+
+<footer class="wrap">funkyorbit.nl · The list is updated every hour from our practice spreadsheet. <span id="updated"></span></footer>
+<script src="/shared.js?v=20261019h"></script>
+<script src="/patterns/patterns.js?v=20261019h"></script>
+</body>
+</html>
