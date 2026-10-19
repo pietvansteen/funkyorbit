@@ -10,7 +10,7 @@
       <rect x="-7" y="-0.5" width="14" height="4.4" rx="1.8" fill="#d93a78"/>
     </g>
   </defs>
-  <use href="#club" xlink:href="#club" color="#f0612a" transform="rotate(-21 0 132)"/>
+  <use href="#club" xlink:href="#club" color="#ee5a2c" transform="rotate(-21 0 132)"/>
   <use href="#club" xlink:href="#club" color="#1f4fd1" transform="rotate(21 0 132)"/>
-  <use href="#club" xlink:href="#club" color="#f4f5f7"/>
+  <use href="#club" xlink:href="#club" color="#eeeff2"/>
 </svg>
