@@ -181,7 +181,7 @@ a { color: inherit; }
 .ss.lg { font-size: 22px; }
 .ss.sm { font-size: 14px; }
 /* club colours, matched to the bodies of our real clubs */
-.c-w { background: #eeeff2 !important; color: #15203b; box-shadow: inset 0 0 0 1px #c3c8d4; }
+.c-w { background: #eeeff2 !important; color: #15203b; }
 .c-b { background: #1f4fd1 !important; color: #fff; }
 .c-o { background: #ee5a2c !important; color: #fff; }
 .c-r { background: #e6386a !important; color: #fff; }
