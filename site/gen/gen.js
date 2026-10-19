@@ -21,7 +21,8 @@
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
 
-  // Sync throws in siteswap terms, as in the difficulty rules: 3p = 7, 4p = 9, 5p = b, 3 = 6, 4 = 8, 5 = a, 1 = 2
+  // A sync throw counts as the siteswap throw with the same spin (as in the difficulty rules):
+  // 3p ~ 7 single pass, 4p ~ 9 double pass, 5p ~ b triple pass, 3 ~ 6, 4 ~ 8, 5 ~ a, 1 ~ 2 zip
   const SYNC_AS = { "3p": "7", "4p": "9", "5p": "b", "3": "6", "4": "8", "5": "a", "1": "2" };
   function throwsOf(p) {
     if (p._throws) return p._throws;

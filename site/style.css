@@ -341,7 +341,7 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
 .range-track i { position: absolute; top: 0; bottom: 0; background: var(--orbit); border-radius: 99px; }
 .range-label { font-weight: 600; color: var(--muted); }
 
-.opt-name small.inline { display: inline; font-weight: 500; font-size: 12px; color: var(--muted); }
+.opt small.hint { margin-top: -4px; }
 .pair { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: center; }
 .pair-label { font-size: 13px; color: var(--muted); font-weight: 600; white-space: nowrap; }
 .multi { display: flex; flex-wrap: wrap; gap: 6px; }

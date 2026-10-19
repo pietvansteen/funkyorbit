@@ -3,32 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Next pattern · Project Funky Orbit</title>
+<title>Generator · Project Funky Orbit</title>
 <meta name="description" content="Picks the next club passing pattern for us to throw and film.">
 <meta name="theme-color" content="#0d1322">
 <link rel="manifest" href="/gen/manifest.webmanifest">
-<link rel="icon" href="/favicon.svg?v=20261019k" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg?v=20261019l" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Next pattern">
+<meta name="apple-mobile-web-app-title" content="Generator">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
-<link rel="stylesheet" href="/style.css?v=20261019k">
+<link rel="stylesheet" href="/style.css?v=20261019l">
 </head>
 <body class="gen-page">
 <header class="wrap top">
   <a class="brand" href="/" aria-label="Funky Orbit, home">
-    <img src="/favicon.svg?v=20261019k" width="46" height="46" alt="">
+    <img src="/favicon.svg?v=20261019l" width="46" height="46" alt="">
     <b>Funky Orbit</b>
   </a>
   <nav class="nav" aria-label="Pages">
     <a href="/">Progress</a>
-    <a href="/patterns/">All patterns</a>
     <a href="/stats/">Stats</a>
-    <a href="/gen/" aria-current="page">Next</a>
+    <a href="/patterns/">All patterns</a>
+    <a href="/gen/" aria-current="page">Generator</a>
   </nav>
 </header>
 
@@ -81,7 +81,8 @@
     </div>
 
     <div class="opt">
-      <span class="opt-name">Throws <small class="inline">sync: 3p = 7, 4p = 9, 5p = b, 3 = 6, 4 = 8, 5 = a, 1 = 2</small></span>
+      <span class="opt-name">Throws</span>
+      <small class="hint">Sync patterns are matched on the kind of throw, not on the number: a 3p is a single pass just like a 7, 4p a double pass like a 9 and 5p a triple pass like a b. The selfs 3, 4 and 5 match 6, 8 and a, and the 1 matches the zip 2. So choosing 7 also finds sync patterns with a 3p.</small>
       <div class="pair">
         <span class="pair-label">Must contain</span>
         <div class="multi throws" role="group" aria-label="Pattern must contain these throws" data-list="throwsIn"></div>
@@ -110,7 +111,7 @@
 </main>
 
 <footer class="wrap">funkyorbit.nl · Already filmed patterns are never picked. <span id="updated"></span></footer>
-<script src="/shared.js?v=20261019k"></script>
-<script src="/gen/gen.js?v=20261019k"></script>
+<script src="/shared.js?v=20261019l"></script>
+<script src="/gen/gen.js?v=20261019l"></script>
 </body>
 </html>

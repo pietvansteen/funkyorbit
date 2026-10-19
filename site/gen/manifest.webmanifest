@@ -1,6 +1,6 @@
 {
   "name": "Funky Orbit pattern generator",
-  "short_name": "Next pattern",
+  "short_name": "Generator",
   "description": "Picks the next club passing pattern for Piet & Mees to throw and film.",
   "start_url": "/gen/",
   "scope": "/gen/",

@@ -1,13 +1,13 @@
 /* Funky Orbit generator: works offline in a sports hall without (good) wifi.
    The page and its files come from the cache; data.json from the network when possible,
    otherwise the last copy we got. Bump VERSION when the files below change. */
-const VERSION = "fo-gen-20261019k";
+const VERSION = "fo-gen-20261019l";
 const FILES = [
   "/gen/",
-  "/gen/gen.js?v=20261019k",
-  "/shared.js?v=20261019k",
-  "/style.css?v=20261019k",
-  "/favicon.svg?v=20261019k",
+  "/gen/gen.js?v=20261019l",
+  "/shared.js?v=20261019l",
+  "/style.css?v=20261019l",
+  "/favicon.svg?v=20261019l",
   "/gen/manifest.webmanifest",
   "/icons/icon-192.png",
   "/data.json",
