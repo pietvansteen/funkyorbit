@@ -76,6 +76,8 @@ a { color: inherit; }
 .hero-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 56px; align-items: start; }
 .hero p { margin: 0; color: var(--muted); font-size: 19px; line-height: 1.6; max-width: 68ch; text-wrap: pretty; }
 .hero p strong { color: var(--ink); }
+.hero p a { color: var(--ink); text-decoration-color: var(--orbit); text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.hero p a:hover { color: var(--orbit); }
 
 .bar { height: 14px; background: var(--track); border-radius: 99px; overflow: hidden; position: relative; }
 .bar > i { display: block; height: 100%; background: var(--orbit); border-radius: 99px; min-width: 14px; transition: width .8s cubic-bezier(.2,.8,.2,1); }
