@@ -5,9 +5,13 @@
   const { esc, fmt, siteswap, syncPattern, updated } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
-  const DEFAULTS = { period: "any", sync: false, color: "any", skipfam: true, lo: 0.5, hi: 5 };
+  const DEFAULTS = { period: "any", sync: false, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, lo: 0.5, hi: 5 };
+  const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" };
   let opts = { ...DEFAULTS };
   try { opts = { ...DEFAULTS, ...JSON.parse(localStorage.getItem("fo_gen") || "{}") }; } catch (e) {}
+  for (const k of Object.keys(LISTS)) if (!Array.isArray(opts[k])) opts[k] = [];
+  if (opts.color && opts.color !== "any" && !opts.colorsIn.length) opts.colorsIn = [opts.color]; // older saved option
+  delete opts.color;
   const save = () => { try { localStorage.setItem("fo_gen", JSON.stringify(opts)); } catch (e) {} };
 
   let PATTERNS = []; // one entry per unique pattern (key), with all its families
@@ -16,6 +20,16 @@
 
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
+
+  // Sync throws in siteswap terms, as in the difficulty rules: 3p = 7, 4p = 9, 5p = b, 3 = 6, 4 = 8, 5 = a, 1 = 2
+  const SYNC_AS = { "3p": "7", "4p": "9", "5p": "b", "3": "6", "4": "8", "5": "a", "1": "2" };
+  function throwsOf(p) {
+    if (p._throws) return p._throws;
+    const t = p.ss
+      ? [...p.ss.toLowerCase()]
+      : (((p.a || "") + " " + (p.b || "")).toLowerCase().match(/[0-9a-oq-z]p?/g) || []).map((x) => SYNC_AS[x] || x);
+    return (p._throws = new Set(t));
+  }
 
   // data.json "all" lists a pattern once per family; merge them by key.
   function build(data) {
@@ -36,7 +50,9 @@
       if (p.kind === "Sync") {
         if (!opts.sync || opts.period !== "any") return false;
       } else if (opts.period !== "any" && String(p.period) !== opts.period) return false;
-      if (opts.color !== "any" && !colorsOf(p).includes(opts.color)) return false;
+      const cs = colorsOf(p), ts = throwsOf(p);
+      if (opts.colorsIn.some((c) => !cs.includes(c)) || opts.colorsOut.some((c) => cs.includes(c))) return false;
+      if (opts.throwsIn.some((t) => !ts.has(t)) || opts.throwsOut.some((t) => ts.has(t))) return false;
       if (opts.skipfam && lastFam && p.families.includes(lastFam)) return false;
       if (!full && (p.stars == null || p.stars < opts.lo || p.stars > opts.hi)) return false;
       return true;
@@ -76,6 +92,9 @@
     document.querySelectorAll(".seg").forEach((seg) => {
       seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === String(opts[seg.dataset.opt]))));
     });
+    document.querySelectorAll("[data-list]").forEach((g) => {
+      g.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(opts[g.dataset.list].includes(b.dataset.v))));
+    });
     $("#sync").checked = opts.sync;
     $("#skipfam").checked = opts.skipfam;
     $("#sync-note").textContent = opts.sync && opts.period !== "any"
@@ -104,6 +123,16 @@
   document.addEventListener("click", (ev) => {
     const b = ev.target.closest(".seg button");
     if (b) { opts[b.parentElement.dataset.opt] = b.dataset.v; changed(); return; }
+    const m = ev.target.closest("[data-list] button");
+    if (m) {
+      // a colour or throw is either in "must contain" or in "leave out", never both
+      const list = m.parentElement.dataset.list, v = m.dataset.v;
+      if (opts[list].includes(v)) opts[list] = opts[list].filter((x) => x !== v);
+      else { opts[list] = [...opts[list], v]; opts[LISTS[list]] = opts[LISTS[list]].filter((x) => x !== v); }
+      changed();
+      return;
+    }
+    if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; changed(); return; }
     if (ev.target.closest("#draw")) { draw(); return; }
     if (ev.target.closest("#stars-reset")) { opts.lo = 0.5; opts.hi = 5; changed(); }
   });
@@ -127,6 +156,13 @@
       return;
     }
     build(data);
+    // throw buttons: every throw that occurs in the list, in siteswap order
+    const all = new Set();
+    PATTERNS.forEach((p) => throwsOf(p).forEach((t) => all.add(t)));
+    const order = [...all].sort((x, y) => parseInt(x, 36) - parseInt(y, 36));
+    document.querySelectorAll(".multi.throws").forEach((g) => {
+      g.innerHTML = order.map((t) => `<button type="button" data-v="${esc(t)}">${esc(t)}</button>`).join("");
+    });
     $("#updated").textContent = updated(data.updated);
     if (lastFilmed) {
       $("#lastfam").innerHTML = `Not from the family of the last pattern we filmed: <b>${esc(lastFilmed.siteswap)}</b> (${esc(lastFilmed.family)}).`;

@@ -7,7 +7,7 @@
 <meta name="description" content="Picks the next club passing pattern for us to throw and film.">
 <meta name="theme-color" content="#0d1322">
 <link rel="manifest" href="/gen/manifest.webmanifest">
-<link rel="icon" href="/favicon.svg?v=20261019j" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg?v=20261019k" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -16,17 +16,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
-<link rel="stylesheet" href="/style.css?v=20261019j">
+<link rel="stylesheet" href="/style.css?v=20261019k">
 </head>
 <body class="gen-page">
 <header class="wrap top">
   <a class="brand" href="/" aria-label="Funky Orbit, home">
-    <img src="/favicon.svg?v=20261019j" width="46" height="46" alt="">
+    <img src="/favicon.svg?v=20261019k" width="46" height="46" alt="">
     <b>Funky Orbit</b>
   </a>
   <nav class="nav" aria-label="Pages">
     <a href="/">Progress</a>
     <a href="/patterns/">All patterns</a>
+    <a href="/stats/">Stats</a>
     <a href="/gen/" aria-current="page">Next</a>
   </nav>
 </header>
@@ -60,13 +61,32 @@
     </label>
 
     <div class="opt">
-      <span class="opt-name">Club colour</span>
-      <div class="seg" role="group" aria-label="Club colour in the pattern" data-opt="color">
-        <button type="button" data-v="any">Any</button>
-        <button type="button" data-v="W"><i class="sw c-w"></i><span class="sr">white</span></button>
-        <button type="button" data-v="B"><i class="sw c-b"></i><span class="sr">blue</span></button>
-        <button type="button" data-v="O"><i class="sw c-o"></i><span class="sr">orange</span></button>
-        <button type="button" data-v="R"><i class="sw c-r"></i><span class="sr">pink</span></button>
+      <span class="opt-name">Club colours</span>
+      <div class="pair">
+        <span class="pair-label">Must contain</span>
+        <div class="multi" role="group" aria-label="Pattern must contain these club colours" data-list="colorsIn">
+          <button type="button" data-v="W"><i class="sw c-w"></i>white</button>
+          <button type="button" data-v="B"><i class="sw c-b"></i>blue</button>
+          <button type="button" data-v="O"><i class="sw c-o"></i>orange</button>
+          <button type="button" data-v="R"><i class="sw c-r"></i>pink</button>
+        </div>
+        <span class="pair-label">Leave out</span>
+        <div class="multi out" role="group" aria-label="Pattern must not contain these club colours" data-list="colorsOut">
+          <button type="button" data-v="W"><i class="sw c-w"></i>white</button>
+          <button type="button" data-v="B"><i class="sw c-b"></i>blue</button>
+          <button type="button" data-v="O"><i class="sw c-o"></i>orange</button>
+          <button type="button" data-v="R"><i class="sw c-r"></i>pink</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <span class="opt-name">Throws <small class="inline">sync: 3p = 7, 4p = 9, 5p = b, 3 = 6, 4 = 8, 5 = a, 1 = 2</small></span>
+      <div class="pair">
+        <span class="pair-label">Must contain</span>
+        <div class="multi throws" role="group" aria-label="Pattern must contain these throws" data-list="throwsIn"></div>
+        <span class="pair-label">Leave out</span>
+        <div class="multi throws out" role="group" aria-label="Pattern must not contain these throws" data-list="throwsOut"></div>
       </div>
     </div>
 
@@ -85,12 +105,12 @@
       <div class="range-label" id="range-label">Any difficulty</div>
     </div>
 
-    <p class="label" id="pool"></p>
+    <p class="pool-line"><span class="label" id="pool"></span> <button type="button" class="reset" id="reset-all">Reset all options</button></p>
   </section>
 </main>
 
 <footer class="wrap">funkyorbit.nl · Already filmed patterns are never picked. <span id="updated"></span></footer>
-<script src="/shared.js?v=20261019j"></script>
-<script src="/gen/gen.js?v=20261019j"></script>
+<script src="/shared.js?v=20261019k"></script>
+<script src="/gen/gen.js?v=20261019k"></script>
 </body>
 </html>

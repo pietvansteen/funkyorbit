@@ -12,7 +12,7 @@ visitors ──like──> likes API ──> data/likes.db ─────┘
 
 | Folder | What |
 |---|---|
-| `site/` | The website: `index.html` + `app.js` (progress, videos, funny stats), `patterns/` (all patterns), `gen/` (pattern generator, installable as an app and usable offline), `shared.js`, `style.css`, icons |
+| `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats), `gen/` (pattern generator, installable as an app and usable offline), `shared.js`, `style.css`, icons |
 | `sync/sync.py` | Fetches the Sheet tabs as CSV and writes `data/data.json` |
 | `likes/likes.py` | Small API that stores likes in SQLite (one like per visitor per video, via a cookie) |
 | `web/nginx.conf` | Serves the site and `data.json`, and forwards `/api/` to the likes API |
