@@ -7,7 +7,7 @@
   var OUT_MOGRT = "__OUT_MOGRT__";  // folder; AE names the file after the template
   var OUT_AEP = "__OUT_AEP__";
   var FONT = "IBMPlexMono-SemiBold";
-  var W = 1920, H = 1080, FPS = 25, DUR = 6, INTRO = 0.7, OUTRO = 0.4;
+  var W = 1920, H = 1080, FPS = 25, DUR = 6, INTRO = 0.7;
 
   app.beginSuppressDialogs();
   if (app.project) app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
@@ -33,8 +33,6 @@
   effect("ADBE Slider Control", "Schaduw").property(1).setValue(40);
   var intro = effect("ADBE Slider Control", "Intro").property(1);
   intro.setValueAtTime(0, 0); intro.setValueAtTime(INTRO, 1);
-  var outro = effect("ADBE Slider Control", "Outro").property(1);
-  outro.setValueAtTime(DUR - OUTRO, 1); outro.setValueAtTime(DUR, 0);
 
   // ---- Input text layers (hidden; edited from Premiere) -----------------------------------------
   function textLayer(name, value) {
@@ -119,7 +117,7 @@
     'var c1 = 1.70158, c3 = c1 + 1; return p >= 1 ? 1 : 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); } ';
   var FADE = 'function fade(I) { var c = thisComp.layer("Controls"); if (!c.effect("Animatie")(1).value) return 100; ' +
     'var k = 0.18, p = c.effect("Intro")(1).value * (1 + Math.max(0, d.n - 1) * k) - I * k; ' +
-    'return 100 * Math.min(1, Math.max(0, p * 4)) * c.effect("Outro")(1).value; } ';
+    'return 100 * Math.min(1, Math.max(0, p * 4)); } ';
   var BG = { W: "#eeeff2", B: "#1f4fd1", O: "#ee5a2c", R: "#e6386a", "": "#e3e7f0" };
   var FG = { W: "#15203b", B: "#ffffff", O: "#ffffff", R: "#ffffff", "": "#15203b" };
   function colorExpr(table) {
@@ -177,7 +175,7 @@
     dfill.property("ADBE Fill-0002").expression = READ + 'var b = d.boxes[' + i + ']; ' + colorExpr(FG) + '[b ? b.c : ""]';
   }
 
-  // ---- Responsive time: keep the intro and outro intact when the clip is stretched in Premiere ---
+  // ---- Responsive time: keep the intro intact when the clip is stretched in Premiere ---
   function region(t, len, name) {
     var mv = new MarkerValue(name);
     mv.duration = len;
@@ -185,7 +183,6 @@
     comp.markerProperty.setValueAtTime(t, mv);
   }
   region(0, INTRO, "Intro");
-  region(DUR - OUTRO, OUTRO, "Outro");
 
   // ---- Essential Graphics -----------------------------------------------------------------------
   comp.motionGraphicsTemplateName = "Funky Orbit siteswap";
