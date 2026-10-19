@@ -2,39 +2,10 @@
 (function () {
   "use strict";
 
-  const PREVIEW = !!window.FUNKY_PREVIEW; // no YouTube embeds and no API in the preview
   const $ = (sel, el = document) => el.querySelector(sel);
-  const { esc, fmt, siteswap, cyclicIncludes } = window.FO;
-
-  // ---------- visitor ID (cookie + localStorage), for "one like per visitor" ----------
-  function visitorId() {
-    let id = null;
-    const m = document.cookie.match(/(?:^|;\s*)fo_visitor=([A-Za-z0-9-]{8,64})/);
-    if (m) id = m[1];
-    if (!id) { try { id = localStorage.getItem("fo_visitor"); } catch (e) {} }
-    if (!id) {
-      id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12));
-    }
-    try { localStorage.setItem("fo_visitor", id); } catch (e) {}
-    try { document.cookie = `fo_visitor=${id}; max-age=${60 * 60 * 24 * 400}; path=/; samesite=lax`; } catch (e) {}
-    return id;
-  }
-  const VISITOR = visitorId();
+  const { esc, fmt, siteswap, cyclicIncludes, stars, when, player, likes } = window.FO;
 
   // ---------- formatting helpers ----------
-  function stars(r) {
-    if (r == null) return `<span class="unrated">not rated yet</span>`;
-    const pct = Math.max(0, Math.min(100, (r / 5) * 100));
-    return `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${r} out of 5 stars" title="${r} / 5"></span>`;
-  }
-
-  function when(p) {
-    if (!p.date) return "";
-    const d = new Date(p.date + "T12:00:00");
-    const day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
-    return p.time ? `${day} · ${p.time}` : day;
-  }
-
   function splitGroup(name) {
     const i = name.indexOf(" - ");
     return i > 0 ? [name.slice(0, i), name.slice(i + 3)] : [name, ""];
@@ -116,29 +87,6 @@
   }
 
   // ---------- video feed ----------
-  let likes = { counts: {}, liked: new Set() };
-
-  function heart() {
-    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3 1.6-1.8 3.1-3 5.2-3 3.5 0 5.4 3.5 4.1 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" stroke-linejoin="round"/></svg>`;
-  }
-
-  function likeButton(id) {
-    const on = likes.liked.has(id);
-    const n = likes.counts[id] || 0;
-    return `<button type="button" class="like" data-like="${id}" aria-pressed="${on}" aria-label="${on ? "Remove like" : "Like this video"}">${heart()}<span>${n}</span></button>`;
-  }
-
-  function player(p) {
-    const url = p.isShort ? `https://www.youtube.com/shorts/${p.youtubeId}` : `https://www.youtube.com/watch?v=${p.youtubeId}`;
-    const play = `<span><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>`;
-    const poster = `<div class="poster">${esc(p.siteswap)}<small>${esc(p.name || p.family)}</small></div>`;
-    const img = PREVIEW ? "" : `<img src="https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">`;
-    const btn = PREVIEW
-      ? `<a class="play" href="${url}" target="_blank" rel="noopener" aria-label="Watch ${esc(p.siteswap)} on YouTube">${play}</a>`
-      : `<button type="button" class="play" data-play="${p.youtubeId}" aria-label="Play video of ${esc(p.siteswap)}">${play}</button>`;
-    return `<div class="player ${p.isShort ? "" : "wide"}">${poster}${img}${btn}</div>`;
-  }
-
   // ---------- search ----------
   let query = "";
 
@@ -167,7 +115,7 @@
         <div class="meta">
           <div class="meta-top">
             <div class="title">${siteswap(p.siteswap, "lg", p.colors)}${p.name ? `<span class="pname">${esc(p.name)}</span>` : ""}</div>
-            ${likeButton(p.youtubeId)}
+            ${likes.button(p.youtubeId)}
           </div>
           <span class="fam">${esc(p.family)}</span>
           <div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>
@@ -179,46 +127,6 @@
     $("#rest").innerHTML = rest.map((p) => `<tr>
       <td>${siteswap(p.siteswap, "sm", p.colors)}</td><td>${esc(p.name)}</td><td>${esc(p.family)}</td>
       <td>${stars(p.rating)}</td><td class="num">${esc(when(p))}</td></tr>`).join("");
-  }
-
-  // ---------- likes ----------
-  async function loadLikes() {
-    if (PREVIEW) {
-      try { likes.liked = new Set(JSON.parse(localStorage.getItem("fo_liked") || "[]")); } catch (e) {}
-      likes.liked.forEach((id) => (likes.counts[id] = 1));
-      return;
-    }
-    try {
-      const r = await fetch(`api/likes?visitor=${encodeURIComponent(VISITOR)}`, { cache: "no-store" });
-      if (!r.ok) throw new Error(r.status);
-      const j = await r.json();
-      likes = { counts: j.counts || {}, liked: new Set(j.liked || []) };
-    } catch (e) { /* without the API, just no counters */ }
-  }
-
-  async function toggleLike(btn) {
-    const id = btn.dataset.like;
-    const on = !likes.liked.has(id);
-    // update right away, then confirm with the server
-    on ? likes.liked.add(id) : likes.liked.delete(id);
-    likes.counts[id] = Math.max(0, (likes.counts[id] || 0) + (on ? 1 : -1));
-    btn.outerHTML = likeButton(id);
-    if (PREVIEW) {
-      try { localStorage.setItem("fo_liked", JSON.stringify([...likes.liked])); } catch (e) {}
-      return;
-    }
-    try {
-      const r = await fetch("api/like", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ video: id, visitor: VISITOR, liked: on }),
-      });
-      if (r.ok) {
-        const j = await r.json();
-        likes.counts[id] = j.count;
-        const b = document.querySelector(`[data-like="${id}"]`);
-        if (b) b.outerHTML = likeButton(id);
-      }
-    } catch (e) {}
   }
 
   // ---------- events ----------
@@ -242,14 +150,6 @@
       if (again) again.focus();
       return;
     }
-    const like = ev.target.closest("[data-like]");
-    if (like) { toggleLike(like); return; }
-    const play = ev.target.closest("[data-play]");
-    if (play) {
-      const id = play.dataset.play;
-      const box = play.parentElement;
-      box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0" title="YouTube video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
-    }
   });
 
   // ---------- start ----------
@@ -269,7 +169,7 @@
     $("#search").value = query;
     renderHero(DATA);
     renderGroups(DATA);
-    await loadLikes();
+    await likes.load();
     renderFeed(DATA);
   }
   start();

@@ -357,3 +357,20 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
 .pool-line { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .pool-line .reset { padding-left: 0; }
 @media (max-width: 480px) { .pair { grid-template-columns: 1fr; } .pair-label { margin-top: 4px; } }
+
+/* ---------- pop-up with the video of a thrown pattern ---------- */
+.pat.done { cursor: pointer; }
+.pat.done:hover { box-shadow: 0 0 0 1px var(--done); }
+.pat.done:focus-visible { outline: 2px solid var(--club); outline-offset: 2px; }
+.modal {
+  width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: var(--radius);
+  background: transparent; color: var(--ink); overflow: visible;
+}
+.modal::backdrop { background: rgb(5 9 20 / .72); backdrop-filter: blur(2px); }
+.modal-card { max-height: calc(100dvh - 32px); overflow: auto; }
+.modal-card .player { max-height: min(560px, calc(100dvh - 200px)); }
+.player.no-video { aspect-ratio: 16 / 9; }
+.modal-close {
+  position: absolute; top: 10px; right: 10px; z-index: 3; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
+  display: grid; place-items: center; background: rgb(0 0 0 / .55); color: #fff;
+}

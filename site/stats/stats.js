@@ -13,6 +13,12 @@
     return v;
   }
 
+  // "Patterns with triple self (a)" -> "Triple Self (a)"; zaps get their throw too: "Zaps (5)"
+  function withLabel(name) {
+    const label = name.replace(/^patterns with /i, "").replace(/\b[a-z]{2,}/g, (w) => w[0].toUpperCase() + w.slice(1));
+    return /^zaps$/i.test(label) ? "Zaps (5)" : label;
+  }
+
   function statBlock(b, d) {
     const cols = b.columns.map((c) => c.toLowerCase());
     const iTotal = cols.indexOf("total"), iDone = cols.indexOf("done");
@@ -24,7 +30,7 @@
       return `<div class="stat-card"><h3>Patterns with…</h3>${rows.map((r) => {
         const total = num(r[iTotal + 1]) || 0, done = num(r[iDone + 1]) || 0;
         const p = total ? (done / total) * 100 : 0;
-        return `<div class="cat"><span>${esc(r[0].replace(/^patterns with /i, ""))}</span>
+        return `<div class="cat"><span>${esc(withLabel(r[0]))}</span>
           <div class="bar sm"><i class="${done ? "some" : ""}" style="width:${p}%"></i></div>
           <span class="n"><b>${done}</b>/${total}</span></div>`;
       }).join("")}</div>`;

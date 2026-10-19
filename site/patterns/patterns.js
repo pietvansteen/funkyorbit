@@ -2,10 +2,11 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, when, player, likes } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
+  const DONE = new Map(); // key -> the Done row to show: the newest with a video, else the newest
   let query = "";
   const colorFilter = new Set();
 
@@ -16,7 +17,8 @@
     const pat = p.ss ? siteswap(p.ss, "sm", p.colors) : syncPattern(p.a, p.b, "sm", p.colors);
     const title = [label(p), p.name, p.family, p.done ? "done" : ""].filter(Boolean).join(" · ");
     // every chip has a tick slot, so done chips don't shift the rest; the name line only when there is a name
-    return `<li class="pat${p.done ? " done" : ""}" data-i="${i}" title="${esc(title)}">
+    const open = p.done ? ` role="button" tabindex="0" data-open="${esc(p.key)}" aria-label="${esc(label(p))}: show video and details"` : "";
+    return `<li class="pat${p.done ? " done" : ""}" data-i="${i}" title="${esc(title)}"${open}>
       ${pat}<svg class="tick" width="14" height="14" viewBox="0 0 24 24" ${p.done ? 'aria-label="done"' : 'aria-hidden="true"'}><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <small>${esc(p.name || "")}</small>
     </li>`;
@@ -103,6 +105,44 @@
     } catch (e) {}
   }
 
+  // ---------- pop-up for a pattern we have thrown: video and details, as on the home page ----------
+  function openModal(key) {
+    const p = DONE.get(key);
+    if (!p) return;
+    const item = ITEMS.find((x) => x.key === key);
+    const video = p.youtubeId
+      ? player(p)
+      : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;
+    $("#modal-body").innerHTML = `
+      <article class="card modal-card">
+        ${video}
+        <div class="meta">
+          <div class="meta-top">
+            <div class="title" id="modal-title">${siteswap(p.siteswap, "lg", (item && item.colors) || p.colors)}${p.name || (item && item.name) ? `<span class="pname">${esc(p.name || item.name)}</span>` : ""}</div>
+            ${p.youtubeId ? likes.button(p.youtubeId) : ""}
+          </div>
+          <span class="fam">${esc(p.family)}</span>
+          <div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>
+        </div>
+      </article>`;
+    const dlg = $("#modal");
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  }
+
+  function closeModal() {
+    const dlg = $("#modal");
+    if (dlg.close) dlg.close(); else dlg.removeAttribute("open");
+  }
+
+  // stop the video when the pop-up closes (button, Esc or a click next to it)
+  $("#modal").addEventListener("close", () => { $("#modal-body").innerHTML = ""; });
+  $("#modal").addEventListener("click", (ev) => { if (ev.target === ev.currentTarget) closeModal(); });
+  $("#modal-close").addEventListener("click", closeModal);
+  document.addEventListener("keydown", (ev) => {
+    const el = ev.target.closest && ev.target.closest("[data-open]");
+    if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openModal(el.dataset.open); }
+  });
+
   function reset() {
     query = "";
     $("#q").value = "";
@@ -121,7 +161,9 @@
       applyFilter();
       return;
     }
-    if (ev.target.closest("#reset, [data-reset]")) reset();
+    if (ev.target.closest("#reset, [data-reset]")) { reset(); return; }
+    const pat = ev.target.closest("[data-open]");
+    if (pat) openModal(pat.dataset.open);
   });
 
   async function start() {
@@ -133,6 +175,11 @@
       return;
     }
     ITEMS = data.all || [];
+    for (const p of data.patterns || []) { // Done, newest first
+      const have = DONE.get(p.key);
+      if (!have || (!have.youtubeId && p.youtubeId)) DONE.set(p.key, p);
+    }
+    likes.load();
     const keys = new Map(ITEMS.map((p) => [p.key, p.done]));
     const done = [...keys.values()].filter(Boolean).length;
     $("#title").innerHTML = `${fmt.format(keys.size)}<span class="of">patterns · ${fmt.format(done)} done</span>`;

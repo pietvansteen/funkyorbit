@@ -147,6 +147,7 @@ def parse_done(rows):
         yt_url = cell(row, c_yt)
         patterns.append({
             "nr": cell(row, c_nr),
+            "key": pattern_key(siteswap),
             "siteswap": siteswap,
             "name": cell(row, c_name),
             "family": cell(row, c_fam),
@@ -311,12 +312,24 @@ def parse_difficulty(rows):
     return out
 
 
-def parse_done_keys(rows):
-    """Match keys of everything in 'Done' (same keys as the Families tab)."""
-    if not rows:
-        return set()
-    c = header_index(rows[0], "match key")
-    return {cell(r, c).lower() for r in rows[1:] if cell(r, c)}
+def pattern_key(pat):
+    """Unique key as in the Families tab: smallest rotation; sync over rotations and both jugglers."""
+    pat = pat.strip()
+    if "(" in pat:
+        return pat.lower()
+    if "|" in pat or " " in pat:
+        a, b = re.split(r"\s*\|\s*|\s+", pat, maxsplit=1)
+        return sync_canon(a, b)
+    return min_rotation(pat)
+
+
+def parse_done_keys(rows, patterns):
+    """Keys of everything in 'Done': computed from the patterns, plus the Sheet's 'Match keys (auto)' helper column."""
+    keys = {p["key"] for p in patterns}
+    if rows:
+        c = header_index(rows[0], "match key")
+        keys |= {cell(r, c).lower() for r in rows[1:] if cell(r, c)}
+    return keys
 
 
 def popcorn_count(notation):
@@ -437,7 +450,7 @@ def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_r
         "summary": parse_summary(progress_rows),
         "statBlocks": parse_stat_blocks(progress_rows),
         "all": parse_all_patterns(fam_rows, colors, parse_sync_colors(sync_color_rows),
-                                  parse_difficulty(difficulty_rows), parse_done_keys(done_rows)),
+                                  parse_difficulty(difficulty_rows), parse_done_keys(done_rows, patterns)),
         "groups": groups,
         "patterns": patterns,
         "stats": {
