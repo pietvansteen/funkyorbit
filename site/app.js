@@ -56,11 +56,11 @@
   function renderHero(d) {
     const pct = d.total ? (d.done / d.total) * 100 : 0;
     $("#hero").innerHTML = `
-      <span class="label">Project Funky Orbit · passing patterns</span>
+      <span class="label">Project Funky Orbit by Piet &amp; Mees</span>
       <h1 class="num">${fmt.format(d.done)}<span class="of">of ${fmt.format(d.total)} patterns · ${pct.toLocaleString("en-GB", { maximumFractionDigits: 1 })}%</span></h1>
       <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${d.total}" aria-valuenow="${d.done}" aria-label="Total progress"><i style="width:${pct}%"></i></div>
       <div class="hero-body">
-      <p>We, Piet &amp; Mees, are passing all ${fmt.format(d.total)} club patterns from James Francis' list, which many jugglers did before us (Brook almost finished it!). Our goal: every pattern for at least 2 rounds (3 for period 3), recorded on video. Follow along and cheer us on!</p>
+      <p>We are passing all ${fmt.format(d.total)} club patterns from James Francis' list, which many jugglers did before us (Brook almost finished it!). Our goal: every pattern for at least 2 rounds (3 for period 3), recorded on video. Follow along and cheer us on!</p>
       <dl class="facts">
         <div><dt>videos</dt><dd>${d.stats.videos}</dd></div>
         <div><dt>practice days</dt><dd>${d.stats.recordingDays}</dd></div>
