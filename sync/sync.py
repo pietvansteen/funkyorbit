@@ -388,6 +388,26 @@ def parse_summary(rows):
     return summary
 
 
+def parse_stat_blocks(rows):
+    """The whole 'Statistics' area of Progress (columns G onwards) as blocks.
+    A block starts with a header row (title + column names) and ends at an empty row,
+    so stats added to the Sheet later show up on the site by themselves."""
+    blocks, current = [], None
+    for row in rows:
+        vals = [cell(row, i) for i in range(6, max(len(row), 7))]
+        while vals and not vals[-1]:
+            vals.pop()
+        if not vals or not vals[0]:
+            current = None
+            continue
+        if current is None:
+            current = {"title": vals[0], "columns": vals[1:], "rows": []}
+            blocks.append(current)
+        else:
+            current["rows"].append(vals)
+    return [b for b in blocks if b["rows"]]
+
+
 def parse_sheet_stats(rows):
     """The 'Statistics' block in columns G:H of Progress, as name -> value."""
     stats = {}
@@ -415,6 +435,7 @@ def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_r
         "total": int(all_patterns) if all_patterns else sum(g["total"] for g in groups),
         "done": len({p["siteswap"] for p in patterns}),
         "summary": parse_summary(progress_rows),
+        "statBlocks": parse_stat_blocks(progress_rows),
         "all": parse_all_patterns(fam_rows, colors, parse_sync_colors(sync_color_rows),
                                   parse_difficulty(difficulty_rows), parse_done_keys(done_rows)),
         "groups": groups,
