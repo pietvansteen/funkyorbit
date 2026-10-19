@@ -149,9 +149,30 @@
     return `<div class="player ${p.isShort ? "" : "wide"}">${poster}${img}${btn}</div>`;
   }
 
+  // ---------- search ----------
+  let query = "";
+
+  function matches(p, q) {
+    if (!q) return true;
+    // A siteswap is cyclic, so 6966 also finds 9666: search in the pattern written twice.
+    const ss = p.siteswap.toLowerCase();
+    const qs = q.replace(/\s+/g, "");
+    if (qs && qs.length <= ss.length && (ss + ss).includes(qs)) return true;
+    return (p.name || "").toLowerCase().includes(q);
+  }
+
   function renderFeed(d) {
-    const vids = d.patterns.filter((p) => p.youtubeId);
-    $("#feed-count").textContent = `${vids.length} video${vids.length === 1 ? "" : "s"}, newest first`;
+    const q = query.trim().toLowerCase();
+    const allVids = d.patterns.filter((p) => p.youtubeId);
+    const vids = allVids.filter((p) => matches(p, q));
+    const plural = (n) => `${n} video${n === 1 ? "" : "s"}`;
+    $("#feed-count").textContent = q
+      ? `${vids.length} of ${plural(allVids.length)} match`
+      : `${plural(allVids.length)}, newest first`;
+    const restMatch = d.patterns.some((p) => !p.youtubeId && matches(p, q));
+    const none = q
+      ? `<p class="empty">No video matches “${esc(query.trim())}”${restMatch ? " yet, but it has been thrown: see the list below." : "."}</p>`
+      : `<p class="empty">No videos yet. Check back soon!</p>`;
     $("#feed").innerHTML = vids.length ? vids.map((p) => `
       <article class="card">
         ${player(p)}
@@ -163,9 +184,9 @@
           <span class="fam">${esc(p.family)}</span>
           <div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>
         </div>
-      </article>`).join("") : `<p class="empty">No videos yet. Check back soon!</p>`;
+      </article>`).join("") : none;
 
-    const rest = d.patterns.filter((p) => !p.youtubeId);
+    const rest = d.patterns.filter((p) => !p.youtubeId && matches(p, q));
     $("#rest-wrap").hidden = !rest.length;
     $("#rest").innerHTML = rest.map((p) => `<tr>
       <td>${siteswap(p.siteswap, "sm", p.colors)}</td><td>${esc(p.name)}</td><td>${esc(p.family)}</td>
@@ -213,6 +234,16 @@
   }
 
   // ---------- events ----------
+  $("#search").addEventListener("input", (ev) => {
+    query = ev.target.value;
+    try {
+      const url = new URL(location.href);
+      query.trim() ? url.searchParams.set("q", query.trim()) : url.searchParams.delete("q");
+      history.replaceState(null, "", url);
+    } catch (e) {}
+    if (DATA) renderFeed(DATA);
+  });
+
   document.addEventListener("click", (ev) => {
     const tile = ev.target.closest("[data-tile]");
     if (tile) {
@@ -247,6 +278,8 @@
       const u = new Date(DATA.updated);
       $("#updated").textContent = "Updated " + u.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     }
+    query = new URLSearchParams(location.search).get("q") || "";
+    $("#search").value = query;
     renderHero(DATA);
     renderGroups(DATA);
     await loadLikes();

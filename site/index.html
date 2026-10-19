@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Funky Orbit</title>
 <meta name="description" content="Follow our progress through hundreds of club passing patterns, with videos of every pattern we land.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='16' rx='13' ry='6.5' transform='rotate(-30 16 16)' fill='none' stroke='%23128f82' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%2315203b'/%3E%3Ccircle cx='26.5' cy='9.5' r='3' fill='%23d1256c'/%3E%3C/svg%3E">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
@@ -14,11 +14,7 @@
 <body>
 <header class="wrap top">
   <a class="brand" href="./" aria-label="Funky Orbit, home">
-    <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
-      <ellipse cx="16" cy="16" rx="13" ry="6.5" transform="rotate(-30 16 16)" fill="none" stroke="var(--orbit)" stroke-width="2.5"/>
-      <circle cx="16" cy="16" r="4" fill="var(--ink)"/>
-      <circle cx="26.5" cy="9.5" r="3" fill="var(--club)"/>
-    </svg>
+    <img src="favicon.svg" width="38" height="38" alt="">
     <b>Funky Orbit</b>
   </a>
   <span class="updated" id="updated"></span>
@@ -41,6 +37,10 @@
       </div>
       <div class="legend" aria-label="Digits are coloured by club"><span><i class="sw c-w"></i>white</span><span><i class="sw c-b"></i>blue</span><span><i class="sw c-o"></i>orange</span><span><i class="sw c-r"></i>pink</span></div>
     </div>
+    <label class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <input type="search" id="search" placeholder="Search by siteswap or name, e.g. 96677 or Uwe" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search patterns by siteswap or name">
+    </label>
     <div class="feed" id="feed"></div>
   </section>
 

@@ -61,7 +61,7 @@ a { color: inherit; }
 /* ---------- header ---------- */
 .top { padding-block: 28px 8px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-.brand svg { flex: none; }
+.brand img { flex: none; display: block; }
 .brand b { font: 600 18px/1 var(--f-display); letter-spacing: -.01em; }
 .updated { font-size: 13px; color: var(--muted); }
 
@@ -151,6 +151,19 @@ a { color: inherit; }
 .fam { font-size: 14px; color: var(--muted); }
 .when { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .meta-bottom { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
+.search {
+  display: flex; align-items: center; gap: 10px; margin: -2px 0 18px; padding: 0 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 99px; color: var(--muted);
+  max-width: 460px;
+}
+.search:focus-within { border-color: var(--orbit); box-shadow: 0 0 0 1px var(--orbit); }
+.search svg { flex: none; }
+.search input {
+  all: unset; flex: 1; min-width: 0; padding: 11px 0; color: var(--ink);
+  font: 500 16px/1.2 var(--f-body);
+}
+.search input::placeholder { color: var(--muted); opacity: 1; }
 
 /* siteswap: always on one line, each throw in a box with the colour of its club */
 .ss { display: inline-flex; flex-wrap: nowrap; gap: 3px; font-family: var(--f-mono); font-weight: 600; white-space: nowrap; }
