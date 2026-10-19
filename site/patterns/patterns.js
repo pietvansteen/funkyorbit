@@ -15,7 +15,7 @@
   function chip(p, i) {
     const pat = p.ss ? siteswap(p.ss, "sm", p.colors) : syncPattern(p.a, p.b, "sm", p.colors);
     const title = [label(p), p.name, p.family, p.done ? "done" : ""].filter(Boolean).join(" · ");
-    // every chip has the same parts (tick slot, name line), so done or named chips don't shift the rest
+    // every chip has a tick slot, so done chips don't shift the rest; the name line only when there is a name
     return `<li class="pat${p.done ? " done" : ""}" data-i="${i}" title="${esc(title)}">
       ${pat}<svg class="tick" width="14" height="14" viewBox="0 0 24 24" ${p.done ? 'aria-label="done"' : 'aria-hidden="true"'}><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <small>${esc(p.name || "")}</small>
@@ -48,11 +48,10 @@
       html += `<section class="kind" data-kind="${esc(kind)}"><div class="section-head"><h2>${esc(kind)}</h2><span class="label">${c.done} / ${c.total} done</span></div>`;
       for (const [fam, idx] of fams) {
         const f = count(idx);
-        // all chips in a family get the width of its longest pattern; a name line only when some have a name
+        // all chips in a family get the width of its longest pattern
         const width = Math.max(...idx.map((i) => throwWidth(ITEMS[i])));
-        const named = idx.some((i) => ITEMS[i].name);
         html += `<div class="fam-block"><h3>${esc(fam)} <span>${f.done} / ${f.total}</span></h3>
-          <ul class="pats${named ? " named" : ""}" style="--w:${width}">${idx.map((i) => chip(ITEMS[i], i)).join("")}</ul></div>`;
+          <ul class="pats" style="--w:${width}">${idx.map((i) => chip(ITEMS[i], i)).join("")}</ul></div>`;
       }
       html += `</section>`;
     }

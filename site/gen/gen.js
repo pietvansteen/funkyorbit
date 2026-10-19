@@ -127,7 +127,7 @@
     const m = ev.target.closest("[data-list] button");
     if (m) {
       // a colour or throw is either in "must contain" or in "leave out", never both
-      const list = m.parentElement.dataset.list, v = m.dataset.v;
+      const list = m.closest("[data-list]").dataset.list, v = m.dataset.v;
       if (opts[list].includes(v)) opts[list] = opts[list].filter((x) => x !== v);
       else { opts[list] = [...opts[list], v]; opts[LISTS[list]] = opts[LISTS[list]].filter((x) => x !== v); }
       changed();
@@ -161,9 +161,10 @@
     const all = new Set();
     PATTERNS.forEach((p) => throwsOf(p).forEach((t) => all.add(t)));
     const order = [...all].sort((x, y) => parseInt(x, 36) - parseInt(y, 36));
-    document.querySelectorAll(".multi.throws").forEach((g) => {
-      g.innerHTML = order.map((t) => `<button type="button" data-v="${esc(t)}">${esc(t)}</button>`).join("");
-    });
+    // two rows: even throws (selfs, zip, hold) and odd throws (passes)
+    const row = (odd) => `<div class="row">${order.filter((t) => parseInt(t, 36) % 2 === (odd ? 1 : 0))
+      .map((t) => `<button type="button" data-v="${esc(t)}">${esc(t)}</button>`).join("")}</div>`;
+    document.querySelectorAll(".multi.throws").forEach((g) => { g.innerHTML = row(false) + row(true); });
     $("#updated").textContent = updated(data.updated);
     if (lastFilmed) {
       $("#lastfam").innerHTML = `Not from the family of the last pattern we filmed: <b>${esc(lastFilmed.siteswap)}</b> (${esc(lastFilmed.family)}).`;
