@@ -5,7 +5,7 @@
   const { esc, fmt, siteswap, syncPattern, updated } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
-  const DEFAULTS = { period: "any", sync: false, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, lo: 0.5, hi: 5 };
+  const DEFAULTS = { period: "any", sync: false, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, lo: 0.5, hi: 5 };
   const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" };
   let opts = { ...DEFAULTS };
   try { opts = { ...DEFAULTS, ...JSON.parse(localStorage.getItem("fo_gen") || "{}") }; } catch (e) {}
@@ -47,7 +47,7 @@
     const lastFam = lastFilmed && lastFilmed.family;
     const full = opts.lo <= 0.5 && opts.hi >= 5;
     return PATTERNS.filter((p) => {
-      if (p.done) return false;
+      if (opts.skipdone && p.done) return false;
       if (p.kind === "Sync") {
         if (!opts.sync || opts.period !== "any") return false;
       } else if (opts.period !== "any" && String(p.period) !== opts.period) return false;
@@ -72,6 +72,7 @@
     box.innerHTML = `
       <div class="pick-pat">${pat}</div>
       ${p.name ? `<p class="pick-name">${esc(p.name)}</p>` : ""}
+      ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
       <dl class="pick-meta">
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>
         <div><dt>Category</dt><dd>${esc(cat)}</dd></div>
@@ -98,6 +99,7 @@
     });
     $("#sync").checked = opts.sync;
     $("#skipfam").checked = opts.skipfam;
+    $("#skipdone").checked = opts.skipdone;
     $("#sync-note").textContent = opts.sync && opts.period !== "any"
       ? "Sync patterns are only picked with period Any."
       : "Sync patterns can be picked too (with period Any).";
@@ -139,6 +141,7 @@
   });
   $("#sync").addEventListener("change", (ev) => { opts.sync = ev.target.checked; changed(); });
   $("#skipfam").addEventListener("change", (ev) => { opts.skipfam = ev.target.checked; changed(); });
+  $("#skipdone").addEventListener("change", (ev) => { opts.skipdone = ev.target.checked; changed(); });
   for (const id of ["lo", "hi"]) {
     $("#" + id).addEventListener("input", (ev) => {
       let v = parseFloat(ev.target.value);

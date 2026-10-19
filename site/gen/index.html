@@ -7,7 +7,7 @@
 <meta name="description" content="Picks the next club passing pattern for us to throw and film.">
 <meta name="theme-color" content="#0d1322">
 <link rel="manifest" href="/gen/manifest.webmanifest">
-<link rel="icon" href="/favicon.svg?v=20261019o" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg?v=20261019p" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -16,12 +16,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
-<link rel="stylesheet" href="/style.css?v=20261019o">
+<link rel="stylesheet" href="/style.css?v=20261019p">
 </head>
 <body class="gen-page">
 <header class="wrap top">
   <a class="brand" href="/" aria-label="Funky Orbit, home">
-    <img src="/favicon.svg?v=20261019o" width="46" height="46" alt="">
+    <img src="/favicon.svg?v=20261019p" width="46" height="46" alt="">
     <b>Funky Orbit</b>
   </a>
   <nav class="nav" aria-label="Pages">
@@ -96,6 +96,11 @@
       <span><span class="opt-name">Skip last family</span><small id="lastfam">Not from the same family as the last pattern we filmed.</small></span>
     </label>
 
+    <label class="opt check">
+      <input type="checkbox" id="skipdone" checked>
+      <span><span class="opt-name">Skip already filmed patterns</span><small>Turn this off to pick from every pattern, including the ones we have already filmed.</small></span>
+    </label>
+
     <div class="opt">
       <span class="opt-name">Difficulty <button type="button" class="reset" id="stars-reset" hidden>All</button></span>
       <div class="range" id="range">
@@ -110,8 +115,8 @@
   </section>
 </main>
 
-<footer class="wrap">funkyorbit.nl · Already filmed patterns are never picked. <span id="updated"></span></footer>
-<script src="/shared.js?v=20261019o"></script>
-<script src="/gen/gen.js?v=20261019o"></script>
+<footer class="wrap">funkyorbit.nl · Pick the next pattern to throw. <span id="updated"></span></footer>
+<script src="/shared.js?v=20261019p"></script>
+<script src="/gen/gen.js?v=20261019p"></script>
 </body>
 </html>

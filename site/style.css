@@ -374,3 +374,4 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
   position: absolute; top: 10px; right: 10px; z-index: 3; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
   display: grid; place-items: center; background: rgb(0 0 0 / .55); color: #fff;
 }
+.pick-done { margin: -4px 0 0; color: var(--done); font-weight: 700; font-size: 14px; }
