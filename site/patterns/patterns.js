@@ -11,6 +11,8 @@
   const colorFilter = new Set();
 
   const label = (p) => p.ss || `${p.a} | ${p.b}`;
+  // smallest rotation, the same unique key as in the Sheet
+  const minRotation = (ss) => { ss = (ss || "").toLowerCase(); let m = ss; for (let i = 1; i < ss.length; i++) { const r = ss.slice(i) + ss.slice(0, i); if (r < m) m = r; } return m; };
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
 
   function chip(p, i) {
@@ -176,14 +178,15 @@
     }
     ITEMS = data.all || [];
     for (const p of data.patterns || []) { // Done, newest first
-      const have = DONE.get(p.key);
-      if (!have || (!have.youtubeId && p.youtubeId)) DONE.set(p.key, p);
+      const key = p.key || minRotation(p.siteswap); // older data.json without keys
+      const have = DONE.get(key);
+      if (!have || (!have.youtubeId && p.youtubeId)) DONE.set(key, p);
     }
     likes.load();
     const keys = new Map(ITEMS.map((p) => [p.key, p.done]));
     const done = [...keys.values()].filter(Boolean).length;
     $("#title").innerHTML = `${fmt.format(keys.size)}<span class="of">patterns · ${fmt.format(done)} done</span>`;
-    $("#intro").textContent = "Every pattern on the list, in the order of our spreadsheet. Each digit has the colour of the club it throws. Patterns we have already thrown are marked green. A few patterns fit two families, so they appear twice.";
+    $("#intro").textContent = "Every pattern on the list, in the order of our spreadsheet. Each digit has the colour of the club it throws. Patterns we have already thrown are marked green: click one to watch its video. A few patterns fit two families, so they appear twice.";
     $("#updated").textContent = updated(data.updated);
     render();
     const params = new URLSearchParams(location.search);
