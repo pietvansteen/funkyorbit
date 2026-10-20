@@ -14,7 +14,7 @@ visitors ──like──> likes API ──> data/likes.db ─────┘
 |---|---|
 | `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats), `gen/` (pattern generator, installable as an app and usable offline), `changes/` (release notes), `shared.js`, `style.css`, icons |
 | `sync/sync.py` | Fetches the Sheet tabs as CSV and writes `data/data.json` |
-| `likes/likes.py` | Small API that stores likes in SQLite (one like per visitor per video, via a cookie) |
+| `likes/likes.py` | Small API: likes (one per visitor per video, via a cookie) and feature requests, both in SQLite |
 | `web/nginx.conf` | Serves the site and `data.json`, and forwards `/api/` to the likes API |
 | `tools/release.py` | Puts the newest version from `site/changelog.json` in the footer, the asset links and the service worker |
 | `docker-compose.yml` | Runs everything with Docker Compose, plus a Cloudflare Tunnel |
@@ -37,10 +37,17 @@ The Sheet must be shared as *Anyone with the link can view*.
 git clone https://github.com/pietvansteen/funkyorbit.git
 cd funkyorbit
 echo "TUNNEL_TOKEN=<cloudflare-tunnel-token>" > .env
+echo "ADMIN_TOKEN=<password for /requests/>" >> .env
 docker compose up -d
 ```
 
 The site is then available on port 8088. In the Cloudflare Tunnel, point the public hostname to `http://web:80`. After `git pull`, changes in `site/` are live right away; restart the containers after changes to `sync.py` or `likes.py`.
+
+## Feature requests
+
+Visitors send ideas via **Request a feature** in the footer (`/request/`): name, email and request. They are stored on the server in `data/requests.db`, never on the public site. Spam is kept out with a hidden honeypot field, a limit of 3 requests per visitor per hour and maximum field lengths.
+
+Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallowed in `robots.txt`) asks for the password set as `ADMIN_TOKEN` in `.env`. There you can give each request a status (new, planned, done, no) and download all of them as CSV. A device that is logged in also shows the number of new requests in the footer.
 
 ## Versions and release notes
 

@@ -171,5 +171,19 @@
     }
   });
 
+  // On our own (logged-in) devices only: the number of new feature requests in the footer
+  (function adminCount() {
+    let token = "";
+    try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
+    const links = document.querySelector("footer .foot-links");
+    if (!token || !links || location.pathname.startsWith("/requests")) return;
+    fetch("/api/requests/count", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j && j.new) links.insertAdjacentHTML("beforeend", ` · <a class="admin-count" href="/requests/">${j.new} new request${j.new === 1 ? "" : "s"}</a>`);
+      })
+      .catch(() => {});
+  })();
+
   window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, day, ago, when, player, likes };
 })();

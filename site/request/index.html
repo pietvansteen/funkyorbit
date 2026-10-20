@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0d1322">
+<style>html { background: #0d1322; color-scheme: dark; }</style>
+<title>Request a feature · Project Funky Orbit</title>
+<meta name="description" content="Send Piet &amp; Mees an idea or request for funkyorbit.nl.">
+<link rel="icon" href="/favicon.svg?v=1.6.0-37c50c" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
+<link rel="stylesheet" href="/style.css?v=1.6.0-37c50c">
+</head>
+<body>
+<header class="wrap top">
+  <a class="brand" href="/" aria-label="Funky Orbit, home">
+    <img src="/favicon.svg?v=1.6.0-37c50c" width="46" height="46" alt="">
+    <b>Funky Orbit</b>
+  </a>
+  <nav class="nav" aria-label="Pages">
+    <a href="/">Progress</a>
+    <a href="/stats/">Stats</a>
+    <a href="/patterns/">All patterns</a>
+    <a href="/gen/">Generator</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero compact">
+    <span class="label">Project Funky Orbit by Piet &amp; Mees</span>
+    <h1 class="num">Request a feature</h1>
+    <p>Missing something on this site, or do you have an idea? Let us know. We read every request.</p>
+  </section>
+
+  <form class="req-form" id="req-form" novalidate>
+    <label>Name <input type="text" name="name" maxlength="80" autocomplete="name" required></label>
+    <label>Email <small>so we can answer you; never shown on the site</small>
+      <input type="email" name="email" maxlength="120" autocomplete="email" required></label>
+    <label>Your request <textarea name="request" rows="6" maxlength="2000" required></textarea></label>
+    <!-- left empty by people; bots fill it in -->
+    <label class="hp" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+    <p class="req-msg" id="req-msg" role="status" hidden></p>
+    <button type="submit" class="draw" id="req-send">Send request</button>
+  </form>
+  <div class="req-thanks" id="req-thanks" hidden>
+    <h2>Thank you!</h2>
+    <p>We have received your request and will look at it soon.</p>
+    <p><a href="/">Back to the progress</a> · <button type="button" class="reset" id="req-again">Send another request</button></p>
+  </div>
+</main>
+
+<footer class="wrap"><span>funkyorbit.nl</span> <span class="foot-links"><a class="version" href="/changes/">v1.6.0 · What's new</a> · <a class="request-link" href="/request/">Request a feature</a></span></footer>
+<script src="/shared.js?v=1.6.0-37c50c"></script>
+<script src="/request/request.js?v=1.6.0-37c50c"></script>
+</body>
+</html>

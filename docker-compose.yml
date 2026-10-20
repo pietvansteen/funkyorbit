@@ -37,6 +37,8 @@ services:
     environment:
       DB_FILE: /data/likes.db
       DATA_FILE: /data/data.json
+      REQUESTS_DB: /data/requests.db
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}   # password for the requests page, from .env
     volumes:
       - ./likes:/app:ro
       - ./data:/data
