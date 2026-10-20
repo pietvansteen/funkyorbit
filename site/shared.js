@@ -92,9 +92,12 @@
   // ---------- difficulty: half stars + the score, with a short explanation on hover (or tap on a phone) ----------
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
 
-  function difficulty(p, maxScore) {
+  // `explain` false: just the stars and the score, without the explanation (e.g. in a small pop-up)
+  function difficulty(p, maxScore, explain = true) {
     const pct = Math.max(0, Math.min(100, (p.stars / 5) * 100));
-    return `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${p.stars} out of 5 stars"></span>
+    const starsHtml = `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${p.stars} out of 5 stars"></span>`;
+    if (!explain) return `${starsHtml} <span class="score">${half(p.stars)} ★ · ${p.score}</span>`;
+    return `${starsHtml}
       <span class="score tip" tabindex="0" aria-describedby="score-tip">${half(p.stars)} ★ · ${p.score}
       <span class="tip-text" id="score-tip" role="tooltip"><b>Difficulty score ${p.score}</b>
         It adds up how hard the throws are (more spins and more passes are harder; selfs and zips give a moment of rest)

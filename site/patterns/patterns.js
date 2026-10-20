@@ -131,7 +131,7 @@
       ? syncPattern(item.a, item.b, "lg", item.colors, true)
       : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
     const diff = item.stars != null
-      ? `<div class="pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE)}</div>` : "";
+      ? `<div class="pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE, false)}</div>` : "";
     const video = !p ? "" : p.youtubeId
       ? player(p)
       : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;

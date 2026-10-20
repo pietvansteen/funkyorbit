@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.4.1",
+    "date": "2026-10-20",
+    "changes": [
+      "All patterns: the pop-up shows the difficulty without the long explanation (you can still find it in the generator)"
+    ]
+  },
+  {
     "version": "1.4.0",
     "date": "2026-10-20",
     "changes": [
