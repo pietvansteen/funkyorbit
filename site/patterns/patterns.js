@@ -128,7 +128,7 @@
     const families = [...new Set(items.map((x) => x.family))];
     const name = (p && p.name) || item.name;
     const pat = item.kind === "Sync"
-      ? syncPattern(item.a, item.b, "lg", item.colors, true)
+      ? syncPattern(item.a, item.b, "lg", item.colors)
       : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
     const diff = item.stars != null
       ? `<div class="pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE, false)}</div>` : "";
