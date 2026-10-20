@@ -1,18 +1,20 @@
 /* Layout: one column; progress at the top, compact category tiles that expand, the video grid below. */
+/* Always dark, whatever the browser or phone prefers. */
 :root {
-  --paper: #f2f4f8;
-  --surface: #ffffff;
-  --ink: #15203b;
-  --muted: #5a6683;
-  --line: #d9deea;
-  --club: #d1256c;       /* accent: passes, likes */
-  --club-soft: #fbe3ed;
-  --orbit: #128f82;      /* progress */
-  --orbit-soft: #d6efeb;
-  --track: #e3e7f0;
-  --star: #e2a412;
-  --done: #1f9d55;
-  --done-soft: #dff3e7;
+  color-scheme: dark;
+  --paper: #0d1322;
+  --surface: #151d31;
+  --ink: #e8ecf5;
+  --muted: #98a3bd;
+  --line: #26304a;
+  --club: #ff5c97;       /* accent: passes, likes */
+  --club-soft: #3a1a2b;
+  --orbit: #3dd6c4;      /* progress */
+  --orbit-soft: #123430;
+  --track: #222c45;
+  --star: #f5bf3c;
+  --done: #3ccf7a;
+  --done-soft: #12301f;
 
   --f-display: "Unbounded", "Trebuchet MS", system-ui, sans-serif;
   --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -20,18 +22,6 @@
 
   --radius: 14px;
   --max: 1080px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #0d1322; --surface: #151d31; --ink: #e8ecf5; --muted: #98a3bd;
-    --line: #26304a; --club: #ff5c97; --club-soft: #3a1a2b; --orbit: #3dd6c4;
-    --orbit-soft: #123430; --track: #222c45; --star: #f5bf3c; --done: #3ccf7a; --done-soft: #12301f; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #0d1322; --surface: #151d31; --ink: #e8ecf5; --muted: #98a3bd;
-  --line: #26304a; --club: #ff5c97; --club-soft: #3a1a2b; --orbit: #3dd6c4;
-  --orbit-soft: #123430; --track: #222c45; --star: #f5bf3c; --done: #3ccf7a; --done-soft: #12301f; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
