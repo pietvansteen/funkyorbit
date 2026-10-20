@@ -568,3 +568,4 @@ footer .admin-count { color: var(--club) !important; font-weight: 600; }
 .pick-pat [data-digit]:hover { box-shadow: inset 0 0 0 2px var(--muted); }
 .pick-pat [data-digit]:focus-visible { outline: 2px solid var(--club); outline-offset: 2px; }
 .opt-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px 24px; }
+.starts { font-style: normal; margin-left: 6px; padding: 1px 6px; border-radius: 99px; background: var(--orbit-soft); color: var(--orbit); letter-spacing: .04em; }

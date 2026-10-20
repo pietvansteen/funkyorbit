@@ -41,8 +41,8 @@
 
   // ---------- start position: how many clubs, in which colours, in each of the four hands ----------
   // A club starts in the hand that throws it first: the throw at beat t >= 0 whose club was thrown before beat 0.
-  // Not sync: juggler 1 starts, throws on the even beats and starts with the right hand; juggler 2 on the odd beats.
-  // Sync: both throw on every beat, both starting right; the first part is juggler 1, the second juggler 2.
+  // Not sync: juggler 1 (Piet) starts, throws on the even beats and starts with the right hand; juggler 2 (Mees) on the odd beats.
+  // Sync: both throw on every beat, both starting right; the first part is Piet's, the second Mees's.
   const CLUB_FILL = { W: "#eeeff2", B: "#1f4fd1", O: "#ee5a2c", R: "#e6386a" };
   const val = (c) => parseInt(c, 36);
 
@@ -83,19 +83,23 @@
   const clubIcon = (c) => `<svg class="club-ic" viewBox="-13 -2 26 147" aria-hidden="true"><path d="M-4 78H4L3 135.5H-3Z" fill="#2bb5aa"/><rect x="-5" y="135" width="10" height="7.6" rx="3" fill="#d93a78"/><path d="M-6.4 3.4C-9.6 12-11.6 24-11.6 33C-11.6 45-6.4 60-4.8 74H4.8C6.4 60 11.6 45 11.6 33C11.6 24 9.6 12 6.4 3.4Z" fill="${CLUB_FILL[c] || "#5a6683"}"/><rect x="-5.2" y="73.6" width="10.4" height="4.6" rx="0.6" fill="#f4f5f7"/><rect x="-6.6" y="-1.2" width="13.2" height="4.4" rx="1.6" fill="#d93a78"/></svg>`;
   const NAMES = { W: "white", B: "blue", O: "orange", R: "pink" };
 
-  // Juggler 1 on the left, juggler 2 on the right; per hand the clubs in the order they are thrown.
-  // `shown(i)` says whether the colour of digit i may be shown (for "Hide colours"); default all.
+  // As in our videos: Mees on the left, Piet on the right; Piet (juggler 1) starts. Per hand the clubs in
+  // the order they are thrown. `shown(i)` says whether the colour of digit i may be shown (for "Hide colours").
   function startHtml(p, shown = () => true) {
-    const jugglers = startHands(p);
-    if (!jugglers) return "";
+    const hands = startHands(p);
+    if (!hands) return "";
+    const jugglers = [
+      { name: "Mees", h: hands[1] },
+      { name: "Piet", h: hands[0], starts: !!p.ss }, // in sync patterns both start together
+    ];
     const hand = (side, list) => {
       const cs = list.map((x) => (shown(x.i) ? x.c : ""));
       const label = `${side === "L" ? "left" : "right"} hand: ${list.length} club${list.length === 1 ? "" : "s"}` +
         (cs.some(Boolean) ? ` (${cs.map((c) => NAMES[c] || "hidden").join(", ")})` : "");
       return `<div class="hand" aria-label="${label}"><span class="hl"><span>${side}</span><b>${list.length}</b></span><span class="clubs">${cs.map(clubIcon).join("")}</span></div>`;
     };
-    return `<div class="start" role="group" aria-label="Start position">${jugglers.map((h, k) =>
-      `<div class="jug-start"><span class="jn">Juggler ${k + 1}</span><div class="hands">${hand("L", h.L)}${hand("R", h.R)}</div></div>`).join("")}</div>`;
+    return `<div class="start" role="group" aria-label="Start position">${jugglers.map((j) =>
+      `<div class="jug-start"><span class="jn">${j.name}${j.starts ? ' <em class="starts">starts</em>' : ""}</span><div class="hands">${hand("L", j.h.L)}${hand("R", j.h.R)}</div></div>`).join("")}</div>`;
   }
 
   // A siteswap is cyclic, so 6966 also finds 9666: search in the pattern written twice.
