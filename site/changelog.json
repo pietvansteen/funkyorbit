@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.3.0",
+    "date": "2026-10-20",
+    "changes": [
+      "Generator: choose All, 3, 5, 7 or Sync, so you can also draw only sync patterns",
+      "New intro on the home page, with a short explanation of the orbits and our club colours",
+      "Funny stats: the figures in clear groups, First and Last recording together, Busiest date with its number of patterns, and no more double counts",
+      "Funny stats: Dragons (95) under Patterns with…",
+      "Dates everywhere written the same way, like Sat 26 Sep 2026"
+    ]
+  },
+  {
     "version": "1.2.0",
     "date": "2026-10-20",
     "changes": [

@@ -389,6 +389,18 @@ def parse_all_patterns(fam_rows, colors, sync_colors, difficulty, done_keys):
     return out
 
 
+def dragon_stats(all_patterns):
+    """Patterns with a dragon: a 9 directly followed by a 5, also around the end (9...5 -> 5 after the 9).
+    Counted over the unique non-sync patterns, as done / total."""
+    seen = {}
+    for p in all_patterns:
+        ss = (p.get("ss") or "").lower()
+        if ss and p["key"] not in seen:
+            seen[p["key"]] = ("95" in ss + ss[:1], p["done"])
+    with_dragon = [done for has, done in seen.values() if has]
+    return {"name": "Dragons (95)", "total": len(with_dragon), "done": sum(with_dragon)}
+
+
 def parse_summary(rows):
     """Period 3 / 5 / 7 and Sync from the 'Statistics' block (columns G:I of Progress)."""
     summary = []
@@ -438,6 +450,8 @@ def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_r
         p["colors"] = color_for(colors, p["siteswap"])
     groups = parse_progress(progress_rows)
     sheet_stats = parse_sheet_stats(progress_rows)
+    overview = parse_all_patterns(fam_rows, colors, parse_sync_colors(sync_color_rows),
+                                      parse_difficulty(difficulty_rows), parse_done_keys(done_rows, patterns))
     rated = [p["rating"] for p in patterns if p["rating"] is not None]
     days = sorted({p["date"] for p in patterns if p["date"]})
     # The 'All patterns' total takes precedence: some patterns count in more
@@ -449,8 +463,8 @@ def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_r
         "done": len({p["siteswap"] for p in patterns}),
         "summary": parse_summary(progress_rows),
         "statBlocks": parse_stat_blocks(progress_rows),
-        "all": parse_all_patterns(fam_rows, colors, parse_sync_colors(sync_color_rows),
-                                  parse_difficulty(difficulty_rows), parse_done_keys(done_rows, patterns)),
+        "all": overview,
+        "patternsWith": [dragon_stats(overview)],  # computed here, next to the Sheet's "Patterns with ..." rows
         "groups": groups,
         "patterns": patterns,
         "stats": {

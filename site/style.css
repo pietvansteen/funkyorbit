@@ -71,6 +71,7 @@ a { color: inherit; }
 .hero-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 56px; align-items: start; }
 .hero p { margin: 0; color: var(--muted); font-size: 19px; line-height: 1.6; max-width: 68ch; text-wrap: pretty; }
 .hero p strong { color: var(--ink); }
+.hero .intro { display: grid; gap: 10px; }
 .hero p a { color: var(--ink); text-decoration-color: var(--orbit); text-underline-offset: 3px; text-decoration-thickness: 2px; }
 .hero p a:hover { color: var(--orbit); }
 
@@ -422,3 +423,10 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 }
 .tip-text b { display: block; margin-bottom: 4px; }
 .tip:hover .tip-text, .tip:focus .tip-text, .tip:focus-within .tip-text { visibility: visible; opacity: 1; }
+
+/* ---------- stats: the recording figures in small groups ---------- */
+.stat-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 18px 28px; }
+.stat-groups h3 { margin-bottom: 10px; }
+.stat-groups .stat-grid { grid-template-columns: 1fr; gap: 12px; }
+.stat-grid .sub { order: 3; font-size: 13px; color: var(--ink); opacity: .8; }
+@media (max-width: 560px) { .stat-groups .stat-grid dd { font-size: 17px; } }

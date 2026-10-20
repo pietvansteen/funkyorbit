@@ -5,13 +5,16 @@
   const { esc, fmt, siteswap, syncPattern, updated } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
-  const DEFAULTS = { period: "any", sync: false, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, lo: 0.5, hi: 5 };
+  const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, lo: 0.5, hi: 5 };
   const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" };
   let opts = { ...DEFAULTS };
   try { opts = { ...DEFAULTS, ...JSON.parse(localStorage.getItem("fo_gen") || "{}") }; } catch (e) {}
   for (const k of Object.keys(LISTS)) if (!Array.isArray(opts[k])) opts[k] = [];
   if (opts.color && opts.color !== "any" && !opts.colorsIn.length) opts.colorsIn = [opts.color]; // older saved option
   delete opts.color;
+  // older saved options: "Any" (with or without "Include sync") is now "All"
+  if (!["all", "3", "5", "7", "sync"].includes(String(opts.period))) opts.period = "all";
+  delete opts.sync;
   const save = () => { try { localStorage.setItem("fo_gen", JSON.stringify(opts)); } catch (e) {} };
 
   let PATTERNS = []; // one entry per unique pattern (key), with all its families
@@ -49,9 +52,9 @@
     const full = opts.lo <= 0.5 && opts.hi >= 5;
     return PATTERNS.filter((p) => {
       if (opts.skipdone && p.done) return false;
-      if (p.kind === "Sync") {
-        if (!opts.sync || opts.period !== "any") return false;
-      } else if (opts.period !== "any" && String(p.period) !== opts.period) return false;
+      // All = everything; 3 / 5 / 7 = siteswaps of that period; Sync = only sync patterns
+      if (opts.period === "sync") { if (p.kind !== "Sync") return false; }
+      else if (opts.period !== "all" && (p.kind === "Sync" || String(p.period) !== opts.period)) return false;
       const cs = colorsOf(p), ts = throwsOf(p);
       if (opts.colorsIn.some((c) => !cs.includes(c)) || opts.colorsOut.some((c) => cs.includes(c))) return false;
       if (opts.throwsIn.some((t) => !ts.has(t)) || opts.throwsOut.some((t) => ts.has(t))) return false;
@@ -114,13 +117,9 @@
     document.querySelectorAll("[data-list]").forEach((g) => {
       g.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(opts[g.dataset.list].includes(b.dataset.v))));
     });
-    $("#sync").checked = opts.sync;
     $("#skipfam").checked = opts.skipfam;
     $("#skipdone").checked = opts.skipdone;
     $("#hide").checked = opts.hide;
-    $("#sync-note").textContent = opts.sync && opts.period !== "any"
-      ? "Sync patterns are only picked with period Any."
-      : "Sync patterns can be picked too (with period Any).";
     $("#lo").value = opts.lo;
     $("#hi").value = opts.hi;
     const full = opts.lo <= 0.5 && opts.hi >= 5;
@@ -163,7 +162,6 @@
       ev.preventDefault(); revealed = true; show(current);
     }
   });
-  $("#sync").addEventListener("change", (ev) => { opts.sync = ev.target.checked; changed(); });
   $("#skipfam").addEventListener("change", (ev) => { opts.skipfam = ev.target.checked; changed(); });
   $("#skipdone").addEventListener("change", (ev) => { opts.skipdone = ev.target.checked; changed(); });
   $("#hide").addEventListener("change", (ev) => { opts.hide = ev.target.checked; revealed = false; changed(); show(current); });

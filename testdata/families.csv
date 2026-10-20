@@ -4,12 +4,12 @@ Family,Range,Type,,Pattern (auto),Family (auto),Unique key (auto),Named siteswap
 7 club popcorns,Standard!D20:D20,single,,89742,6 club period 5's,28974,726,5 club one count
 7 club period 5 - with zips (mostly),Standard!B32:D40,single,,97842,6 club period 5's,29784,726,coconut laden swallow
 7 club period 5 - with holds,Standard!G3:I13,single,,79284,6 club period 5's,28479,942,glass elevator
-7 club period 7's - Single passes & Heffs,Standard!G16:G19,single,,92478,6 club period 5's,24789,867,French 3 count
-7 club period 7's - with zips - Whynot family,Standard!G23:J26,single,,99642,6 club period 5's,29964,966,7 club three count
-Other 7 club period 7's - no triples,Standard!G29:J39,single,,96924,6 club period 5's,24969,756,baby dragon; zap opus 1; holy hand-grenade
+7 club period 7's - Single passes & Heffs,Standard!G16:H18,single,,92478,6 club period 5's,24789,867,French 3 count
+7 club period 7's - with zips - Whynot family,Standard!G22:J25,single,,99642,6 club period 5's,29964,966,7 club three count
+Other 7 club period 7's - no triples,Standard!G28:J37,single,,96924,6 club period 5's,24969,756,baby dragon; zap opus 1; holy hand-grenade
 Other 7 club period 7's - with triples & 1 pass,Standard!L3:P14,single,,92946,6 club period 5's,29469,945,dragons; black beast of aaaarg...
 Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6 club period 5's,2a774,996,8 club pps
-7 club - Triple pass,Standard!L32:O41,single,,7a724,6 club period 5's,247a7,7,7 club one count
+7 club - Triple pass,Standard!L32:O39,single,,7a724,6 club period 5's,247a7,7,7 club one count
 8 club period 3's,Standard!R3:R6,single,,7a274,6 club period 5's,2747a,777,7 club one count
 8 club period 5's,Standard!R9:T18,single,,a7292,6 club period 5's,292a7,77777,7 club one count
 8 club period 5's - with holds,Standard!R21:T23,single,,a2792,6 club period 5's,2792a,7777777,7 club one count
@@ -17,20 +17,20 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 8 club period 7 with triple self,Standard!R36:T41,single,,92928,6 club period 5's,28929,999,9 club one count
 8 club with triple pass,Standard!V3:X16,single,,86772,6 club period 5's,28677,99999,9 club one count
 9 club,Standard!V19:V25,single,,77772,6 club period 5's,27777,9999999,9 club one count
-9 club with triple pass,Standard!V28:W41,single,,a74,7 club period 3,4a7,975,Holy Grail; zap opus two
+9 club with triple pass,Standard!V28:X40,single,,a74,7 club period 3,4a7,975,Holy Grail; zap opus two
 5 club period 3 Zaps,Standard!Z5:AA6,single,,a47,7 club period 3,47a,64645,zap intro
 6 club period 3 Zaps,Standard!Z15:Z17,single,,9a2,7 club period 3,29a,86227,5 club why not
 7 club period 3 Zaps,Standard!AC5:AC7,single,,966,7 club period 3,669,86722,5 club not why
-8 club period 3 Zaps,Standard!AC25:AC25,single,,894,7 club period 3,489,86867,5 count popcorn (44)
+8 club period 3 Zaps,Standard!AC24:AC24,single,,894,7 club period 3,489,86867,5 count popcorn (44)
 5 club period 5 Zaps,Standard!Z7:AA12,single,,786,7 club period 3,678,77772,Martin's one count (async)
 6 club period 5 Zaps,Standard!Z18:AA31,single,,786,7 club popcorns,678,77722,parsnip
-7 club period 5 Zaps,Standard!AC8:AE22,single,,96677,7 club period 5 - with zips (mostly),66779,77222,inverted parsnip
-8 club period 5 Zaps,Standard!AC26:AE31,single,,96686,7 club period 5 - with zips (mostly),66869,7746666,Jim's 3 count (async)
-5 club period 7 Zaps,Zapz!B35:G58,single,,88892,7 club period 5 - with zips (mostly),28889,77466,Jim's 2 count (async)
-6 club period 7 Zaps,Zapz!B3:G32,single,,88a72,7 club period 5 - with zips (mostly),288a7,774,Jim's 1 count (async)
-6 club period 7 Zaps with triple,Zapz!I3:N22,single,,88a27,7 club period 5 - with zips (mostly),2788a,7777266,Mild Madness (async)
-7 club period 7 Zaps,Zapz!I25:N44,single,,99692,7 club period 5 - with zips (mostly),29969,77862,why not
-7 club period 7 Zaps with triple,Zapz!P3:U44,single,,a7a62,7 club period 5 - with zips (mostly),2a7a6,77286,not why
+7 club period 5 Zaps,Standard!AC8:AE21,single,,96677,7 club period 5 - with zips (mostly),66779,77222,inverted parsnip
+8 club period 5 Zaps,Standard!AC25:AE30,single,,96686,7 club period 5 - with zips (mostly),66869,7746666,Jim's 3 count (async)
+5 club period 7 Zaps,Zapz!B33:G51,single,,88892,7 club period 5 - with zips (mostly),28889,77466,Jim's 2 count (async)
+6 club period 7 Zaps,Zapz!B3:G30,single,,88a72,7 club period 5 - with zips (mostly),288a7,774,Jim's 1 count (async)
+6 club period 7 Zaps with triple,Zapz!I3:N21,single,,88a27,7 club period 5 - with zips (mostly),2788a,7777266,Mild Madness (async)
+7 club period 7 Zaps,Zapz!I24:N44,single,,99692,7 club period 5 - with zips (mostly),29969,77862,why not
+7 club period 7 Zaps with triple,Zapz!P3:U38,single,,a7a62,7 club period 5 - with zips (mostly),2a7a6,77286,not why
 7 club sync PSS - 3 & 4 only,Sync!B6:C10,pair,,a2a67,7 club period 5 - with zips (mostly),2a67a,78672,maybe
 7 club sync PSS - plus 5 & 1's,Sync!B13:C28,pair,,89a62,7 club period 5 - with zips (mostly),289a6,96672,not likely
 7 club sync PSS - plus 5p's,Sync!B33:C39,pair,,a8692,7 club period 5 - with zips (mostly),2a869,79662,maybe not
@@ -64,8 +64,8 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,99494,7 club period 5 - with holds,49499,9969788,Poem
 ,,,,7868686,7 club period 7's - Single passes & Heffs,6786868,9968978,Clean Finish
 ,,,,7778686,7 club period 7's - Single passes & Heffs,6777868,9968897,Real Fake Clean Finish
-,,,,7777786,7 club period 7's - Single passes & Heffs,6777778,75724,Kaatzi
-,,,,7786786,7 club period 7's - Single passes & Heffs,6778678,8897926,Good Morning
+,,,,7786786,7 club period 7's - Single passes & Heffs,6778678,75724,Kaatzi
+,,,,7777786,7 club period 7's - Single passes & Heffs,6777778,8897926,Good Morning
 ,,,,9968926,7 club period 7's - with zips - Whynot family,2699689,89742,The One to Concentrate
 ,,,,9689962,7 club period 7's - with zips - Whynot family,2968996,9789788,Milk Duds
 ,,,,8996926,7 club period 7's - with zips - Whynot family,2689969,9647772,Odnom
@@ -288,9 +288,9 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,b8b96,9 club with triple pass,6b8b9,,
 ,,,,b8a79,9 club with triple pass,79b8a,,
 ,,,,b97a8,9 club with triple pass,7a8b9,,
+,,,,ab789,9 club with triple pass,789ab,,
 ,,,,b88a8,9 club with triple pass,88a8b,,
 ,,,,ab969,9 club with triple pass,69ab9,,
-,,,,ab789,9 club with triple pass,789ab,,
 ,,,,aab68,9 club with triple pass,68aab,,
 ,,,,b8aa6,9 club with triple pass,6b8aa,,
 ,,,,ab7a7,9 club with triple pass,7a7ab,,
@@ -311,21 +311,21 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,85525,5 club period 5 Zaps,25855,,
 ,,,,97522,5 club period 5 Zaps,22975,,
 ,,,,79252,5 club period 5 Zaps,25279,,
+,,,,92572,5 club period 5 Zaps,25729,,
 ,,,,a6252,5 club period 5 Zaps,252a6,,
 ,,,,a2562,5 club period 5 Zaps,2562a,,
-,,,,92572,5 club period 5 Zaps,25729,,
 ,,,,75666,6 club period 5 Zaps,56667,,
 ,,,,85566,6 club period 5 Zaps,55668,,
 ,,,,78852,6 club period 5 Zaps,27885,,
 ,,,,88572,6 club period 5 Zaps,28857,,
 ,,,,79752,6 club period 5 Zaps,27975,,
+,,,,97572,6 club period 5 Zaps,29757,,
+,,,,77925,6 club period 5 Zaps,25779,,
 ,,,,75756,6 club period 5 Zaps,56757,,
 ,,,,85575,6 club period 5 Zaps,55758,,
 ,,,,89562,6 club period 5 Zaps,28956,,
 ,,,,96852,6 club period 5 Zaps,29685,,
 ,,,,95556,6 club period 5 Zaps,55569,,
-,,,,97572,6 club period 5 Zaps,29757,,
-,,,,77925,6 club period 5 Zaps,25779,,
 ,,,,99552,6 club period 5 Zaps,29955,,
 ,,,,a5555,6 club period 5 Zaps,5555a,,
 ,,,,a6752,6 club period 5 Zaps,2a675,,
@@ -398,6 +398,8 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,6952562,5 club period 7 Zaps,2562695,,
 ,,,,6962525,5 club period 7 Zaps,2525696,,
 ,,,,9562625,5 club period 7 Zaps,2595626,,
+,,,,9552662,5 club period 7 Zaps,2662955,,
+,,,,9662255,5 club period 7 Zaps,2255966,,
 ,,,,6992522,5 club period 7 Zaps,2269925,,
 ,,,,9592622,5 club period 7 Zaps,2295926,,
 ,,,,9692252,5 club period 7 Zaps,2252969,,
@@ -419,11 +421,12 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,9527822,5 club period 7 Zaps,2295278,,
 ,,,,8279225,5 club period 7 Zaps,2258279,,
 ,,,,9258272,5 club period 7 Zaps,2582729,,
-,,,,9552662,5 club period 7 Zaps,2662955,,
-,,,,9662255,5 club period 7 Zaps,2255966,,
 ,,,,7a72252,5 club period 7 Zaps,22527a7,,
 ,,,,a772225,5 club period 7 Zaps,2225a77,,
+,,,,a572722,5 club period 7 Zaps,22a5727,,
 ,,,,6a52552,5 club period 7 Zaps,25526a5,,
+,,,,a552562,5 club period 7 Zaps,2562a55,,
+,,,,a562525,5 club period 7 Zaps,2525a56,,
 ,,,,6a82522,5 club period 7 Zaps,226a825,,
 ,,,,a852262,5 club period 7 Zaps,2262a85,,
 ,,,,a862225,5 club period 7 Zaps,2225a86,,
@@ -433,9 +436,6 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,a592522,5 club period 7 Zaps,22a5925,,
 ,,,,a529522,5 club period 7 Zaps,22a5295,,
 ,,,,92a5225,5 club period 7 Zaps,22592a5,,
-,,,,a552562,5 club period 7 Zaps,2562a55,,
-,,,,a562525,5 club period 7 Zaps,2525a56,,
-,,,,a572722,5 club period 7 Zaps,22a5727,,
 ,,,,7566666,6 club period 7 Zaps,5666667,,
 ,,,,7567566,6 club period 7 Zaps,5667567,,
 ,,,,7575666,6 club period 7 Zaps,5666757,,
@@ -448,19 +448,19 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,7867275,6 club period 7 Zaps,2757867,,
 ,,,,7868256,6 club period 7 Zaps,2567868,,
 ,,,,7885266,6 club period 7 Zaps,2667885,,
-,,,,8556675,6 club period 7 Zaps,5566758,,
-,,,,8556756,6 club period 7 Zaps,5567568,,
-,,,,8557566,6 club period 7 Zaps,5575668,,
-,,,,7885275,6 club period 7 Zaps,2757885,,
-,,,,8557575,6 club period 7 Zaps,5575758,,
-,,,,8577825,6 club period 7 Zaps,2585778,,
-,,,,8857275,6 club period 7 Zaps,2758857,,
-,,,,8556666,6 club period 7 Zaps,5566668,,
 ,,,,8578626,6 club period 7 Zaps,2685786,,
 ,,,,8586726,6 club period 7 Zaps,2685867,,
 ,,,,8678256,6 club period 7 Zaps,2568678,,
 ,,,,8686275,6 club period 7 Zaps,2758686,,
 ,,,,8857266,6 club period 7 Zaps,2668857,,
+,,,,8556675,6 club period 7 Zaps,5566758,,
+,,,,8556756,6 club period 7 Zaps,5567568,,
+,,,,8557566,6 club period 7 Zaps,5575668,,
+,,,,7885275,6 club period 7 Zaps,2757885,,
+,,,,8577825,6 club period 7 Zaps,2585778,,
+,,,,8857275,6 club period 7 Zaps,2758857,,
+,,,,8557575,6 club period 7 Zaps,5575758,,
+,,,,8556666,6 club period 7 Zaps,5566668,,
 ,,,,8586825,6 club period 7 Zaps,2585868,,
 ,,,,8588526,6 club period 7 Zaps,2685885,,
 ,,,,8858256,6 club period 7 Zaps,2568858,,
@@ -488,9 +488,20 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,9758256,6 club period 7 Zaps,2569758,,
 ,,,,7899252,6 club period 7 Zaps,2527899,,
 ,,,,8979225,6 club period 7 Zaps,2258979,,
+,,,,9589722,6 club period 7 Zaps,2295897,,
+,,,,9597822,6 club period 7 Zaps,2295978,,
+,,,,9789225,6 club period 7 Zaps,2259789,,
+,,,,9958272,6 club period 7 Zaps,2729958,,
+,,,,7892952,6 club period 7 Zaps,2789295,,
+,,,,7992582,6 club period 7 Zaps,2582799,,
+,,,,8972925,6 club period 7 Zaps,2589729,,
+,,,,9782925,6 club period 7 Zaps,2597829,,
+,,,,9952782,6 club period 7 Zaps,2782995,,
+,,,,7929582,6 club period 7 Zaps,2792958,,
 ,,,,8589525,6 club period 7 Zaps,2585895,,
 ,,,,8859255,6 club period 7 Zaps,2558859,,
 ,,,,9558852,6 club period 7 Zaps,2955885,,
+,,,,9585825,6 club period 7 Zaps,2595858,,
 ,,,,8596626,6 club period 7 Zaps,2685966,,
 ,,,,8696256,6 club period 7 Zaps,2568696,,
 ,,,,8956266,6 club period 7 Zaps,2668956,,
@@ -513,17 +524,6 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,9559752,6 club period 7 Zaps,2955975,,
 ,,,,9759255,6 club period 7 Zaps,2559759,,
 ,,,,9955275,6 club period 7 Zaps,2759955,,
-,,,,9585825,6 club period 7 Zaps,2595858,,
-,,,,9589722,6 club period 7 Zaps,2295897,,
-,,,,9597822,6 club period 7 Zaps,2295978,,
-,,,,9789225,6 club period 7 Zaps,2259789,,
-,,,,9958272,6 club period 7 Zaps,2729958,,
-,,,,7892952,6 club period 7 Zaps,2789295,,
-,,,,7992582,6 club period 7 Zaps,2582799,,
-,,,,8972925,6 club period 7 Zaps,2589729,,
-,,,,9782925,6 club period 7 Zaps,2597829,,
-,,,,9952782,6 club period 7 Zaps,2782995,,
-,,,,7929582,6 club period 7 Zaps,2792958,,
 ,,,,9599622,6 club period 7 Zaps,2295996,,
 ,,,,9699252,6 club period 7 Zaps,2529699,,
 ,,,,9995226,6 club period 7 Zaps,2269995,,
@@ -546,6 +546,7 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,a666275,6 club period 7 Zaps with triple,275a666,,
 ,,,,a675266,6 club period 7 Zaps with triple,266a675,,
 ,,,,a756266,6 club period 7 Zaps with triple,266a756,,
+,,,,7a66256,6 club period 7 Zaps with triple,2567a66,,
 ,,,,78a5255,6 club period 7 Zaps with triple,25578a5,,
 ,,,,85a7525,6 club period 7 Zaps with triple,2585a75,,
 ,,,,a558572,6 club period 7 Zaps with triple,2a55857,,
@@ -557,7 +558,6 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,a578822,6 club period 7 Zaps with triple,22a5788,,
 ,,,,a858272,6 club period 7 Zaps with triple,272a858,,
 ,,,,a852782,6 club period 7 Zaps with triple,2782a85,,
-,,,,7a66256,6 club period 7 Zaps with triple,2567a66,,
 ,,,,85a6625,6 club period 7 Zaps with triple,2585a66,,
 ,,,,86a6255,6 club period 7 Zaps with triple,25586a6,,
 ,,,,8a56256,6 club period 7 Zaps with triple,2568a56,,
@@ -626,28 +626,28 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,9758677,7 club period 7 Zaps,5867797,,
 ,,,,8956786,7 club period 7 Zaps,5678689,,
 ,,,,8956867,7 club period 7 Zaps,5686789,,
+,,,,9667885,7 club period 7 Zaps,5966788,,
+,,,,9668857,7 club period 7 Zaps,5796688,,
+,,,,9685786,7 club period 7 Zaps,5786968,,
+,,,,9685867,7 club period 7 Zaps,5867968,,
+,,,,9758686,7 club period 7 Zaps,5868697,,
 ,,,,8956975,7 club period 7 Zaps,5697589,,
+,,,,8959567,7 club period 7 Zaps,5678959,,
+,,,,9685975,7 club period 7 Zaps,5968597,,
+,,,,9695857,7 club period 7 Zaps,5796958,,
+,,,,9955867,7 club period 7 Zaps,5586799,,
 ,,,,9757885,7 club period 7 Zaps,5788597,,
 ,,,,9758857,7 club period 7 Zaps,5797588,,
 ,,,,8958577,7 club period 7 Zaps,5778958,,
 ,,,,8956885,7 club period 7 Zaps,5688589,,
 ,,,,8958586,7 club period 7 Zaps,5858689,,
 ,,,,9685885,7 club period 7 Zaps,5885968,,
-,,,,9667885,7 club period 7 Zaps,5966788,,
-,,,,9668857,7 club period 7 Zaps,5796688,,
-,,,,9685786,7 club period 7 Zaps,5786968,,
-,,,,9685867,7 club period 7 Zaps,5867968,,
-,,,,9758686,7 club period 7 Zaps,5868697,,
 ,,,,8956966,7 club period 7 Zaps,5696689,,
 ,,,,9685966,7 club period 7 Zaps,5966968,,
 ,,,,9695686,7 club period 7 Zaps,5686969,,
 ,,,,8889925,7 club period 7 Zaps,2588899,,
 ,,,,9958882,7 club period 7 Zaps,2995888,,
 ,,,,8889295,7 club period 7 Zaps,2958889,,
-,,,,8959567,7 club period 7 Zaps,5678959,,
-,,,,9685975,7 club period 7 Zaps,5968597,,
-,,,,9695857,7 club period 7 Zaps,5796958,,
-,,,,9955867,7 club period 7 Zaps,5586799,,
 ,,,,8959585,7 club period 7 Zaps,5858959,,
 ,,,,9955885,7 club period 7 Zaps,5588599,,
 ,,,,9695677,7 club period 7 Zaps,5677969,,
@@ -688,11 +688,17 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,8a57586,7 club period 7 Zaps with triple,575868a,,
 ,,,,a675885,7 club period 7 Zaps with triple,5885a67,,
 ,,,,a756885,7 club period 7 Zaps with triple,56885a7,,
+,,,,a758586,7 club period 7 Zaps with triple,58586a7,,
+,,,,a855867,7 club period 7 Zaps with triple,55867a8,,
+,,,,a855786,7 club period 7 Zaps with triple,55786a8,,
 ,,,,8a57577,7 club period 7 Zaps with triple,575778a,,
+,,,,a758577,7 club period 7 Zaps with triple,577a758,,
+,,,,a855777,7 club period 7 Zaps with triple,55777a8,,
 ,,,,a666975,7 club period 7 Zaps with triple,5a66697,,
 ,,,,a669567,7 club period 7 Zaps with triple,567a669,,
 ,,,,a675966,7 club period 7 Zaps with triple,5966a67,,
 ,,,,a756966,7 club period 7 Zaps with triple,56966a7,,
+,,,,96a5667,7 club period 7 Zaps with triple,566796a,,
 ,,,,88a7925,7 club period 7 Zaps with triple,2588a79,,
 ,,,,897a825,7 club period 7 Zaps with triple,25897a8,,
 ,,,,89a8527,7 club period 7 Zaps with triple,2789a85,,
@@ -707,8 +713,15 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,9a57882,7 club period 7 Zaps with triple,29a5788,,
 ,,,,895a566,7 club period 7 Zaps with triple,566895a,,
 ,,,,8a56956,7 club period 7 Zaps with triple,568a569,,
+,,,,96a5685,7 club period 7 Zaps with triple,568596a,,
+,,,,a669585,7 club period 7 Zaps with triple,585a669,,
+,,,,a695586,7 club period 7 Zaps with triple,5586a69,,
+,,,,a855966,7 club period 7 Zaps with triple,55966a8,,
 ,,,,895a575,7 club period 7 Zaps with triple,575895a,,
 ,,,,8a59557,7 club period 7 Zaps with triple,5578a59,,
+,,,,9a55857,7 club period 7 Zaps with triple,558579a,,
+,,,,a759585,7 club period 7 Zaps with triple,585a759,,
+,,,,a855975,7 club period 7 Zaps with triple,55975a8,,
 ,,,,899a526,7 club period 7 Zaps with triple,26899a5,,
 ,,,,89a6925,7 club period 7 Zaps with triple,2589a69,,
 ,,,,969a852,7 club period 7 Zaps with triple,2969a85,,
@@ -724,7 +737,6 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,996a825,7 club period 7 Zaps with triple,25996a8,,
 ,,,,9a59682,7 club period 7 Zaps with triple,29a5968,,
 ,,,,9a85926,7 club period 7 Zaps with triple,269a859,,
-,,,,96a5667,7 club period 7 Zaps with triple,566796a,,
 ,,,,97a7925,7 club period 7 Zaps with triple,2597a79,,
 ,,,,995a772,7 club period 7 Zaps with triple,2995a77,,
 ,,,,99a5727,7 club period 7 Zaps with triple,2799a57,,
@@ -734,15 +746,6 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,a779925,7 club period 7 Zaps with triple,25a7799,,
 ,,,,97a7295,7 club period 7 Zaps with triple,29597a7,,
 ,,,,a579792,7 club period 7 Zaps with triple,2a57979,,
-,,,,a758577,7 club period 7 Zaps with triple,577a758,,
-,,,,a855777,7 club period 7 Zaps with triple,55777a8,,
-,,,,a758586,7 club period 7 Zaps with triple,58586a7,,
-,,,,a855867,7 club period 7 Zaps with triple,55867a8,,
-,,,,a855786,7 club period 7 Zaps with triple,55786a8,,
-,,,,96a5685,7 club period 7 Zaps with triple,568596a,,
-,,,,a669585,7 club period 7 Zaps with triple,585a669,,
-,,,,a695586,7 club period 7 Zaps with triple,5586a69,,
-,,,,a855966,7 club period 7 Zaps with triple,55966a8,,
 ,,,,96a5757,7 club period 7 Zaps with triple,575796a,,
 ,,,,9a55677,7 club period 7 Zaps with triple,556779a,,
 ,,,,a675975,7 club period 7 Zaps with triple,5975a67,,
@@ -757,9 +760,6 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,96a5955,7 club period 7 Zaps with triple,5596a59,,
 ,,,,9a55956,7 club period 7 Zaps with triple,559569a,,
 ,,,,a569595,7 club period 7 Zaps with triple,569595a,,
-,,,,9a55857,7 club period 7 Zaps with triple,558579a,,
-,,,,a759585,7 club period 7 Zaps with triple,585a759,,
-,,,,a855975,7 club period 7 Zaps with triple,55975a8,,
 ,,,,a66a566,7 club period 7 Zaps with triple,566a66a,,
 ,,,,8a8a526,7 club period 7 Zaps with triple,268a8a5,,
 ,,,,88aa625,7 club period 7 Zaps with triple,2588aa6,,
@@ -783,6 +783,11 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,a7a6295,7 club period 7 Zaps with triple,295a7a6,,
 ,,,,a5a6792,7 club period 7 Zaps with triple,2a5a679,,
 ,,,,aa69527,7 club period 7 Zaps with triple,27aa695,,
+,,,,96aa752,7 club period 7 Zaps with triple,296aa75,,
+,,,,97aa625,7 club period 7 Zaps with triple,2597aa6,,
+,,,,9aa5627,7 club period 7 Zaps with triple,279aa56,,
+,,,,9a5a672,7 club period 7 Zaps with triple,29a5a67,,
+,,,,a69a572,7 club period 7 Zaps with triple,2a69a57,,
 ,,,,a66a575,7 club period 7 Zaps with triple,575a66a,,
 ,,,,a6a5567,7 club period 7 Zaps with triple,5567a6a,,
 ,,,,a75a566,7 club period 7 Zaps with triple,566a75a,,
@@ -792,11 +797,6 @@ Other 7 club period 7's - with triples > 1 pass,Standard!L17:P29,single,,a7742,6
 ,,,,a8a5925,7 club period 7 Zaps with triple,25a8a59,,
 ,,,,aa59582,7 club period 7 Zaps with triple,2aa5958,,
 ,,,,a5a8592,7 club period 7 Zaps with triple,2a5a859,,
-,,,,96aa752,7 club period 7 Zaps with triple,296aa75,,
-,,,,97aa625,7 club period 7 Zaps with triple,2597aa6,,
-,,,,9aa5627,7 club period 7 Zaps with triple,279aa56,,
-,,,,9a5a672,7 club period 7 Zaps with triple,29a5a67,,
-,,,,a69a572,7 club period 7 Zaps with triple,2a69a57,,
 ,,,,a75a575,7 club period 7 Zaps with triple,575a75a,,
 ,,,,aa55577,7 club period 7 Zaps with triple,55577aa,,
 ,,,,8a5a556,7 club period 7 Zaps with triple,5568a5a,,

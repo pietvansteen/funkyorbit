@@ -24,7 +24,7 @@ No pip packages needed: everything runs on standard Python.
 ## What is read from the Sheet
 
 - **Done**: one row per pattern thrown. Columns are matched by name: `date`, `pattern` (siteswap), `known name`, `family`, `rating`, `youtube`, `file name`. The time comes from the camera file name. Rows with a YouTube link appear in the video feed.
-- **Progress**: the categories and their totals. The *Statistics* block provides the overall total and the Period 3 / 5 / 7 and Sync tiles.
+- **Progress**: the categories and their totals. The *Statistics* block provides the overall total and the Period 3 / 5 / 7 and Sync tiles, and the figures on the Funny stats page. *Dragons (95)* (a 9 directly followed by a 5, also around the end) is counted by the sync itself from the pattern list.
 - **Kleuren** / **Kleuren sync**: the club colour per throw (`W`/`B`/`O`/`R` = white, blue, orange, pink), used to colour the digits. Written in another rotation is fine.
 - **Families**: every pattern with its family, in Sheet order (columns *Pattern / Family / Unique key (auto)*), plus the known names. This feeds the *All patterns* page; a pattern counts as done when its unique key is among the *Match keys* in *Done*.
 - **Moeilijkheid**: difficulty score and stars per pattern, used by the generator's difficulty filter.

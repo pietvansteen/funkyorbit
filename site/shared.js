@@ -57,11 +57,25 @@
     return `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${r} out of 5 stars" title="${r} / 5"></span>`;
   }
 
+  // One date format everywhere: "Sat 26 Sep 2026" (the browser would write "Sept")
+  const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function day(d) {
+    if (typeof d === "string") d = new Date(d + "T12:00:00");
+    return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  // "today", "yesterday", "3 days ago"
+  function ago(d) {
+    if (typeof d === "string") d = new Date(d + "T12:00:00");
+    const midnight = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+    const n = Math.round((midnight(new Date()) - midnight(d)) / 864e5);
+    return n <= 0 ? "today" : n === 1 ? "yesterday" : `${n} days ago`;
+  }
+
   function when(p) {
     if (!p.date) return "";
-    const d = new Date(p.date + "T12:00:00");
-    const day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
-    return p.time ? `${day} · ${p.time}` : day;
+    return p.time ? `${day(p.date)} · ${p.time}` : day(p.date);
   }
 
   function player(p) {
@@ -140,5 +154,5 @@
     }
   });
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, when, player, likes };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, day, ago, when, player, likes };
 })();
