@@ -27,7 +27,7 @@ No pip packages needed: everything runs on standard Python.
 - **Progress**: the categories and their totals. The *Statistics* block provides the overall total and the Period 3 / 5 / 7 and Sync tiles, and the figures on the Funny stats page.
 - **Kleuren** / **Kleuren sync**: the club colour per throw (`W`/`B`/`O`/`R` = white, blue, orange, pink), used to colour the digits. Written in another rotation is fine.
 - **Families**: every pattern with its family, in Sheet order (columns *Pattern / Family / Unique key (auto)*), plus the known names. This feeds the *All patterns* page; a pattern counts as done when its unique key is among the *Match keys* in *Done*.
-- **Moeilijkheid**: difficulty score, stars and estimated minutes per pattern, used by the generator's difficulty filter and the pattern pop-up.
+- **Moeilijkheid**: difficulty score and stars per pattern, used by the generator's difficulty filter and the pattern pop-up.
 
 The Sheet must be shared as *Anyone with the link can view*.
 

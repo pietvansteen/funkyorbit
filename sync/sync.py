@@ -297,7 +297,7 @@ def parse_difficulty(rows):
     if not rows:
         return out
     h = rows[0]
-    c_pat, c_score, c_stars, c_min = (header_index(h, n) for n in ("patroon", "score", "sterren", "minuten"))
+    c_pat, c_score, c_stars = (header_index(h, n) for n in ("patroon", "score", "sterren"))
     for row in rows[1:]:
         pat = cell(row, c_pat)
         score, stars = to_number(cell(row, c_score)), to_number(cell(row, c_stars))
@@ -309,9 +309,6 @@ def parse_difficulty(rows):
         else:
             key = min_rotation(pat)
         out[key] = {"score": score, "stars": stars}
-        minutes = to_number(cell(row, c_min))
-        if minutes:
-            out[key]["minutes"] = round(minutes)  # estimated juggling time
     return out
 
 

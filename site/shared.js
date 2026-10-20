@@ -101,7 +101,7 @@
       <span class="score tip" tabindex="0" aria-describedby="score-tip">${half(p.stars)} ★ · ${p.score}
       <span class="tip-text" id="score-tip" role="tooltip"><b>Difficulty score ${p.score}</b>
         It adds up how hard the throws are (more spins and more passes are harder; selfs and zips give a moment of rest)
-        plus extra points for tricky combinations, such as a dragon (9 then 5), a 5 next to a triple, or two triples in a row.
+        plus extra points for tricky combinations, such as a dragon (a 9 and then a 5 by the same juggler: 9_5 in the siteswap), a 5 next to a triple, or two triples in a row.
         Our patterns go from about 1 (easiest) to ${Math.ceil(maxScore)} (hardest).
         The stars group the scores: ½ ★ below 4.5, half a star more for every 1.5 points, and 5 ★ from 17.</span></span>`;
   }

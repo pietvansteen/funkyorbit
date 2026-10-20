@@ -502,7 +502,6 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .read-more svg { transition: transform .25s; }
 .read-more[aria-expanded="true"] svg { transform: rotate(180deg); }
 .read-more:focus-visible { outline: 2px solid var(--club); outline-offset: 3px; border-radius: 6px; }
-.pop-time { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .hero .more { transition: none; } }
 /* very narrow phones: the four menu items still fit on one line */
 .nav a { white-space: nowrap; }
