@@ -409,4 +409,16 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .ss.sync .jug.named:first-child small { padding-left: 0; }
 .pick-pat.hidden-colors { cursor: pointer; }
 .pick-pat.hidden-colors:focus-visible { outline: 2px solid var(--club); outline-offset: 4px; border-radius: 8px; }
-.reveal { justify-self: start; padding-left: 0; }
+
+/* ---------- explanation of the difficulty score ---------- */
+/* the tooltip hangs under the whole details block (right-aligned), so it stays inside the card on a phone */
+.pick-meta { position: relative; }
+.tip { cursor: help; border-bottom: 1px dotted var(--muted); outline: none; }
+.tip-text {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 5; width: min(320px, 100%);
+  padding: 10px 12px; border-radius: 10px; background: var(--paper); border: 1px solid var(--line);
+  box-shadow: 0 8px 24px rgb(0 0 0 / .45); color: var(--ink); font: 400 13px/1.45 var(--f-body);
+  visibility: hidden; opacity: 0; transition: opacity .15s;
+}
+.tip-text b { display: block; margin-bottom: 4px; }
+.tip:hover .tip-text, .tip:focus .tip-text, .tip:focus-within .tip-text { visibility: visible; opacity: 1; }

@@ -61,6 +61,17 @@
     });
   }
 
+  // The score behind the stars, with a short explanation on hover (or tap on a phone).
+  function scoreTip(p) {
+    const max = Math.max(...PATTERNS.map((x) => x.score || 0));
+    return `<span class="score tip" tabindex="0" aria-describedby="score-tip">${half(p.stars)} ★ · ${p.score}
+      <span class="tip-text" id="score-tip" role="tooltip"><b>Difficulty score ${p.score}</b>
+        It adds up how hard the throws are (more spins and more passes are harder; selfs and zips give a moment of rest)
+        plus extra points for tricky combinations, such as a dragon (9 then 5), a 5 next to a triple, or two triples in a row.
+        Our patterns go from about 1 (easiest) to ${Math.ceil(max)} (hardest).
+        The stars group the scores: ½ ★ below 4.5, half a star more for every 1.5 points, and 5 ★ from 17.</span></span>`;
+  }
+
   function show(p) {
     const box = $("#pick");
     if (!p) {
@@ -75,14 +86,13 @@
     const cat = p.kind === "Sync" ? "Sync" : `${p.kind} · period ${p.period}`;
     box.innerHTML = `
       <div class="pick-pat${hidden ? " hidden-colors" : ""}"${hidden ? ' role="button" tabindex="0" data-reveal aria-label="Show the club colours"' : ""}>${pat}</div>
-      ${hidden ? `<button type="button" class="reset reveal" data-reveal>Show colours</button>` : ""}
       ${p.name ? `<p class="pick-name">${esc(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
       <dl class="pick-meta">
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>
         <div><dt>Category</dt><dd>${esc(cat)}</dd></div>
         <div><dt>Difficulty</dt><dd>${p.stars != null
-          ? `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${p.stars} out of 5 stars"></span> <span class="score" title="difficulty score">${half(p.stars)} ★ · ${p.score}</span>`
+          ? `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${p.stars} out of 5 stars"></span> ${scoreTip(p)}`
           : "–"}</dd></div>
       </dl>`;
   }
