@@ -549,7 +549,7 @@ footer .admin-count { color: var(--club) !important; font-weight: 600; }
 
 /* ---------- start position: clubs per hand (juggler 1 left, juggler 2 right) ----------
    Labels sit next to the clubs instead of above them, so the clubs can be bigger without a taller block. */
-.start { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.start { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-bottom: 14px; }
 .jug-start { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: grid; gap: 4px; align-items: center; }
 .jn { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; white-space: nowrap; }
 .hands { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -558,8 +558,14 @@ footer .admin-count { color: var(--club) !important; font-weight: 600; }
 .hl b { color: var(--ink); font-size: 16px; }
 .clubs { display: flex; gap: 4px; min-height: 60px; align-items: flex-end; }
 .club-ic { width: 11px; height: 60px; }
-@media (min-width: 600px) {
+/* The block picks its layout from its own width (not the screen): in a narrow place such as the pop-up or a
+   phone the name sits above the hands with "starts" next to it; with room to spare the name goes next to the
+   hands and "starts" under the name, so the name column stays narrow. */
+.start { container-type: inline-size; }
+@container (min-width: 520px) {
   .jug-start { grid-template-columns: auto 1fr; gap: 14px; padding: 8px 14px; }
+  .jn { display: grid; justify-items: start; gap: 4px; }
+  .jn .starts { margin-left: 0; }
 }
 .modal-card .start { margin: 2px 0 0; }
 
