@@ -64,7 +64,7 @@ Numbering is `MAJOR.MINOR.PATCH`:
 
 For every change to the site:
 
-1. In `site/changelog.json`: add a line to the newest version if that version is not live yet, otherwise add a new version at the top.
+1. In `site/changelog.json`: add a line to the newest version if that version is not live yet, otherwise add a new version at the top. The date of a version is the day it goes live; update it when the release goes out on a later day.
 2. Run `python3 tools/release.py`. It puts the version in the footer of every page, and `?v=<version>-<code>` on the css/js/svg links and in the cache name of the generator's service worker. The code is a short hash of those files, so browsers and Cloudflare fetch the new files after every change, also when the version number stays the same.
 3. Commit and push, then `git pull` on the server.
 

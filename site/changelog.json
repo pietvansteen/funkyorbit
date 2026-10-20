@@ -1,12 +1,16 @@
 [
   {
     "version": "1.6.0",
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "changes": [
       "Request a feature: send us your idea from the link in the footer or on this page",
       "Generator and pattern pop-up: how many clubs each of us starts with in each hand, in their colours; Mees on the left and Piet on the right as in our videos, with who starts",
       "Generator: with Hide colours you tap the digits open one by one; the first tap switches Hide colours off, so the next pattern comes in colour",
-      "Generator: Hide hands, for just the siteswap"
+      "Generator: Hide hands, for just the siteswap",
+      "Videos without black bars; in the pattern pop-up the video sits above the details, cut just above the siteswap at the bottom so there is more room for high throws",
+      "Pattern pop-up: the same size with or without a video, and even margins",
+      "The play button is now orange, like our clubs",
+      "Funny stats: on a wide screen Patterns, Recording days and Dates side by side"
     ]
   },
   {
