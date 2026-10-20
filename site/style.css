@@ -145,7 +145,7 @@ a { color: inherit; }
 }
 .play span {
   width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center;
-  background: color-mix(in srgb, var(--club) 92%, transparent); color: #fff;
+  background: color-mix(in srgb, #ee5a2c 94%, transparent); color: #fff; /* the orange of our clubs */
   box-shadow: 0 6px 24px rgb(0 0 0 / .35); transition: transform .15s;
 }
 .play:hover span { transform: scale(1.06); }
@@ -368,18 +368,18 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
 }
 .modal::backdrop { background: rgb(5 9 20 / .72); backdrop-filter: blur(2px); }
 .modal-card { max-height: calc(100dvh - 32px); overflow: auto; }
-/* In the pop-up the video sits above the details, as wide as the pop-up but not as tall: a strip at the top and
-   the bottom is cut off (nothing important there). Video and thumbnail are scaled to fill the width without
-   black bars and centred, so only top and bottom fall away. */
+/* In the pop-up the video sits above the details, as wide as the pop-up but less tall. The cut is placed so the
+   siteswap at the bottom of our videos just falls away (it is shown in the pop-up already; our feet are always
+   above it), which leaves as much as possible at the top for high throws. Without a video yet, the placeholder
+   gets exactly the same box. */
 .modal-card .player { flex-shrink: 0; max-height: none; }
-.modal-card .player:not(.wide):not(.no-video) { aspect-ratio: auto; height: min(580px, 60dvh); }
+.modal-card .player:not(.wide) { aspect-ratio: 0.77; height: auto; max-height: min(580px, 60dvh); }
+/* video and the 4:3 YouTube thumbnail (the short sits in its middle) fill the width; the bottom 16.5% is cut */
 .modal-card .player:not(.wide):not(.no-video) iframe {
-  inset: auto; top: 50%; left: 0; width: 100%; height: auto; aspect-ratio: 9 / 16; transform: translateY(-50%);
+  inset: auto; bottom: 0; left: 0; width: 100%; height: auto; aspect-ratio: 9 / 16; transform: translateY(16.5%);
 }
-/* the YouTube thumbnail of a short is 4:3 with the video in the middle: scale it so that middle part fills the width */
 .modal-card .player:not(.wide):not(.no-video) img {
-  inset: auto; top: 50%; left: 50%; width: 237%; height: auto; object-fit: initial; transform: translate(-50%, -50%);
-}
+  inset: auto; bottom: 0; left: 50%; width: 237%; height: auto; object-fit: initial; transform: translate(-50%, 16.5%);
 }
 .player.no-video { aspect-ratio: 16 / 9; }
 .modal-close {
