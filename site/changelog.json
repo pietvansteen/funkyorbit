@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.1.2",
+    "date": "2026-10-20",
+    "changes": [
+      "Generator: on a wide screen the throws are in one row, from 2 to b"
+    ]
+  },
+  {
     "version": "1.1.1",
     "date": "2026-10-20",
     "changes": [

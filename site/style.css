@@ -341,8 +341,12 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
   min-height: 40px; padding: 0 12px; border-radius: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
   border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 14px/1 var(--f-body);
 }
-.multi.throws { flex-direction: column; gap: 6px; }
-.multi.throws .row { display: flex; gap: 6px; }
+.multi.throws { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+.multi.throws .row { display: contents; }
+@media (max-width: 560px) {
+  .multi.throws { flex-direction: column; }
+  .multi.throws .row { display: flex; gap: 6px; }
+}
 .multi.throws button { min-width: 40px; justify-content: center; padding: 0 8px; font-family: var(--f-mono); font-size: 16px; }
 .multi button[aria-pressed="true"] { border-color: var(--orbit); box-shadow: inset 0 0 0 1px var(--orbit); background: var(--orbit-soft); }
 .multi.out button[aria-pressed="true"] { border-color: var(--club); box-shadow: inset 0 0 0 1px var(--club); background: var(--club-soft); text-decoration: line-through; text-decoration-thickness: 2px; }

@@ -165,9 +165,10 @@
     const all = new Set();
     PATTERNS.forEach((p) => throwsOf(p).forEach((t) => all.add(t)));
     const order = [...all].sort((x, y) => parseInt(x, 36) - parseInt(y, 36));
-    // two rows: even throws (selfs, zip, hold) and odd throws (passes)
+    // phones: two rows, even throws (selfs, zip, hold) and odd throws (passes);
+    // wide screens: one row from 2 to b (the rows dissolve and `order` sorts the buttons)
     const row = (odd) => `<div class="row">${order.filter((t) => parseInt(t, 36) % 2 === (odd ? 1 : 0))
-      .map((t) => `<button type="button" data-v="${esc(t)}">${esc(t)}</button>`).join("")}</div>`;
+      .map((t) => `<button type="button" data-v="${esc(t)}" style="order:${parseInt(t, 36)}">${esc(t)}</button>`).join("")}</div>`;
     document.querySelectorAll(".multi.throws").forEach((g) => { g.innerHTML = row(false) + row(true); });
     $("#updated").textContent = updated(data.updated);
     if (lastFilmed) {
