@@ -541,3 +541,15 @@ footer .admin-count { color: var(--club) !important; font-weight: 600; }
 .req header time { color: var(--muted); font-size: 13px; margin-left: auto; }
 .req p { margin: 0; line-height: 1.5; }
 .seg.small button { min-height: 34px; min-width: 0; padding: 0 12px; font-size: 13px; border-radius: 9px; }
+
+/* ---------- start position: clubs per hand (Mees left, Piet right, as in the videos) ---------- */
+.start { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.jug-start { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px 10px; display: grid; gap: 6px; }
+.jn { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.hands { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hand { display: grid; gap: 4px; justify-items: start; }
+.hl { font-size: 12px; color: var(--muted); }
+.hl b { color: var(--ink); font-size: 14px; }
+.clubs { display: flex; gap: 4px; min-height: 37px; align-items: flex-end; }
+.club-ic { width: 13px; height: 37px; }
+.modal-card .start { margin: 2px 0 0; }

@@ -37,6 +37,61 @@
   }
 
 
+  // ---------- start position: how many clubs, in which colours, in each of the four hands ----------
+  // A club starts in the hand that throws it first: the throw at beat t >= 0 whose club was thrown before beat 0.
+  // Not sync: Piet is juggler 1, throws on the even beats and starts with his right hand; Mees on the odd beats.
+  // Sync: both throw on every beat, both starting right; Mees is juggler 1 (left in the video), Piet juggler 2.
+  const CLUB_FILL = { W: "#eeeff2", B: "#1f4fd1", O: "#ee5a2c", R: "#e6386a" };
+  const val = (c) => parseInt(c, 36);
+
+  function startHands(p) {
+    const hands = [{ L: [], R: [] }, { L: [], R: [] }]; // [juggler 1, juggler 2]
+    const beats = 48;
+    if (p.ss) {
+      const ss = p.ss.toLowerCase(), n = ss.length;
+      for (let t = 0; t < beats; t++) {
+        for (let s = t - 12; s < t; s++) {
+          if (s + val(ss[((s % n) + n) % n]) !== t) continue;
+          if (s < 0) hands[t % 2][Math.floor(t / 2) % 2 ? "L" : "R"].push(p.colors ? p.colors[t % n] : "");
+          break;
+        }
+      }
+      return [{ name: "Mees", hands: hands[1] }, { name: "Piet", hands: hands[0] }];
+    }
+    const throws = [(p.a || "").toLowerCase().match(SYNC_THROW) || [], (p.b || "").toLowerCase().match(SYNC_THROW) || []];
+    const n = throws[0].length;
+    if (!n || throws[1].length !== n) return null;
+    for (let t = 0; t < beats; t++) {
+      for (const j of [0, 1]) {
+        let first = Infinity;
+        for (let s = t - 12; s < t; s++) for (const k of [0, 1]) {
+          const tok = throws[k][((s % n) + n) % n];
+          const dest = tok.endsWith("p") ? 1 - k : k;
+          if (dest === j && s + val(tok[0]) === t) first = Math.min(first, s);
+        }
+        if (first < 0) hands[j][t % 2 ? "L" : "R"].push(p.colors && p.colors[j] ? p.colors[j][t % n] : "");
+      }
+    }
+    return [{ name: "Mees", hands: hands[0] }, { name: "Piet", hands: hands[1] }];
+  }
+
+  const clubIcon = (c) => `<svg class="club-ic" viewBox="0 0 12 34" aria-hidden="true"><path d="M6 1C9 1 10.5 4 10.5 8.5 10.5 13 7.6 16.5 7.1 21H4.9C4.4 16.5 1.5 13 1.5 8.5 1.5 4 3 1 6 1Z" fill="${CLUB_FILL[c] || "#5a6683"}"/><rect x="4.6" y="20.5" width="2.8" height="10" rx="1" fill="#2bb5aa"/><rect x="3.8" y="30" width="4.4" height="3" rx="1.4" fill="#d93a78"/></svg>`;
+  const NAMES = { W: "white", B: "blue", O: "orange", R: "pink" };
+
+  // Mees on the left and Piet on the right, as in our videos; per hand the clubs in the order they are thrown
+  function startHtml(p, hideColors) {
+    const jugglers = startHands(p);
+    if (!jugglers) return "";
+    const hand = (side, list) => {
+      const shown = hideColors ? list.map(() => "") : list;
+      const label = `${side === "L" ? "left" : "right"} hand: ${list.length} club${list.length === 1 ? "" : "s"}` +
+        (hideColors || !list.length ? "" : ` (${list.map((c) => NAMES[c] || "?").join(", ")})`);
+      return `<div class="hand" aria-label="${label}"><span class="hl">${side} <b>${list.length}</b></span><span class="clubs">${shown.map(clubIcon).join("")}</span></div>`;
+    };
+    return `<div class="start" role="group" aria-label="Start position">${jugglers.map((j) =>
+      `<div class="jug-start"><span class="jn">${j.name}</span><div class="hands">${hand("L", j.hands.L)}${hand("R", j.hands.R)}</div></div>`).join("")}</div>`;
+  }
+
   // A siteswap is cyclic, so 6966 also finds 9666: search in the pattern written twice.
   function cyclicIncludes(ss, q) {
     ss = (ss || "").toLowerCase();
@@ -185,5 +240,5 @@
       .catch(() => {});
   })();
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, day, ago, when, player, likes };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, day, ago, when, player, likes };
 })();

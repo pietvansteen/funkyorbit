@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, difficulty, updated } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, difficulty, startHtml, updated } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, lo: 0.5, hi: 5 };
@@ -79,6 +79,7 @@
       <div class="pick-pat${hidden ? " hidden-colors" : ""}"${hidden ? ' role="button" tabindex="0" data-reveal aria-label="Show the club colours"' : ""}>${pat}</div>
       ${p.name ? `<p class="pick-name">${esc(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
+      ${startHtml(p, hidden)}
       <dl class="pick-meta">
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>
         <div><dt>Category</dt><dd>${esc(cat)}</dd></div>

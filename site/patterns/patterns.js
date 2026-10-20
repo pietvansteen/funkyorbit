@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, when, player, likes } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, when, player, likes } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
@@ -145,6 +145,7 @@
           </div>
           ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
           <span class="fam">${families.map(esc).join("<br>")}</span>
+          ${startHtml(item)}
           ${diff}
           ${p ? `<div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>` : ""}
         </div>
