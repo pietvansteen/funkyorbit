@@ -88,6 +88,7 @@
     if (current && pool.length > 1) options = pool.filter((p) => p.key !== current.key); // never the same twice in a row
     current = options.length ? options[Math.floor(Math.random() * options.length)] : null;
     show(current);
+    $("#pick-note").hidden = true;
   }
 
   function syncUi() {
@@ -115,12 +116,12 @@
     $("#pool").textContent = PATTERNS.length ? `${fmt.format(n)} pattern${n === 1 ? "" : "s"} to choose from` : "";
   }
 
-  function changed(redraw = true) {
+  // Changing options never draws a new pattern: the pick stays until you press Draw again.
+  function changed() {
     save();
     syncUi();
-    if (!redraw || !PATTERNS.length) return;
-    // keep the current pick when it still fits the options
-    if (!current || !candidates().some((p) => p.key === current.key)) draw();
+    const off = !!current && PATTERNS.length > 0 && !candidates().some((p) => p.key === current.key);
+    $("#pick-note").hidden = !off;
   }
 
   document.addEventListener("click", (ev) => {

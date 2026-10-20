@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0d1322">
 <style>html { background: #0d1322; color-scheme: dark; }</style>
 <title>Generator · Project Funky Orbit</title>
 <meta name="description" content="Picks the next club passing pattern for us to throw and film.">
 <link rel="manifest" href="/gen/manifest.webmanifest">
-<link rel="icon" href="/favicon.svg?v=1.1.0" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg?v=1.1.1" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -18,12 +18,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
-<link rel="stylesheet" href="/style.css?v=1.1.0">
+<link rel="stylesheet" href="/style.css?v=1.1.1">
 </head>
 <body class="gen-page">
 <header class="wrap top">
   <a class="brand" href="/" aria-label="Funky Orbit, home">
-    <img src="/favicon.svg?v=1.1.0" width="46" height="46" alt="">
+    <img src="/favicon.svg?v=1.1.1" width="46" height="46" alt="">
     <b>Funky Orbit</b>
   </a>
   <nav class="nav" aria-label="Pages">
@@ -38,6 +38,7 @@
   <section class="pick" aria-live="polite">
     <span class="label">Next pattern to throw</span>
     <div id="pick"><p class="muted">Loading the list…</p></div>
+    <p class="pick-note" id="pick-note" hidden>This pattern no longer matches your options. Press <b>Draw again</b> for a new one.</p>
     <button type="button" class="draw" id="draw" disabled>
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.7M20 4v4.7h-4.7M20 12a8 8 0 0 1-13.7 5.6L4 15.3M4 20v-4.7h4.7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Draw again
@@ -117,8 +118,8 @@
   </section>
 </main>
 
-<footer class="wrap"><span>funkyorbit.nl · Pick the next pattern to throw. <span id="updated"></span></span> <a class="version" href="/changes/">v1.1.0 · What's new</a></footer>
-<script src="/shared.js?v=1.1.0"></script>
-<script src="/gen/gen.js?v=1.1.0"></script>
+<footer class="wrap"><span>funkyorbit.nl · Pick the next pattern to throw. <span id="updated"></span></span> <a class="version" href="/changes/">v1.1.1 · What's new</a></footer>
+<script src="/shared.js?v=1.1.1"></script>
+<script src="/gen/gen.js?v=1.1.1"></script>
 </body>
 </html>
