@@ -2,10 +2,11 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, when, player, likes } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, when, player, likes } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
+  let MAX_SCORE = 0;
   const userOpen = new Set([0]); // families the visitor opened (by number); the first one starts open
   const filtering = () => !!query.trim() || colorFilter.size > 0;
   const DONE = new Map(); // key -> the Done row to show: the newest with a video, else the newest
@@ -21,7 +22,7 @@
     const pat = p.ss ? siteswap(p.ss, "sm", p.colors) : syncPattern(p.a, p.b, "sm", p.colors);
     const title = [label(p), p.name, p.family, p.done ? "done" : ""].filter(Boolean).join(" · ");
     // every chip has a tick slot, so done chips don't shift the rest; the name line only when there is a name
-    const open = p.done ? ` role="button" tabindex="0" data-open="${esc(p.key)}" aria-label="${esc(label(p))}: show video and details"` : "";
+    const open = ` role="button" tabindex="0" data-open="${esc(p.key)}" aria-label="${esc(label(p))}: show ${p.done ? "video and " : ""}details"`;
     return `<li class="pat${p.done ? " done" : ""}" data-i="${i}" title="${esc(title)}"${open}>
       ${pat}<svg class="tick" width="14" height="14" viewBox="0 0 24 24" ${p.done ? 'aria-label="done"' : 'aria-hidden="true"'}><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <small>${esc(p.name || "")}</small>
@@ -118,28 +119,40 @@
   }
 
   // ---------- pop-up for a pattern we have thrown: video and details, as on the home page ----------
+  // Every pattern opens a pop-up: thrown ones with their video and our rating, the others as "Not thrown yet".
+  // Both show the families, the known name and the difficulty.
   function openModal(key) {
-    const p = DONE.get(key);
-    if (!p) return;
-    const item = ITEMS.find((x) => x.key === key);
-    const video = p.youtubeId
+    const items = ITEMS.filter((x) => x.key === key);
+    if (!items.length) return;
+    const item = items[0], p = DONE.get(key);
+    const families = [...new Set(items.map((x) => x.family))];
+    const name = (p && p.name) || item.name;
+    const pat = item.kind === "Sync"
+      ? syncPattern(item.a, item.b, "lg", item.colors, true)
+      : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
+    const diff = item.stars != null
+      ? `<div class="pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE)}</div>` : "";
+    const video = !p ? "" : p.youtubeId
       ? player(p)
       : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;
     $("#modal-body").innerHTML = `
-      <article class="card modal-card">
+      <article class="card modal-card${p ? "" : " not-thrown"}">
         ${video}
         <div class="meta">
           <div class="meta-top">
-            <div class="title" id="modal-title">${item && item.kind === "Sync" ? syncPattern(item.a, item.b, "lg", item.colors, true) : siteswap(p.siteswap, "lg", (item && item.colors) || p.colors)}${p.name || (item && item.name) ? `<span class="pname">${esc(p.name || item.name)}</span>` : ""}</div>
-            ${p.youtubeId ? likes.button(p.youtubeId) : ""}
+            <div class="title" id="modal-title">${pat}${name ? `<span class="pname">${esc(name)}</span>` : ""}</div>
+            ${p && p.youtubeId ? likes.button(p.youtubeId) : ""}
           </div>
-          <span class="fam">${esc(p.family)}</span>
-          <div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>
+          ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
+          <span class="fam">${families.map(esc).join("<br>")}</span>
+          ${diff}
+          ${p ? `<div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>` : ""}
         </div>
       </article>`;
     const dlg = $("#modal");
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
   }
+
 
   function closeModal() {
     const dlg = $("#modal");
@@ -147,7 +160,8 @@
   }
 
   // stop the video when the pop-up closes (button, Esc or a click next to it)
-  $("#modal").addEventListener("close", () => { $("#modal-body").innerHTML = ""; });
+  // (the close event comes a moment later: when another pop-up was opened in the meantime, keep that one)
+  $("#modal").addEventListener("close", () => { if (!$("#modal").open) $("#modal-body").innerHTML = ""; });
   $("#modal").addEventListener("click", (ev) => { if (ev.target === ev.currentTarget) closeModal(); });
   $("#modal-close").addEventListener("click", closeModal);
   document.addEventListener("keydown", (ev) => {
@@ -213,6 +227,7 @@
       return;
     }
     ITEMS = data.all || [];
+    MAX_SCORE = Math.max(0, ...ITEMS.map((x) => x.score || 0));
     for (const p of data.patterns || []) { // Done, newest first
       const key = p.key || minRotation(p.siteswap); // older data.json without keys
       const have = DONE.get(key);
@@ -222,7 +237,7 @@
     const keys = new Map(ITEMS.map((p) => [p.key, p.done]));
     const done = [...keys.values()].filter(Boolean).length;
     $("#title").innerHTML = `${fmt.format(keys.size)}<span class="of">patterns · ${fmt.format(done)} done</span>`;
-    $("#intro").textContent = "Every pattern on the list, in the order of our spreadsheet. Each digit has the colour of the club it throws. Patterns we have already thrown are marked green: click one to watch its video. A few patterns fit two families, so they appear twice.";
+    $("#intro").textContent = "Every pattern on the list, in the order of our spreadsheet. Each digit has the colour of the club it throws. Patterns we have already thrown are marked green: click one to watch its video, or any other pattern for its details. A few patterns fit two families, so they appear twice.";
     $("#updated").textContent = updated(data.updated);
     render();
     const params = new URLSearchParams(location.search);

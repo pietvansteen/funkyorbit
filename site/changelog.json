@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.4.0",
+    "date": "2026-10-20",
+    "changes": [
+      "All patterns: every pattern opens a pop-up; patterns we haven't thrown yet show \"Not thrown yet\" with their families and difficulty",
+      "The pop-up of a thrown pattern now also shows its difficulty",
+      "Home: the newest videos page by page (3 on a phone, 6 on a wider screen) with arrows, or swipe on a phone",
+      "Home: a link to all our videos on YouTube",
+      "Home: filter the videos by date: this week, this month, a practice day or your own dates; the filter is kept in the link"
+    ]
+  },
+  {
     "version": "1.3.0",
     "date": "2026-10-20",
     "changes": [

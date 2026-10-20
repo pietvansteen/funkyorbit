@@ -89,6 +89,20 @@
     return `<div class="player ${p.isShort ? "" : "wide"}">${poster}${img}${btn}</div>`;
   }
 
+  // ---------- difficulty: half stars + the score, with a short explanation on hover (or tap on a phone) ----------
+  const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
+
+  function difficulty(p, maxScore) {
+    const pct = Math.max(0, Math.min(100, (p.stars / 5) * 100));
+    return `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${p.stars} out of 5 stars"></span>
+      <span class="score tip" tabindex="0" aria-describedby="score-tip">${half(p.stars)} ★ · ${p.score}
+      <span class="tip-text" id="score-tip" role="tooltip"><b>Difficulty score ${p.score}</b>
+        It adds up how hard the throws are (more spins and more passes are harder; selfs and zips give a moment of rest)
+        plus extra points for tricky combinations, such as a dragon (9 then 5), a 5 next to a triple, or two triples in a row.
+        Our patterns go from about 1 (easiest) to ${Math.ceil(maxScore)} (hardest).
+        The stars group the scores: ½ ★ below 4.5, half a star more for every 1.5 points, and 5 ★ from 17.</span></span>`;
+  }
+
   // ---------- likes: one per visitor (cookie + localStorage), counted by the likes API ----------
   function visitorId() {
     let id = null;
@@ -154,5 +168,5 @@
     }
   });
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, day, ago, when, player, likes };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, day, ago, when, player, likes };
 })();

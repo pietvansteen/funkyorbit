@@ -357,9 +357,10 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
 @media (max-width: 480px) { .pair { grid-template-columns: 1fr; } .pair-label { margin-top: 4px; } }
 
 /* ---------- pop-up with the video of a thrown pattern ---------- */
-.pat.done { cursor: pointer; }
+.pat { cursor: pointer; }
+.pat:hover { box-shadow: 0 0 0 1px var(--line); }
 .pat.done:hover { box-shadow: 0 0 0 1px var(--done); }
-.pat.done:focus-visible { outline: 2px solid var(--club); outline-offset: 2px; }
+.pat:focus-visible { outline: 2px solid var(--club); outline-offset: 2px; }
 .modal {
   width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: var(--radius);
   background: transparent; color: var(--ink); overflow: visible;
@@ -430,3 +431,38 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .stat-groups .stat-grid { grid-template-columns: 1fr; gap: 12px; }
 .stat-grid .sub { order: 3; font-size: 13px; color: var(--ink); opacity: .8; }
 @media (max-width: 560px) { .stat-groups .stat-grid dd { font-size: 17px; } }
+.modal-card.not-thrown .meta { padding-top: 22px; padding-right: 56px; }
+.not-yet { justify-self: start; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 4px 10px; }
+.pop-diff { position: relative; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.pop-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.pop-diff .tip-text { right: auto; left: 0; }
+
+/* ---------- home: date filter, pages of videos, YouTube link ---------- */
+.feed-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: -6px 0 18px; }
+.date-pick {
+  display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--muted);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 99px;
+}
+.date-pick:focus-within { border-color: var(--orbit); }
+.date-pick select { all: unset; padding: 10px 2px; color: var(--ink); font: 500 16px/1.2 var(--f-body); cursor: pointer; max-width: 260px; }
+.date-pick select option, .date-pick select optgroup { background: var(--surface); color: var(--ink); }
+.date-range { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+.date-range input {
+  padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  font: 500 16px/1.2 var(--f-body);
+}
+.feed { margin-bottom: 16px; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; }
+.page-btn {
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+.page-btn:hover:not(:disabled) { border-color: var(--orbit); color: var(--orbit); }
+.page-btn:disabled { opacity: .35; cursor: default; }
+.yt-link { margin: 0 0 56px; text-align: center; }
+.yt-link a {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 99px;
+  border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px;
+}
+.yt-link a svg { color: #ff3b30; }
+.yt-link a:hover { border-color: var(--orbit); }

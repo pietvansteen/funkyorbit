@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, updated } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, difficulty, updated } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, lo: 0.5, hi: 5 };
@@ -64,17 +64,6 @@
     });
   }
 
-  // The score behind the stars, with a short explanation on hover (or tap on a phone).
-  function scoreTip(p) {
-    const max = Math.max(...PATTERNS.map((x) => x.score || 0));
-    return `<span class="score tip" tabindex="0" aria-describedby="score-tip">${half(p.stars)} ★ · ${p.score}
-      <span class="tip-text" id="score-tip" role="tooltip"><b>Difficulty score ${p.score}</b>
-        It adds up how hard the throws are (more spins and more passes are harder; selfs and zips give a moment of rest)
-        plus extra points for tricky combinations, such as a dragon (9 then 5), a 5 next to a triple, or two triples in a row.
-        Our patterns go from about 1 (easiest) to ${Math.ceil(max)} (hardest).
-        The stars group the scores: ½ ★ below 4.5, half a star more for every 1.5 points, and 5 ★ from 17.</span></span>`;
-  }
-
   function show(p) {
     const box = $("#pick");
     if (!p) {
@@ -85,7 +74,6 @@
     const hidden = opts.hide && !revealed;
     const colors = hidden ? null : p.colors;
     const pat = p.ss ? siteswap(p.ss, "xl", colors) : syncPattern(p.a, p.b, "xl", colors, true);
-    const pct = p.stars != null ? (p.stars / 5) * 100 : 0;
     const cat = p.kind === "Sync" ? "Sync" : `${p.kind} · period ${p.period}`;
     box.innerHTML = `
       <div class="pick-pat${hidden ? " hidden-colors" : ""}"${hidden ? ' role="button" tabindex="0" data-reveal aria-label="Show the club colours"' : ""}>${pat}</div>
@@ -95,7 +83,7 @@
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>
         <div><dt>Category</dt><dd>${esc(cat)}</dd></div>
         <div><dt>Difficulty</dt><dd>${p.stars != null
-          ? `<span class="stars" style="--pct:${pct}%" role="img" aria-label="${p.stars} out of 5 stars"></span> ${scoreTip(p)}`
+          ? difficulty(p, Math.max(...PATTERNS.map((x) => x.score || 0)))
           : "–"}</dd></div>
       </dl>`;
   }
