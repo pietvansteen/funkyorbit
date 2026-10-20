@@ -402,6 +402,10 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .ss.sync .jug.named { display: inline-flex; flex-direction: column; gap: 4px; }
 .ss.sync .jug.named .jug-throws { display: inline-flex; gap: inherit; gap: 4px; }
 .ss.sync .jug.named small { font: 600 12px/1.2 var(--f-body); color: var(--muted); letter-spacing: 0; padding-left: 10px; }
+/* room between the juggler names and what follows (family, category, …) */
+.pick-pat { margin-bottom: 14px; }
+.pick-pat:has(.jug.named) { padding-bottom: 8px; }
+.title:has(.jug.named) { padding-bottom: 8px; }
 .ss.sync .jug.named:first-child small { padding-left: 0; }
 .pick-pat.hidden-colors { cursor: pointer; }
 .pick-pat.hidden-colors:focus-visible { outline: 2px solid var(--club); outline-offset: 4px; border-radius: 8px; }
