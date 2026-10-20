@@ -19,13 +19,24 @@
     return `<span class="ss ${size}" aria-label="siteswap ${esc(ss)}">${boxes([...ss], colors)}</span>`;
   }
 
-  // Sync pattern: juggler A | juggler B, throws like "4p" in one box.
-  function syncPattern(a, b, size, colors) {
+  // Who throws which part of a sync pattern: juggler A is on the left in our videos, B on the right.
+  const JUGGLERS = ["Mees · left", "Piet · right"];
+
+  // Sync pattern: juggler A | juggler B, throws like "4p" in one box. With `named`, each part gets its juggler.
+  function syncPattern(a, b, size, colors, named) {
     const ta = a.toLowerCase().match(SYNC_THROW) || [a];
     const tb = (b || "").toLowerCase().match(SYNC_THROW) || [];
-    return `<span class="ss sync ${size}" aria-label="sync ${esc(a)} ${esc(b)}"><span class="jug">${boxes(ta, colors && colors[0])}</span>` +
-      (tb.length ? `<span class="jug"><i class="sep" aria-hidden="true"></i>${boxes(tb, colors && colors[1])}</span>` : "") + `</span>`;
+    const part = (t, c, i) => {
+      const body = `${i ? '<i class="sep" aria-hidden="true"></i>' : ""}${boxes(t, c)}`;
+      return named
+        ? `<span class="jug named"><span class="jug-throws">${body}</span><small>${JUGGLERS[i]}</small></span>`
+        : `<span class="jug">${body}</span>`;
+    };
+    return `<span class="ss sync ${size}" aria-label="sync ${esc(a)} ${esc(b)}">${part(ta, colors && colors[0], 0)}` +
+      (tb.length ? part(tb, colors && colors[1], 1) : "") + `</span>`;
   }
+
+  const SYNC_NOTE = `<p class="sync-note"><b>Sync:</b> mind who stands where. The first part is thrown by the juggler on the <b>left</b> in the video (Mees), the second part by the juggler on the <b>right</b> (Piet).</p>`;
 
   // A siteswap is cyclic, so 6966 also finds 9666: search in the pattern written twice.
   function cyclicIncludes(ss, q) {
@@ -130,5 +141,5 @@
     }
   });
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, when, player, likes };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, SYNC_NOTE, cyclicIncludes, updated, stars, when, player, likes };
 })();

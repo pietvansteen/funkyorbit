@@ -2,10 +2,12 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, when, player, likes } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, SYNC_NOTE, cyclicIncludes, updated, stars, when, player, likes } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
+  const userOpen = new Set([0]); // families the visitor opened (by number); the first one starts open
+  const filtering = () => !!query.trim() || colorFilter.size > 0;
   const DONE = new Map(); // key -> the Done row to show: the newest with a video, else the newest
   let query = "";
   const colorFilter = new Set();
@@ -46,7 +48,8 @@
       const keys = new Map(idx.map((i) => [ITEMS[i].key, ITEMS[i].done]));
       return { done: [...keys.values()].filter(Boolean).length, total: keys.size };
     };
-    let html = "";
+    let html = "", famNr = 0;
+    const chev = `<svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
     for (const [kind, fams] of kinds) {
       const c = count([...fams.values()].flat());
       html += `<section class="kind" data-kind="${esc(kind)}"><div class="section-head"><h2>${esc(kind)}</h2><span class="label">${c.done} / ${c.total} done</span></div>`;
@@ -54,8 +57,10 @@
         const f = count(idx);
         // all chips in a family get the width of its longest pattern
         const width = Math.max(...idx.map((i) => throwWidth(ITEMS[i])));
-        html += `<div class="fam-block"><h3>${esc(fam)} <span>${f.done} / ${f.total}</span></h3>
-          <ul class="pats" style="--w:${width}">${idx.map((i) => chip(ITEMS[i], i)).join("")}</ul></div>`;
+        const nr = famNr++;
+        html += `<details class="fam-block" data-fam="${nr}"${userOpen.has(nr) ? " open" : ""}>
+          <summary><h3>${esc(fam)} <span>${f.done} / ${f.total} ${chev}</span></h3></summary>
+          <ul class="pats" style="--w:${width}">${idx.map((i) => chip(ITEMS[i], i)).join("")}</ul></details>`;
       }
       html += `</section>`;
     }
@@ -90,6 +95,11 @@
     document.querySelectorAll(".fam-block, .kind").forEach((el) => {
       el.hidden = !el.querySelector(".pat:not([hidden])");
     });
+    // searching or filtering opens every family with a result; without a filter the visitor's own choice is back
+    document.querySelectorAll(".fam-block").forEach((el) => {
+      el.open = active ? !el.hidden : userOpen.has(+el.dataset.fam);
+    });
+    updateToggleAll();
     const total = new Set(ITEMS.map((p) => p.key)).size;
     $("#count").textContent = active ? `${fmt.format(shownKeys.size)} of ${fmt.format(total)} patterns` : `${fmt.format(total)} patterns`;
     $("#reset").hidden = !active;
@@ -120,10 +130,11 @@
         ${video}
         <div class="meta">
           <div class="meta-top">
-            <div class="title" id="modal-title">${siteswap(p.siteswap, "lg", (item && item.colors) || p.colors)}${p.name || (item && item.name) ? `<span class="pname">${esc(p.name || item.name)}</span>` : ""}</div>
+            <div class="title" id="modal-title">${item && item.kind === "Sync" ? syncPattern(item.a, item.b, "lg", item.colors, true) : siteswap(p.siteswap, "lg", (item && item.colors) || p.colors)}${p.name || (item && item.name) ? `<span class="pname">${esc(p.name || item.name)}</span>` : ""}</div>
             ${p.youtubeId ? likes.button(p.youtubeId) : ""}
           </div>
           <span class="fam">${esc(p.family)}</span>
+          ${item && item.kind === "Sync" ? SYNC_NOTE : ""}
           <div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>
         </div>
       </article>`;
@@ -143,6 +154,32 @@
   document.addEventListener("keydown", (ev) => {
     const el = ev.target.closest && ev.target.closest("[data-open]");
     if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openModal(el.dataset.open); }
+  });
+
+  function updateToggleAll() {
+    const shown = [...document.querySelectorAll(".fam-block:not([hidden])")];
+    const allOpen = shown.length > 0 && shown.every((el) => el.open);
+    const btn = $("#toggle-all");
+    btn.textContent = allOpen ? "Collapse all" : "Expand all";
+    btn.setAttribute("aria-expanded", String(allOpen));
+  }
+
+  // remember what the visitor opens or closes (not what a search opened)
+  $("#list").addEventListener("toggle", (ev) => {
+    const el = ev.target;
+    if (!el.classList || !el.classList.contains("fam-block")) return;
+    if (!filtering()) el.open ? userOpen.add(+el.dataset.fam) : userOpen.delete(+el.dataset.fam);
+    updateToggleAll();
+  }, true);
+
+  $("#toggle-all").addEventListener("click", () => {
+    const shown = [...document.querySelectorAll(".fam-block:not([hidden])")];
+    const open = !shown.every((el) => el.open);
+    shown.forEach((el) => {
+      el.open = open;
+      if (!filtering()) open ? userOpen.add(+el.dataset.fam) : userOpen.delete(+el.dataset.fam);
+    });
+    updateToggleAll();
   });
 
   function reset() {

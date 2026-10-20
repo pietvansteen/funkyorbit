@@ -2,10 +2,10 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, updated } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, SYNC_NOTE, updated } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
-  const DEFAULTS = { period: "any", sync: false, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, lo: 0.5, hi: 5 };
+  const DEFAULTS = { period: "any", sync: false, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, lo: 0.5, hi: 5 };
   const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" };
   let opts = { ...DEFAULTS };
   try { opts = { ...DEFAULTS, ...JSON.parse(localStorage.getItem("fo_gen") || "{}") }; } catch (e) {}
@@ -17,6 +17,7 @@
   let PATTERNS = []; // one entry per unique pattern (key), with all its families
   let lastFilmed = null;
   let current = null;
+  let revealed = false; // colours shown for this pick although "Hide colours" is on
 
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
@@ -66,11 +67,16 @@
       box.innerHTML = `<p class="empty">No pattern left with these options. Try another period, colour or difficulty.</p>`;
       return;
     }
-    const pat = p.ss ? siteswap(p.ss, "xl", p.colors) : syncPattern(p.a, p.b, "xl", p.colors);
+    // with "Hide colours" the digits are grey until you reveal them (to work out the orbits yourself)
+    const hidden = opts.hide && !revealed;
+    const colors = hidden ? null : p.colors;
+    const pat = p.ss ? siteswap(p.ss, "xl", colors) : syncPattern(p.a, p.b, "xl", colors, true);
     const pct = p.stars != null ? (p.stars / 5) * 100 : 0;
     const cat = p.kind === "Sync" ? "Sync" : `${p.kind} · period ${p.period}`;
     box.innerHTML = `
-      <div class="pick-pat">${pat}</div>
+      <div class="pick-pat${hidden ? " hidden-colors" : ""}"${hidden ? ' role="button" tabindex="0" data-reveal aria-label="Show the club colours"' : ""}>${pat}</div>
+      ${hidden ? `<button type="button" class="reset reveal" data-reveal>Show colours</button>` : ""}
+      ${p.kind === "Sync" ? SYNC_NOTE : ""}
       ${p.name ? `<p class="pick-name">${esc(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
       <dl class="pick-meta">
@@ -87,6 +93,7 @@
     let options = pool;
     if (current && pool.length > 1) options = pool.filter((p) => p.key !== current.key); // never the same twice in a row
     current = options.length ? options[Math.floor(Math.random() * options.length)] : null;
+    revealed = false;
     show(current);
     $("#pick-note").hidden = true;
   }
@@ -101,6 +108,7 @@
     $("#sync").checked = opts.sync;
     $("#skipfam").checked = opts.skipfam;
     $("#skipdone").checked = opts.skipdone;
+    $("#hide").checked = opts.hide;
     $("#sync-note").textContent = opts.sync && opts.period !== "any"
       ? "Sync patterns are only picked with period Any."
       : "Sync patterns can be picked too (with period Any).";
@@ -136,13 +144,20 @@
       changed();
       return;
     }
-    if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; changed(); return; }
+    if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; changed(); show(current); return; }
     if (ev.target.closest("#draw")) { draw(); return; }
+    if (ev.target.closest("[data-reveal]")) { revealed = true; show(current); return; }
     if (ev.target.closest("#stars-reset")) { opts.lo = 0.5; opts.hi = 5; changed(); }
+  });
+  document.addEventListener("keydown", (ev) => {
+    if ((ev.key === "Enter" || ev.key === " ") && ev.target.closest && ev.target.closest(".pick-pat[data-reveal]")) {
+      ev.preventDefault(); revealed = true; show(current);
+    }
   });
   $("#sync").addEventListener("change", (ev) => { opts.sync = ev.target.checked; changed(); });
   $("#skipfam").addEventListener("change", (ev) => { opts.skipfam = ev.target.checked; changed(); });
   $("#skipdone").addEventListener("change", (ev) => { opts.skipdone = ev.target.checked; changed(); });
+  $("#hide").addEventListener("change", (ev) => { opts.hide = ev.target.checked; revealed = false; changed(); show(current); });
   for (const id of ["lo", "hi"]) {
     $("#" + id).addEventListener("input", (ev) => {
       let v = parseFloat(ev.target.value);

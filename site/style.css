@@ -387,3 +387,23 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .release ul { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 4px; }
 .release li { line-height: 1.5; }
 .pick-note { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--club-soft); color: var(--ink); font-size: 14px; }
+
+/* ---------- all patterns: families fold open and closed ---------- */
+.fam-block summary { list-style: none; cursor: pointer; }
+.fam-block summary::-webkit-details-marker { display: none; }
+.fam-block summary h3 { margin-bottom: 0; }
+.fam-block[open] summary h3 { margin-bottom: 10px; }
+.fam-block summary h3 span { display: inline-flex; align-items: center; gap: 8px; }
+.fam-block[open] .chev { transform: rotate(180deg); }
+.fam-block summary:focus-visible { outline: 2px solid var(--club); outline-offset: 4px; border-radius: 6px; }
+.toolbar #toggle-all { margin-left: auto; }
+
+/* ---------- sync parts with their juggler; hidden colours ---------- */
+.ss.sync .jug.named { display: inline-flex; flex-direction: column; gap: 4px; }
+.ss.sync .jug.named .jug-throws { display: inline-flex; gap: inherit; gap: 4px; }
+.ss.sync .jug.named small { font: 600 12px/1.2 var(--f-body); color: var(--muted); letter-spacing: 0; padding-left: 10px; }
+.ss.sync .jug.named:first-child small { padding-left: 0; }
+.sync-note { margin: 0; padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--star) 16%, transparent); font-size: 14px; }
+.pick-pat.hidden-colors { cursor: pointer; }
+.pick-pat.hidden-colors:focus-visible { outline: 2px solid var(--club); outline-offset: 4px; border-radius: 8px; }
+.reveal { justify-self: start; padding-left: 0; }
