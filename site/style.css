@@ -368,13 +368,18 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
 }
 .modal::backdrop { background: rgb(5 9 20 / .72); backdrop-filter: blur(2px); }
 .modal-card { max-height: calc(100dvh - 32px); overflow: auto; }
-/* the video keeps its own shape (no black bars): full width on a phone, on a wide screen next to the details */
-.modal-card .player { max-height: none; flex-shrink: 0; }
-@media (min-width: 760px) {
-  .modal:has(.player:not(.wide):not(.no-video)) { width: fit-content; max-width: calc(100vw - 32px); }
-  .modal-card:has(.player:not(.wide):not(.no-video)) { display: grid; grid-template-columns: auto 380px; }
-  .modal-card .player:not(.wide):not(.no-video) { height: min(720px, calc(100dvh - 32px)); width: auto; }
-  .modal-card:has(.player:not(.wide):not(.no-video)) .meta { align-content: start; padding-top: 64px; }
+/* In the pop-up the video sits above the details, as wide as the pop-up but not as tall: a strip at the top and
+   the bottom is cut off (nothing important there). Video and thumbnail are scaled to fill the width without
+   black bars and centred, so only top and bottom fall away. */
+.modal-card .player { flex-shrink: 0; max-height: none; }
+.modal-card .player:not(.wide):not(.no-video) { aspect-ratio: auto; height: min(580px, 60dvh); }
+.modal-card .player:not(.wide):not(.no-video) iframe {
+  inset: auto; top: 50%; left: 0; width: 100%; height: auto; aspect-ratio: 9 / 16; transform: translateY(-50%);
+}
+/* the YouTube thumbnail of a short is 4:3 with the video in the middle: scale it so that middle part fills the width */
+.modal-card .player:not(.wide):not(.no-video) img {
+  inset: auto; top: 50%; left: 50%; width: 237%; height: auto; object-fit: initial; transform: translate(-50%, -50%);
+}
 }
 .player.no-video { aspect-ratio: 16 / 9; }
 .modal-close {
@@ -571,10 +576,8 @@ footer .admin-count { color: var(--club) !important; font-weight: 600; }
    hands and "starts" under the name, so the name column stays narrow. */
 .start { container-type: inline-size; }
 @container (min-width: 520px) {
-  /* names in the middle on one line in both boxes; "starts" hangs under the name without moving it */
-  .jug-start { grid-template-columns: 62px 1fr; gap: 14px; padding: 8px 14px; }
-  .jn { position: relative; }
-  .jn .starts { position: absolute; left: 0; top: calc(100% + 4px); margin-left: 0; }
+  /* names in the middle on one line, "starts" right after Piet; both name columns equally wide so the hands line up */
+  .jug-start { grid-template-columns: 112px 1fr; gap: 12px; padding: 8px 14px; }
 }
 .modal-card .start { margin: 2px 0 0; }
 
