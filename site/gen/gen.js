@@ -20,7 +20,8 @@
   let PATTERNS = []; // one entry per unique pattern (key), with all its families
   let lastFilmed = null;
   let current = null;
-  let revealed = new Set(); // digits whose colour was tapped open while "Hide colours" is on
+  let revealed = new Set(); // digits whose colour was tapped open on the current pick
+  let pickHidden = false;    // the current pick was drawn with "Hide colours" on
 
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
@@ -71,7 +72,7 @@
       return;
     }
     // with "Hide colours" the digits are grey until you tap them open one by one (to work out the orbits yourself)
-    const hidden = opts.hide;
+    const hidden = pickHidden;
     const shown = (i) => !hidden || revealed.has(i);
     let colors = p.colors;
     if (hidden && p.colors) {
@@ -105,12 +106,14 @@
     }
   }
 
-  // tap one digit open; when every digit is open, "Hide colours" switches itself off
+  // Tap one digit open. "Hide colours" switches itself off at the first one (the next pattern comes in colour);
+  // the other digits of this pattern stay grey until you tap them too.
   function reveal(i, fromKeyboard) {
     if (!current) return;
     revealed.add(i);
+    if (opts.hide) { opts.hide = false; changed(); }
     const total = current.ss ? current.ss.length : (current.colors ? current.colors.join("").length : 0);
-    if (revealed.size >= total) { opts.hide = false; revealed = new Set(); changed(); }
+    if (revealed.size >= total) { pickHidden = false; revealed = new Set(); }
     show(current);
     const next = document.querySelector(`.pick-pat [data-digit]`);
     if (next && fromKeyboard) next.focus(); // keyboard users go on to the next grey digit
@@ -122,6 +125,7 @@
     if (current && pool.length > 1) options = pool.filter((p) => p.key !== current.key); // never the same twice in a row
     current = options.length ? options[Math.floor(Math.random() * options.length)] : null;
     revealed = new Set();
+    pickHidden = opts.hide;
     show(current);
     $("#pick-note").hidden = true;
   }
@@ -169,7 +173,7 @@
       changed();
       return;
     }
-    if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; changed(); show(current); return; }
+    if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; pickHidden = false; changed(); show(current); return; }
     if (ev.target.closest("#draw")) { draw(); return; }
     const digit = ev.target.closest("[data-digit]");
     if (digit) { reveal(+digit.dataset.digit); return; }
@@ -182,7 +186,9 @@
   });
   $("#skipfam").addEventListener("change", (ev) => { opts.skipfam = ev.target.checked; changed(); });
   $("#skipdone").addEventListener("change", (ev) => { opts.skipdone = ev.target.checked; changed(); });
-  $("#hide").addEventListener("change", (ev) => { opts.hide = ev.target.checked; revealed = new Set(); changed(); show(current); });
+  $("#hide").addEventListener("change", (ev) => {
+    opts.hide = ev.target.checked; pickHidden = opts.hide; revealed = new Set(); changed(); show(current);
+  });
   $("#hidehands").addEventListener("change", (ev) => { opts.hidehands = ev.target.checked; changed(); show(current); });
   for (const id of ["lo", "hi"]) {
     $("#" + id).addEventListener("input", (ev) => {

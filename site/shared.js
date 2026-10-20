@@ -90,7 +90,7 @@
       const cs = list.map((x) => (shown(x.i) ? x.c : ""));
       const label = `${side === "L" ? "left" : "right"} hand: ${list.length} club${list.length === 1 ? "" : "s"}` +
         (cs.some(Boolean) ? ` (${cs.map((c) => NAMES[c] || "hidden").join(", ")})` : "");
-      return `<div class="hand" aria-label="${label}"><span class="hl">${side} <b>${list.length}</b></span><span class="clubs">${cs.map(clubIcon).join("")}</span></div>`;
+      return `<div class="hand" aria-label="${label}"><span class="hl"><span>${side}</span><b>${list.length}</b></span><span class="clubs">${cs.map(clubIcon).join("")}</span></div>`;
     };
     return `<div class="start" role="group" aria-label="Start position">${jugglers.map((h, k) =>
       `<div class="jug-start"><span class="jn">Juggler ${k + 1}</span><div class="hands">${hand("L", h.L)}${hand("R", h.R)}</div></div>`).join("")}</div>`;

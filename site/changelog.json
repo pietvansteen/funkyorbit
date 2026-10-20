@@ -5,7 +5,7 @@
     "changes": [
       "Request a feature: send us your idea from the link in the footer or on this page",
       "Generator and pattern pop-up: how many clubs each juggler starts with in each hand, in their colours (juggler 1 on the left)",
-      "Generator: with Hide colours you tap the digits open one by one; when all are open, Hide colours switches off",
+      "Generator: with Hide colours you tap the digits open one by one; the first tap switches Hide colours off, so the next pattern comes in colour",
       "Generator: Hide hands, for just the siteswap",
       "Sync patterns say Juggler 1 and Juggler 2 instead of our names"
     ]
