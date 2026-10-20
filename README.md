@@ -53,10 +53,12 @@ Numbering is `MAJOR.MINOR.PATCH`:
 - **PATCH**: bug fixes and small text or style corrections.
 - Work that is not about the website (such as the Premiere template) does not go in the release notes.
 
-For every update of the site:
+**One version per release.** A release is what goes live together: everything changed during a work session, until the next `git pull` on the server. Changes made while the current version is not live yet are added to that version's list in the changelog; once it is live (the footer on funkyorbit.nl shows it), the next change starts a new version.
 
-1. Add the new version at the top of `site/changelog.json`.
-2. Run `python3 tools/release.py`. It puts that version in the footer of every page, in the `?v=` of the css/js/svg links (so browsers and Cloudflare fetch the new files) and in the cache name of the generator's service worker.
+For every change to the site:
+
+1. In `site/changelog.json`: add a line to the newest version if that version is not live yet, otherwise add a new version at the top.
+2. Run `python3 tools/release.py`. It puts the version in the footer of every page, and `?v=<version>-<code>` on the css/js/svg links and in the cache name of the generator's service worker. The code is a short hash of those files, so browsers and Cloudflare fetch the new files after every change, also when the version number stays the same.
 3. Commit and push, then `git pull` on the server.
 
 ## Testing locally without Google

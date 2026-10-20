@@ -1,17 +1,11 @@
 [
   {
-    "version": "1.1.2",
-    "date": "2026-10-20",
-    "changes": [
-      "Generator: on a wide screen the throws are in one row, from 2 to b"
-    ]
-  },
-  {
     "version": "1.1.1",
     "date": "2026-10-20",
     "changes": [
       "Generator: changing the options no longer replaces the pattern you drew; only Draw again picks a new one",
-      "No more zooming on phones (pinch, double tap, or when tapping the search box)"
+      "No more zooming on phones (pinch, double tap, or when tapping the search box)",
+      "Generator: on a wide screen the throws are in one row, from 2 to b"
     ]
   },
   {
