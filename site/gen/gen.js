@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, SYNC_NOTE, updated } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, updated } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   const DEFAULTS = { period: "any", sync: false, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, lo: 0.5, hi: 5 };
@@ -76,7 +76,6 @@
     box.innerHTML = `
       <div class="pick-pat${hidden ? " hidden-colors" : ""}"${hidden ? ' role="button" tabindex="0" data-reveal aria-label="Show the club colours"' : ""}>${pat}</div>
       ${hidden ? `<button type="button" class="reset reveal" data-reveal>Show colours</button>` : ""}
-      ${p.kind === "Sync" ? SYNC_NOTE : ""}
       ${p.name ? `<p class="pick-name">${esc(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
       <dl class="pick-meta">

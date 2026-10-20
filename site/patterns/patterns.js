@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, SYNC_NOTE, cyclicIncludes, updated, stars, when, player, likes } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, when, player, likes } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
@@ -134,7 +134,6 @@
             ${p.youtubeId ? likes.button(p.youtubeId) : ""}
           </div>
           <span class="fam">${esc(p.family)}</span>
-          ${item && item.kind === "Sync" ? SYNC_NOTE : ""}
           <div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>
         </div>
       </article>`;

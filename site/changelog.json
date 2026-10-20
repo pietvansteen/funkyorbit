@@ -4,7 +4,7 @@
     "date": "2026-10-20",
     "changes": [
       "All patterns: families fold open and closed, with Expand all / Collapse all; searching or filtering opens the families with results",
-      "Generator: sync patterns show who throws which part (Mees on the left, Piet on the right) with a reminder to stand right",
+      "Generator: sync patterns show who throws which part (Mees on the left, Piet on the right)",
       "Generator: \"Hide colours\" keeps the digits grey so you can work out the orbits yourself; tap the pattern to check"
     ]
   },

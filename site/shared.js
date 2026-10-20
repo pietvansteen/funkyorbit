@@ -36,7 +36,6 @@
       (tb.length ? part(tb, colors && colors[1], 1) : "") + `</span>`;
   }
 
-  const SYNC_NOTE = `<p class="sync-note"><b>Sync:</b> mind who stands where. The first part is thrown by the juggler on the <b>left</b> in the video (Mees), the second part by the juggler on the <b>right</b> (Piet).</p>`;
 
   // A siteswap is cyclic, so 6966 also finds 9666: search in the pattern written twice.
   function cyclicIncludes(ss, q) {
@@ -141,5 +140,5 @@
     }
   });
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, SYNC_NOTE, cyclicIncludes, updated, stars, when, player, likes };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, when, player, likes };
 })();
