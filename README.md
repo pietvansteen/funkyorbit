@@ -12,10 +12,11 @@ visitors ──like──> likes API ──> data/likes.db ─────┘
 
 | Folder | What |
 |---|---|
-| `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats), `gen/` (pattern generator, installable as an app and usable offline), `shared.js`, `style.css`, icons |
+| `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats), `gen/` (pattern generator, installable as an app and usable offline), `changes/` (release notes), `shared.js`, `style.css`, icons |
 | `sync/sync.py` | Fetches the Sheet tabs as CSV and writes `data/data.json` |
 | `likes/likes.py` | Small API that stores likes in SQLite (one like per visitor per video, via a cookie) |
 | `web/nginx.conf` | Serves the site and `data.json`, and forwards `/api/` to the likes API |
+| `tools/release.py` | Puts the newest version from `site/changelog.json` in the footer, the asset links and the service worker |
 | `docker-compose.yml` | Runs everything with Docker Compose, plus a Cloudflare Tunnel |
 
 No pip packages needed: everything runs on standard Python.
@@ -40,6 +41,23 @@ docker compose up -d
 ```
 
 The site is then available on port 8088. In the Cloudflare Tunnel, point the public hostname to `http://web:80`. After `git pull`, changes in `site/` are live right away; restart the containers after changes to `sync.py` or `likes.py`.
+
+## Versions and release notes
+
+The footer of every page shows the live version with a link to **What's new** (`/changes/`). The only source is `site/changelog.json`: newest version first, each with a date and a short list of changes in English.
+
+Numbering is `MAJOR.MINOR.PATCH`:
+
+- **MAJOR**: a milestone, a big set of new pages or features that changes the site substantially. Everything before the complete site (overview, stats and generator) was 0.x; the complete site is 1.0.0.
+- **MINOR**: new features or visible changes, bundled per work session (commits without a long pause in between).
+- **PATCH**: bug fixes and small text or style corrections.
+- Work that is not about the website (such as the Premiere template) does not go in the release notes.
+
+For every update of the site:
+
+1. Add the new version at the top of `site/changelog.json`.
+2. Run `python3 tools/release.py`. It puts that version in the footer of every page, in the `?v=` of the css/js/svg links (so browsers and Cloudflare fetch the new files) and in the cache name of the generator's service worker.
+3. Commit and push, then `git pull` on the server.
 
 ## Testing locally without Google
 

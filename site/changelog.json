@@ -1,0 +1,62 @@
+[
+  {
+    "version": "1.1.0",
+    "date": "2026-10-20",
+    "changes": [
+      "New logo: clubs with crossing handles (favicon and app icons too)",
+      "The site is now always dark, whatever your browser or phone prefers",
+      "Version number and \"What's new\" in the footer, with these release notes"
+    ]
+  },
+  {
+    "version": "1.0.1",
+    "date": "2026-10-19",
+    "changes": [
+      "Removed the grey border around white club boxes"
+    ]
+  },
+  {
+    "version": "1.0.0",
+    "date": "2026-10-19",
+    "changes": [
+      "New page: all 913 patterns, with done patterns marked, search and a colour filter",
+      "New page: funny stats from our spreadsheet",
+      "New: pattern generator that picks our next pattern, with difficulty, period, colour and throw filters; installable as an app and works offline",
+      "Video pop-up for patterns we have thrown",
+      "New menu: Progress, Stats, All patterns, Generator"
+    ]
+  },
+  {
+    "version": "0.3.0",
+    "date": "2026-10-19",
+    "changes": [
+      "Siteswaps shown in our real club colours",
+      "Club logo and favicon",
+      "Search in the video feed",
+      "New intro text, with a link to James Francis' list",
+      "Compact category tiles"
+    ]
+  },
+  {
+    "version": "0.2.1",
+    "date": "2026-10-19",
+    "changes": [
+      "Fixed categories that would not collapse"
+    ]
+  },
+  {
+    "version": "0.2.0",
+    "date": "2026-10-19",
+    "changes": [
+      "The site is now in English",
+      "funkyorbit.nl is online"
+    ]
+  },
+  {
+    "version": "0.1.0",
+    "date": "2026-10-18",
+    "changes": [
+      "First version: our progress through the patterns, per category, and a feed with our videos"
+    ]
+  }
+]
