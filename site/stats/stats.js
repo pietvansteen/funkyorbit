@@ -45,7 +45,7 @@
     const rest = b.rows.filter((r) => !used.has(r[0].trim().toLowerCase()));
     if (rest.length) groups.push(["More", rest.map((r) => item(r[0], esc(niceValue(r[1] ?? ""))))]);
     return `<div class="stat-card wide"><div class="stat-groups">${groups.map(([title, items, raw]) =>
-      `<section${raw ? ' class="dates"' : ""}><h3>${esc(title)}</h3>${raw ? items : `<dl class="stat-grid">${items.join("")}</dl>`}</section>`).join("")}</div></div>`;
+      `<section class="grp-${esc(title.toLowerCase().replace(/[^a-z]+/g, "-"))}${raw ? " dates" : ""}"><h3>${esc(title)}</h3>${raw ? items : `<dl class="stat-grid">${items.join("")}</dl>`}</section>`).join("")}</div></div>`;
   }
 
   // Each date on its own row: label, date (never broken), extra info after it

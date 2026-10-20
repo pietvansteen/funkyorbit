@@ -472,7 +472,14 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .date-rows .dl { font-size: 13px; color: var(--muted); }
 .date-rows .dv { font: 600 16px/1.3 var(--f-body); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .date-rows .dx { font-size: 13px; color: var(--ink); opacity: .8; }
-@media (min-width: 900px) { .stat-groups section.dates { grid-column: span 2; } }
+@media (min-width: 900px) {
+  .stat-groups { grid-template-columns: 1fr 1fr 1.7fr; }
+  /* on a wide screen: Patterns, Recording days, then the dates (which take two columns) */
+  .stat-groups .grp-patterns { order: 0; }
+  .stat-groups .grp-recording-days { order: 1; }
+  .stat-groups .grp-dates { order: 2; }
+  .stat-groups .grp-more { order: 3; }
+}
 @media (max-width: 420px) {
   .date-rows { grid-template-columns: auto 1fr; row-gap: 2px; }
   .date-rows .dl { margin-top: 8px; }

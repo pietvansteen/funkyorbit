@@ -22,14 +22,16 @@
   // Who throws which part of a sync pattern: the first part is juggler 1, the second juggler 2.
   const JUGGLERS = ["Juggler 1", "Juggler 2"];
 
-  // Sync pattern: juggler A | juggler B, throws like "4p" in one box. With `named`, each part gets its juggler.
+  // Sync pattern: juggler A | juggler B, throws like "4p" in one box. With `named`, each part gets its juggler:
+  // true for "Juggler 1" / "Juggler 2", or a pair of names.
   function syncPattern(a, b, size, colors, named) {
+    const names = Array.isArray(named) ? named : JUGGLERS;
     const ta = a.toLowerCase().match(SYNC_THROW) || [a];
     const tb = (b || "").toLowerCase().match(SYNC_THROW) || [];
     const part = (t, c, i) => {
       const body = `${i ? '<i class="sep" aria-hidden="true"></i>' : ""}${boxes(t, c)}`;
       return named
-        ? `<span class="jug named"><span class="jug-throws">${body}</span><small>${JUGGLERS[i]}</small></span>`
+        ? `<span class="jug named"><span class="jug-throws">${body}</span><small>${esc(names[i])}</small></span>`
         : `<span class="jug">${body}</span>`;
     };
     return `<span class="ss sync ${size}" aria-label="sync ${esc(a)} ${esc(b)}">${part(ta, colors && colors[0], 0)}` +

@@ -80,7 +80,8 @@
         ? [...p.colors].map((c, i) => (shown(i) ? c : " ")).join("")
         : p.colors.map((code, j) => [...code].map((c, i) => (shown(j * code.length + i) ? c : " ")).join(""));
     }
-    const pat = p.ss ? siteswap(p.ss, "xl", colors) : syncPattern(p.a, p.b, "xl", colors, true);
+    // our own names under the two parts of a sync pattern: Mees throws the first part (left), Piet the second (right)
+    const pat = p.ss ? siteswap(p.ss, "xl", colors) : syncPattern(p.a, p.b, "xl", colors, ["Mees", "Piet"]);
     const cat = p.kind === "Sync" ? "Sync" : `${p.kind} · period ${p.period}`;
     box.innerHTML = `
       <div class="pick-pat${hidden ? " hidden-colors" : ""}">${pat}</div>
