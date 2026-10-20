@@ -4,7 +4,10 @@
     "date": "2026-10-20",
     "changes": [
       "Request a feature: send us your idea from the link in the footer or on this page",
-      "Generator and pattern pop-up: how many clubs each of us starts with in each hand, in their colours (Mees left, Piet right)"
+      "Generator and pattern pop-up: how many clubs each juggler starts with in each hand, in their colours (juggler 1 on the left)",
+      "Generator: with Hide colours you tap the digits open one by one; when all are open, Hide colours switches off",
+      "Generator: Hide hands, for just the siteswap",
+      "Sync patterns say Juggler 1 and Juggler 2 instead of our names"
     ]
   },
   {

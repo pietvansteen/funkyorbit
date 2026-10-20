@@ -5,7 +5,7 @@
   const { esc, fmt, siteswap, syncPattern, difficulty, startHtml, updated } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
-  const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, lo: 0.5, hi: 5 };
+  const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, hidehands: false, lo: 0.5, hi: 5 };
   const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" };
   let opts = { ...DEFAULTS };
   try { opts = { ...DEFAULTS, ...JSON.parse(localStorage.getItem("fo_gen") || "{}") }; } catch (e) {}
@@ -20,7 +20,7 @@
   let PATTERNS = []; // one entry per unique pattern (key), with all its families
   let lastFilmed = null;
   let current = null;
-  let revealed = false; // colours shown for this pick although "Hide colours" is on
+  let revealed = new Set(); // digits whose colour was tapped open while "Hide colours" is on
 
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
@@ -70,16 +70,22 @@
       box.innerHTML = `<p class="empty">No pattern left with these options. Try another period, colour or difficulty.</p>`;
       return;
     }
-    // with "Hide colours" the digits are grey until you reveal them (to work out the orbits yourself)
-    const hidden = opts.hide && !revealed;
-    const colors = hidden ? null : p.colors;
+    // with "Hide colours" the digits are grey until you tap them open one by one (to work out the orbits yourself)
+    const hidden = opts.hide;
+    const shown = (i) => !hidden || revealed.has(i);
+    let colors = p.colors;
+    if (hidden && p.colors) {
+      colors = p.ss
+        ? [...p.colors].map((c, i) => (shown(i) ? c : " ")).join("")
+        : p.colors.map((code, j) => [...code].map((c, i) => (shown(j * code.length + i) ? c : " ")).join(""));
+    }
     const pat = p.ss ? siteswap(p.ss, "xl", colors) : syncPattern(p.a, p.b, "xl", colors, true);
     const cat = p.kind === "Sync" ? "Sync" : `${p.kind} · period ${p.period}`;
     box.innerHTML = `
-      <div class="pick-pat${hidden ? " hidden-colors" : ""}"${hidden ? ' role="button" tabindex="0" data-reveal aria-label="Show the club colours"' : ""}>${pat}</div>
+      <div class="pick-pat${hidden ? " hidden-colors" : ""}">${pat}</div>
       ${p.name ? `<p class="pick-name">${esc(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
-      ${startHtml(p, hidden)}
+      ${opts.hidehands ? "" : startHtml(p, shown)}
       <dl class="pick-meta">
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>
         <div><dt>Category</dt><dd>${esc(cat)}</dd></div>
@@ -87,6 +93,27 @@
           ? difficulty(p, Math.max(...PATTERNS.map((x) => x.score || 0)))
           : "–"}</dd></div>
       </dl>`;
+    if (hidden) {
+      // every grey digit can be tapped (or chosen with the keyboard) to show its colour
+      box.querySelectorAll(".pick-pat .ss b").forEach((b, i) => {
+        if (revealed.has(i)) return;
+        b.dataset.digit = i;
+        b.setAttribute("role", "button");
+        b.setAttribute("tabindex", "0");
+        b.setAttribute("aria-label", `Show the colour of ${b.textContent}`);
+      });
+    }
+  }
+
+  // tap one digit open; when every digit is open, "Hide colours" switches itself off
+  function reveal(i, fromKeyboard) {
+    if (!current) return;
+    revealed.add(i);
+    const total = current.ss ? current.ss.length : (current.colors ? current.colors.join("").length : 0);
+    if (revealed.size >= total) { opts.hide = false; revealed = new Set(); changed(); }
+    show(current);
+    const next = document.querySelector(`.pick-pat [data-digit]`);
+    if (next && fromKeyboard) next.focus(); // keyboard users go on to the next grey digit
   }
 
   function draw() {
@@ -94,7 +121,7 @@
     let options = pool;
     if (current && pool.length > 1) options = pool.filter((p) => p.key !== current.key); // never the same twice in a row
     current = options.length ? options[Math.floor(Math.random() * options.length)] : null;
-    revealed = false;
+    revealed = new Set();
     show(current);
     $("#pick-note").hidden = true;
   }
@@ -109,6 +136,7 @@
     $("#skipfam").checked = opts.skipfam;
     $("#skipdone").checked = opts.skipdone;
     $("#hide").checked = opts.hide;
+    $("#hidehands").checked = opts.hidehands;
     $("#lo").value = opts.lo;
     $("#hi").value = opts.hi;
     const full = opts.lo <= 0.5 && opts.hi >= 5;
@@ -143,17 +171,19 @@
     }
     if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; changed(); show(current); return; }
     if (ev.target.closest("#draw")) { draw(); return; }
-    if (ev.target.closest("[data-reveal]")) { revealed = true; show(current); return; }
+    const digit = ev.target.closest("[data-digit]");
+    if (digit) { reveal(+digit.dataset.digit); return; }
     if (ev.target.closest("#stars-reset")) { opts.lo = 0.5; opts.hi = 5; changed(); }
   });
   document.addEventListener("keydown", (ev) => {
-    if ((ev.key === "Enter" || ev.key === " ") && ev.target.closest && ev.target.closest(".pick-pat[data-reveal]")) {
-      ev.preventDefault(); revealed = true; show(current);
+    if ((ev.key === "Enter" || ev.key === " ") && ev.target.closest && ev.target.closest("[data-digit]")) {
+      ev.preventDefault(); reveal(+ev.target.closest("[data-digit]").dataset.digit, true);
     }
   });
   $("#skipfam").addEventListener("change", (ev) => { opts.skipfam = ev.target.checked; changed(); });
   $("#skipdone").addEventListener("change", (ev) => { opts.skipdone = ev.target.checked; changed(); });
-  $("#hide").addEventListener("change", (ev) => { opts.hide = ev.target.checked; revealed = false; changed(); show(current); });
+  $("#hide").addEventListener("change", (ev) => { opts.hide = ev.target.checked; revealed = new Set(); changed(); show(current); });
+  $("#hidehands").addEventListener("change", (ev) => { opts.hidehands = ev.target.checked; changed(); show(current); });
   for (const id of ["lo", "hi"]) {
     $("#" + id).addEventListener("input", (ev) => {
       let v = parseFloat(ev.target.value);

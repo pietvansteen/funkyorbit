@@ -410,8 +410,6 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .pick-pat:has(.jug.named) { padding-bottom: 8px; }
 .title:has(.jug.named) { padding-bottom: 8px; }
 .ss.sync .jug.named:first-child small { padding-left: 0; }
-.pick-pat.hidden-colors { cursor: pointer; }
-.pick-pat.hidden-colors:focus-visible { outline: 2px solid var(--club); outline-offset: 4px; border-radius: 8px; }
 
 /* ---------- explanation of the difficulty score ---------- */
 /* the tooltip hangs under the whole details block (right-aligned), so it stays inside the card on a phone */
@@ -550,6 +548,12 @@ footer .admin-count { color: var(--club) !important; font-weight: 600; }
 .hand { display: grid; gap: 4px; justify-items: start; }
 .hl { font-size: 12px; color: var(--muted); }
 .hl b { color: var(--ink); font-size: 14px; }
-.clubs { display: flex; gap: 4px; min-height: 37px; align-items: flex-end; }
-.club-ic { width: 13px; height: 37px; }
+.clubs { display: flex; gap: 3px; min-height: 44px; align-items: flex-end; }
+.club-ic { width: 8px; height: 44px; }
 .modal-card .start { margin: 2px 0 0; }
+
+/* ---------- generator: tap digits open one by one; two checkboxes side by side ---------- */
+.pick-pat [data-digit] { cursor: pointer; }
+.pick-pat [data-digit]:hover { box-shadow: inset 0 0 0 2px var(--muted); }
+.pick-pat [data-digit]:focus-visible { outline: 2px solid var(--club); outline-offset: 2px; }
+.opt-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px 24px; }
