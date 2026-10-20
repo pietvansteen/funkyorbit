@@ -21,7 +21,13 @@
       <div class="hero-body">
       <div class="intro">
         <p>We are passing all ${fmt.format(d.total)} club patterns from James Francis' <a href="https://docs.google.com/spreadsheets/d/1NpMVAcPrU1GTDfDsnxD0ERQxB7KFjGT_iaI7GU5Sw_Q/edit?usp=sharing" target="_blank" rel="noopener">list</a>. Many passers have already done some of these patterns (Brook almost finished the whole list and only has 5 left). Our goal: every pattern for at least 2 rounds (3 for period 3), recorded on video. Follow along and cheer us on!</p>
-        <p>Most patterns are made up of different orbits: groups of clubs that follow their own path through the pattern. We use clubs in different colours so you can see each orbit, which makes it a lot easier to follow what's going on.</p>
+        <div class="more" id="intro-more" aria-hidden="true" inert><div>
+          <p>Most patterns are made up of different orbits: groups of clubs that follow their own path through the pattern. We use clubs in different colours so you can see each orbit, which makes it a lot easier to follow what's going on.</p>
+        </div></div>
+        <button type="button" class="read-more" aria-expanded="false" aria-controls="intro-more">
+          <span>Read more</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
       </div>
       <dl class="facts">
         <div><dt>videos</dt><dd>${d.stats.videos}</dd></div>
@@ -256,6 +262,18 @@
   narrow.addEventListener("change", () => { if (DATA) renderFeed(DATA); });
 
   document.addEventListener("click", (ev) => {
+    // the orbit explanation in the intro folds open and closed
+    const more = ev.target.closest(".read-more");
+    if (more) {
+      const open = more.getAttribute("aria-expanded") !== "true";
+      const box = document.getElementById("intro-more");
+      more.setAttribute("aria-expanded", String(open));
+      more.querySelector("span").textContent = open ? "Read less" : "Read more";
+      box.classList.toggle("open", open);
+      box.setAttribute("aria-hidden", String(!open));
+      open ? box.removeAttribute("inert") : box.setAttribute("inert", "");
+      return;
+    }
     const tile = ev.target.closest("[data-tile]");
     if (tile) {
       const name = tile.dataset.tile;

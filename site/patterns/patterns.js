@@ -119,6 +119,9 @@
   }
 
   // ---------- pop-up for a pattern we have thrown: video and details, as on the home page ----------
+  // estimated juggling time from the Sheet: "27 min", "2 h 10 min"
+  const duration = (m) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}`);
+
   // Every pattern opens a pop-up: thrown ones with their video and our rating, the others as "Not thrown yet".
   // Both show the families, the known name and the difficulty.
   function openModal(key) {
@@ -131,7 +134,8 @@
       ? syncPattern(item.a, item.b, "lg", item.colors, true)
       : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
     const diff = item.stars != null
-      ? `<div class="pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE, false)}</div>` : "";
+      ? `<div class="pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE, false)}${
+        item.minutes ? `<span class="pop-time">· about ${esc(duration(item.minutes))}</span>` : ""}</div>` : "";
     const video = !p ? "" : p.youtubeId
       ? player(p)
       : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;

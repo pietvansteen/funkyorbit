@@ -297,7 +297,7 @@ def parse_difficulty(rows):
     if not rows:
         return out
     h = rows[0]
-    c_pat, c_score, c_stars = (header_index(h, n) for n in ("patroon", "score", "sterren"))
+    c_pat, c_score, c_stars, c_min = (header_index(h, n) for n in ("patroon", "score", "sterren", "minuten"))
     for row in rows[1:]:
         pat = cell(row, c_pat)
         score, stars = to_number(cell(row, c_score)), to_number(cell(row, c_stars))
@@ -309,6 +309,9 @@ def parse_difficulty(rows):
         else:
             key = min_rotation(pat)
         out[key] = {"score": score, "stars": stars}
+        minutes = to_number(cell(row, c_min))
+        if minutes:
+            out[key]["minutes"] = round(minutes)  # estimated juggling time
     return out
 
 
@@ -389,18 +392,6 @@ def parse_all_patterns(fam_rows, colors, sync_colors, difficulty, done_keys):
     return out
 
 
-def dragon_stats(all_patterns):
-    """Patterns with a dragon: a 9 directly followed by a 5, also around the end (9...5 -> 5 after the 9).
-    Counted over the unique non-sync patterns, as done / total."""
-    seen = {}
-    for p in all_patterns:
-        ss = (p.get("ss") or "").lower()
-        if ss and p["key"] not in seen:
-            seen[p["key"]] = ("95" in ss + ss[:1], p["done"])
-    with_dragon = [done for has, done in seen.values() if has]
-    return {"name": "Dragons (95)", "total": len(with_dragon), "done": sum(with_dragon)}
-
-
 def parse_summary(rows):
     """Period 3 / 5 / 7 and Sync from the 'Statistics' block (columns G:I of Progress)."""
     summary = []
@@ -464,7 +455,6 @@ def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_r
         "summary": parse_summary(progress_rows),
         "statBlocks": parse_stat_blocks(progress_rows),
         "all": overview,
-        "patternsWith": [dragon_stats(overview)],  # computed here, next to the Sheet's "Patterns with ..." rows
         "groups": groups,
         "patterns": patterns,
         "stats": {

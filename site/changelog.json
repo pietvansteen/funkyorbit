@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.5.0",
+    "date": "2026-10-20",
+    "changes": [
+      "Funny stats: juggling time, an estimate of how long we have juggled so far and how long the whole list will take",
+      "Funny stats: time of day, with the busiest hour",
+      "Funny stats: first, last and busiest date each on their own row, so they never break in the middle",
+      "Funny stats: Dragons (95) counted as in our difficulty rules (a 9, then a 5 in the throws of one juggler): 149 patterns",
+      "All patterns: the pop-up shows the estimated juggling time of a pattern",
+      "Home: the explanation of the orbits is behind Read more"
+    ]
+  },
+  {
     "version": "1.4.1",
     "date": "2026-10-20",
     "changes": [

@@ -32,10 +32,11 @@
         item("Unique patterns thrown", esc(get("unique patterns thrown") ?? "")),
         item("Average rating", rating ? `${esc(rating)} ★` : ""),
       ]],
-      ["Dates", [
-        item("First → last recording", first && last ? `${esc(day(first))} → ${esc(day(last))}` : "", last ? `last one ${esc(ago(last))}` : ""),
-        item("Busiest date", busiest ? esc(day(busiest)) : "", onBusiest ? `${esc(onBusiest)} pattern${onBusiest === "1" ? "" : "s"}` : ""),
-      ]],
+      ["Dates", dateRows([
+        ["First recording", first],
+        ["Last recording", last, last && ago(last)],
+        ["Busiest date", busiest, onBusiest && `${onBusiest} pattern${onBusiest === "1" ? "" : "s"}`],
+      ]), true],
       ["Recording days", [
         item("Recording days", esc(get("recording days") ?? "")),
         item("Patterns per recording day", esc(get("videos per recording day") ?? get("patterns per recording day") ?? "")),
@@ -43,8 +44,33 @@
     ];
     const rest = b.rows.filter((r) => !used.has(r[0].trim().toLowerCase()));
     if (rest.length) groups.push(["More", rest.map((r) => item(r[0], esc(niceValue(r[1] ?? ""))))]);
-    return `<div class="stat-card wide"><div class="stat-groups">${groups.map(([title, items]) =>
-      `<section><h3>${esc(title)}</h3><dl class="stat-grid">${items.join("")}</dl></section>`).join("")}</div></div>`;
+    return `<div class="stat-card wide"><div class="stat-groups">${groups.map(([title, items, raw]) =>
+      `<section${raw ? ' class="dates"' : ""}><h3>${esc(title)}</h3>${raw ? items : `<dl class="stat-grid">${items.join("")}</dl>`}</section>`).join("")}</div></div>`;
+  }
+
+  // Each date on its own row: label, date (never broken), extra info after it
+  function dateRows(rows) {
+    return `<div class="date-rows">${rows.filter((r) => r[1]).map(([label, date, extra]) =>
+      `<div class="dr"><span class="dl">${esc(label)}</span><span class="dv">${esc(day(date))}</span><span class="dx">${extra ? "· " + esc(extra) : ""}</span></div>`).join("")}</div>`;
+  }
+
+  // Juggling time: the estimate from the Sheet, with "time juggled so far" as the eye-catcher
+  function jugglingBlock(b) {
+    const val = new Map(b.rows.map((r) => [r[0].trim().toLowerCase(), r[1]]));
+    const big = val.get("time juggled so far");
+    const rest = b.rows.filter((r) => r[0].trim().toLowerCase() !== "time juggled so far");
+    return `<div class="stat-card wide juggle-card">
+      <h3>${esc(b.title.replace(/\s*\(estimate\)\s*/i, ""))} <span class="est">estimate</span></h3>
+      <div class="juggle">
+        ${big ? `<div class="juggle-big"><b>${esc(big)}</b><span>time juggled so far</span></div>` : ""}
+        <dl class="stat-grid">${rest.map((r) => `<div><dt>${esc(r[0])}</dt><dd>${esc(r[1] ?? "")}</dd></div>`).join("")}</dl>
+      </div>
+      <div class="juggle-note"><span class="tip" tabindex="0" aria-describedby="juggle-tip">Estimate based on the difficulty of each pattern
+        <span class="tip-text" id="juggle-tip" role="tooltip"><b>How we estimate</b>
+          Every pattern gets a time from its difficulty stars: ½ ★ 15 min, 1 ★ 19, 1½ ★ 23, 2 ★ 26, 2½ ★ 30, 3 ★ 40, 3½ ★ 50,
+          4 ★ 60, 4½ ★ 2 h and 5 ★ 4 h. Within a star level it goes from 10% less (lowest score) to 10% more (highest score).
+          Time juggled so far adds up the patterns we have thrown; time to go the rest.</span></span></div>
+    </div>`;
   }
 
   // "Patterns with triple self (a)" -> "Triple Self (a)"; zaps get their throw too: "Zaps (5)"
@@ -55,16 +81,13 @@
 
   function statBlock(b, d) {
     if (/^recording$/i.test(b.title.trim())) return recordingBlock(b);
+    if (/^juggling time/i.test(b.title.trim())) return jugglingBlock(b);
     const cols = b.columns.map((c) => c.toLowerCase());
     const iTotal = cols.indexOf("total"), iDone = cols.indexOf("done");
     if (iTotal >= 0 && iDone >= 0) {
       // progress-like rows; the ones already shown as tiles at the top are left out
       const skip = new Set(["all patterns", ...(d.summary || []).map((t) => t.name.toLowerCase())]);
       const rows = b.rows.filter((r) => !skip.has(r[0].toLowerCase()));
-      // rows the sync computes itself, such as Dragons (95)
-      for (const x of d.patternsWith || []) {
-        const r = [x.name]; r[iTotal + 1] = String(x.total); r[iDone + 1] = String(x.done); rows.push(r);
-      }
       if (!rows.length) return "";
       return `<div class="stat-card"><h3>Patterns with…</h3>${rows.map((r) => {
         const total = num(r[iTotal + 1]) || 0, done = num(r[iDone + 1]) || 0;
@@ -89,8 +112,9 @@
 
   function renderStats(d) {
     const parts = (d.statBlocks || []).map((b) => statBlock(b, d)).filter(Boolean);
-    // the block with key figures first, the smaller cards side by side below it
-    const html = [...parts.filter((h) => h.includes("stat-card wide")), ...parts.filter((h) => !h.includes("stat-card wide"))].join("");
+    // juggling time first (eye-catcher), then the other wide cards, then the smaller cards side by side
+    const rank = (h) => (h.includes("juggle-card") ? 0 : h.includes("stat-card wide") ? 1 : 2);
+    const html = parts.map((h, i) => [rank(h), i, h]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map((x) => x[2]).join("");
     $("#stats").innerHTML = html;
   }
 
