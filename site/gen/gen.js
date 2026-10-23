@@ -13,7 +13,7 @@
   if (opts.color && opts.color !== "any" && !opts.colorsIn.length) opts.colorsIn = [opts.color]; // older saved option
   delete opts.color;
   // older saved options: "Any" (with or without "Include sync") is now "All"
-  if (!["all", "3", "5", "7", "sync"].includes(String(opts.period))) opts.period = "all";
+  if (!["all", "3", "5", "7", "async", "sync"].includes(String(opts.period))) opts.period = "all";
   delete opts.sync;
   const save = () => { try { localStorage.setItem("fo_gen", JSON.stringify(opts)); } catch (e) {} };
 
@@ -53,8 +53,9 @@
     const full = opts.lo <= 0.5 && opts.hi >= 5;
     return PATTERNS.filter((p) => {
       if (opts.skipdone && p.done) return false;
-      // All = everything; 3 / 5 / 7 = siteswaps of that period; Sync = only sync patterns
+      // All = everything; 3 / 5 / 7 = siteswaps of that period; Async = all but sync; Sync = only sync patterns
       if (opts.period === "sync") { if (p.kind !== "Sync") return false; }
+      else if (opts.period === "async") { if (p.kind === "Sync") return false; }
       else if (opts.period !== "all" && (p.kind === "Sync" || String(p.period) !== opts.period)) return false;
       const cs = colorsOf(p), ts = throwsOf(p);
       if (opts.colorsIn.some((c) => !cs.includes(c)) || opts.colorsOut.some((c) => cs.includes(c))) return false;
@@ -227,8 +228,4 @@
     draw();
   }
   start();
-
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/gen/sw.js", { scope: "/gen/" }).catch(() => {});
-  }
 })();

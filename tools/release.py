@@ -3,7 +3,7 @@
 Put the newest version from site/changelog.json everywhere it is used:
   - the footer link on every page:  vX.Y.Z · What's new
   - the cache-busting ?v= on css/js/svg links:  X.Y.Z-<code>
-  - the cache name of the generator's service worker
+  - the cache name of the service worker (site/sw.js)
 
 The <code> is a short hash of the site's files, so it changes with every change,
 also while the version number stays the same during a work session.
@@ -23,14 +23,14 @@ SITE = ROOT / "site"
 
 FOOTER = re.compile(r'<a class="version" href="/changes/">[^<]*</a>')
 ASSET_V = re.compile(r"\?v=(?:\d{8}[a-z]|\d+\.\d+\.\d+(?:-[0-9a-f]+)?)")  # date codes or version(-code); icons keep their own ?v=
-SW_CACHE = re.compile(r'"fo-gen-[0-9a-z.\-]+"')
+SW_CACHE = re.compile(r'"fo-site-[0-9a-z.\-]+"')
 CODE_OF = ("*.css", "*.js", "*.svg", "*.png", "*.webmanifest", "changelog.json")  # the files that ?v= points at
 
 
 def content_code():
     """Short hash of the files the pages link to (not the pages themselves, which hold the code)."""
     h = hashlib.sha256()
-    files = sorted({f for pattern in CODE_OF for f in SITE.rglob(pattern)} - {SITE / "gen" / "sw.js"})
+    files = sorted({f for pattern in CODE_OF for f in SITE.rglob(pattern)} - {SITE / "sw.js"})
     for f in files:
         h.update(str(f.relative_to(SITE)).encode())
         h.update(f.read_bytes())
@@ -45,11 +45,11 @@ def main():
 
     build = f"{version}-{content_code()}"
     changed = []
-    for path in sorted(SITE.rglob("*.html")) + [SITE / "gen" / "sw.js"]:
+    for path in sorted(SITE.rglob("*.html")) + [SITE / "sw.js"]:
         text = path.read_text(encoding="utf-8")
         new = FOOTER.sub(f'<a class="version" href="/changes/">v{version} · What\'s new</a>', text)
         new = ASSET_V.sub(f"?v={build}", new)
-        new = SW_CACHE.sub(f'"fo-gen-{build}"', new)
+        new = SW_CACHE.sub(f'"fo-site-{build}"', new)
         if new != text:
             path.write_text(new, encoding="utf-8")
             changed.append(str(path.relative_to(ROOT)))

@@ -24,7 +24,10 @@
     $("#req-list").innerHTML = list.length ? list.map((r) => {
       const d = new Date(r.created * 1000);
       const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-      return `<article class="req ${esc(r.status)}">
+      // Done and No fold up to one line (tap to open), so the open requests stay easy to scan.
+      const folded = r.status === "done" || r.status === "no";
+      return `<${folded ? "details" : "article"} class="req ${esc(r.status)}">
+        ${folded ? `<summary><b>${esc(r.name)}</b><span class="req-line">${esc(r.request.split("\n")[0])}</span><span class="req-status">${esc(r.status)}</span></summary>` : ""}
         <header>
           <b>${esc(r.name)}</b>
           <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>
@@ -34,7 +37,7 @@
         <div class="seg small" role="group" aria-label="Status" data-id="${r.id}">
           ${STATUSES.map((s) => `<button type="button" data-status="${s}" aria-pressed="${s === r.status}">${s}</button>`).join("")}
         </div>
-      </article>`;
+      </${folded ? "details" : "article"}>`;
     }).join("") : `<p class="empty">No requests yet.</p>`;
   }
 

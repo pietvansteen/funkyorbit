@@ -42,7 +42,7 @@
   // ---------- start position: how many clubs, in which colours, in each of the four hands ----------
   // A club starts in the hand that throws it first: the throw at beat t >= 0 whose club was thrown before beat 0.
   // Not sync: juggler 1 (Piet) starts, throws on the even beats and starts with the right hand; juggler 2 (Mees) on the odd beats.
-  // Sync: both throw on every beat, both starting right; the first part is Piet's, the second Mees's.
+  // Sync: both throw on every beat, both starting right; the first part is Mees's, the second Piet's.
   const CLUB_FILL = { W: "#eeeff2", B: "#1f4fd1", O: "#ee5a2c", R: "#e6386a" };
   const val = (c) => parseInt(c, 36);
 
@@ -88,9 +88,11 @@
   function startHtml(p, shown = () => true) {
     const hands = startHands(p);
     if (!hands) return "";
+    // Not sync: Piet is juggler 1. Sync: part A is Mees's, part B Piet's.
+    const piet = p.ss ? 0 : 1;
     const jugglers = [
-      { name: "Mees", h: hands[1] },
-      { name: "Piet", h: hands[0], starts: !!p.ss }, // in sync patterns both start together
+      { name: "Mees", h: hands[1 - piet] },
+      { name: "Piet", h: hands[piet], starts: !!p.ss }, // in sync patterns both start together
     ];
     const hand = (side, list) => {
       const cs = list.map((x) => (shown(x.i) ? x.c : ""));
@@ -147,7 +149,13 @@
     const url = p.isShort ? `https://www.youtube.com/shorts/${p.youtubeId}` : `https://www.youtube.com/watch?v=${p.youtubeId}`;
     const play = `<span><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>`;
     const poster = `<div class="poster">${esc(p.siteswap)}<small>${esc(p.name || p.family)}</small></div>`;
-    const img = PREVIEW ? "" : `<img src="https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">`;
+    // Sharp thumbnails: in hqdefault (480×360) a short is only 202×360 pixels. hq720 has the short as 405×720 in its
+    // middle, oardefault (shorts only) the whole 1080×1920 frame; `w` counts the part we show, so sharp screens get the big one.
+    // object-fit: cover crops each to the video's shape. If a size is missing, hqdefault, else just the poster.
+    // A missing thumbnail comes with YouTube's small grey placeholder (a 404 that still loads), so check the size too.
+    const yt = `https://i.ytimg.com/vi_webp/${p.youtubeId}/`;
+    const srcset = p.isShort ? `${yt}hq720.webp 405w, ${yt}oardefault.webp 1080w` : `${yt}hq720.webp 1280w`;
+    const img = PREVIEW ? "" : `<img src="https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg" srcset="${srcset}" sizes="(max-width: 640px) 100vw, 400px" alt="" loading="lazy" onload="if(this.naturalWidth<200)this.onerror()" onerror="if(this.srcset){this.removeAttribute('srcset')}else{this.remove()}">`;
     const btn = PREVIEW
       ? `<a class="play" href="${url}" target="_blank" rel="noopener" aria-label="Watch ${esc(p.siteswap)} on YouTube">${play}</a>`
       : `<button type="button" class="play" data-play="${p.youtubeId}" aria-label="Play video of ${esc(p.siteswap)}">${play}</button>`;
@@ -166,9 +174,9 @@
       <span class="score tip" tabindex="0" aria-describedby="score-tip">${half(p.stars)} ★ · ${p.score}
       <span class="tip-text" id="score-tip" role="tooltip"><b>Difficulty score ${p.score}</b>
         It adds up how hard the throws are (more spins and more passes are harder; selfs and zips give a moment of rest)
-        plus extra points for tricky combinations, such as a dragon (a 9 and then a 5 by the same juggler: 9_5 in the siteswap), a 5 next to a triple, or two triples in a row.
+        plus extra points for tricky combinations, such as a dragon (9_5), a 5 next to a triple, or two triples in a row.
         Our patterns go from about 1 (easiest) to ${Math.ceil(maxScore)} (hardest).
-        The stars group the scores: ½ ★ below 4.5, half a star more for every 1.5 points, and 5 ★ from 17.</span></span>`;
+        ½ ★ is a score below 4.5, 5 ★ is 17 or more, and in between every 1.5 points adds half a star.</span></span>`;
   }
 
   // ---------- likes: one per visitor (cookie + localStorage), counted by the likes API ----------
@@ -249,6 +257,15 @@
       })
       .catch(() => {});
   })();
+
+  // ---------- web app: one service worker for the whole site, so every page works offline ----------
+  // The generator used to have its own (/gen/sw.js, scope /gen/); it would keep the generator, so remove it.
+  if ("serviceWorker" in navigator && !PREVIEW) {
+    navigator.serviceWorker.getRegistrations()
+      .then((regs) => regs.filter((r) => new URL(r.scope).pathname === "/gen/").forEach((r) => r.unregister()))
+      .catch(() => {});
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+  }
 
   window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, day, ago, when, player, likes };
 })();

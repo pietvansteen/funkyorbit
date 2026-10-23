@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.7.0",
+    "date": "2026-10-23",
+    "changes": [
+      "Generator and pattern pop-up: in sync patterns the start clubs of Piet and Mees were swapped",
+      "Sharper video thumbnails, in the full resolution of the video on sharp screens",
+      "Requests: Done and No fold up to one line; the No button has a red outline",
+      "Generator: Async under Period, for all patterns except sync",
+      "Generator: a shorter explanation under Throws",
+      "Difficulty explanation: shorter about dragons and clearer about the stars",
+      "Installed as an app: every page stays full screen, not just the generator, and works offline with the last version you saw. If the bar stays, remove the app once and add it again"
+    ]
+  },
+  {
     "version": "1.6.0",
     "date": "2026-10-21",
     "changes": [
