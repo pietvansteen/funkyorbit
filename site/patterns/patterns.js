@@ -131,7 +131,7 @@
       ? syncPattern(item.a, item.b, "lg", item.colors)
       : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
     const diff = item.stars != null
-      ? `<div class="pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE, false)}</div>` : "";
+      ? `<div class="pop-row pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE, false)}</div>` : "";
     const video = !p ? "" : p.youtubeId
       ? player(p)
       : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;
@@ -146,8 +146,9 @@
           ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
           <span class="fam">${families.map(esc).join("<br>")}</span>
           ${startHtml(item)}
+          ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
           ${diff}
-          ${p ? `<div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>` : ""}
+          ${p ? `<span class="when">${esc(when(p))}</span>` : ""}
         </div>
       </article>`;
     const dlg = $("#modal");

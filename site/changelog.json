@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.7.1",
+    "date": "2026-10-23",
+    "changes": [
+      "Requests: the No button is only red once you choose it",
+      "Web app: Funky Orbit under the logo when the app starts",
+      "Pattern pop-up: Rating before our stars, lined up with Difficulty",
+      "Videos: 3 side by side on a wide screen and 1 at a time on a phone, with the arrows above the video",
+      "Videos: the arrows move one video at a time through all our videos",
+      "Videos: the date no longer touches the edge of the card with a 7-digit siteswap"
+    ]
+  },
+  {
     "version": "1.7.0",
     "date": "2026-10-23",
     "changes": [

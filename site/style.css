@@ -60,6 +60,11 @@ a { color: inherit; }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .brand img { flex: none; display: block; }
 .brand b { font: 600 18px/1 var(--f-display); letter-spacing: -.01em; }
+/* app start: the logo where the phone's splash had it, with our name below */
+.splash { position: fixed; inset: 0; z-index: 100; background: var(--paper); display: grid; place-content: center; justify-items: center; gap: 22px; transition: opacity .4s; }
+.splash[hidden] { display: none; }
+.splash.out { opacity: 0; pointer-events: none; }
+.splash b { font: 600 28px/1 var(--f-display); letter-spacing: -.01em; color: var(--ink); }
 .updated { font-size: 13px; color: var(--muted); }
 
 /* ---------- progress ---------- */
@@ -130,7 +135,10 @@ a { color: inherit; }
 .note { margin: 0; font-size: 14px; color: var(--muted); max-width: 70ch; }
 
 /* ---------- feed ---------- */
-.feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 20px; margin-bottom: 56px; }
+/* one row of videos: 3 side by side, 2 on a tablet, 1 on a phone (pageSize() in app.js counts the same) */
+.feed { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 56px; }
+@media (max-width: 1039px) { .feed { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 599px) { .feed { grid-template-columns: minmax(0, 1fr); } }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
 .player { position: relative; aspect-ratio: 9 / 16; width: 100%; max-width: 100%; background: var(--ink); overflow: hidden; } /* always the video's own shape: no black bars */
 .player.wide { aspect-ratio: 16 / 9; }
@@ -151,7 +159,12 @@ a { color: inherit; }
   box-shadow: 0 6px 24px rgb(0 0 0 / .35); transition: transform .15s;
 }
 .play:hover span { transform: scale(1.06); }
-.meta { padding: 16px 18px 18px; display: grid; gap: 10px; }
+.meta { padding: 16px 18px 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+/* a long siteswap (period 7) next to the like button: smaller digits instead of pushing past the padding.
+   --n is the number of digits; 100cqi is the card's inner width, about 70px of it go to the like button and gaps. */
+.feed .card .meta { container-type: inline-size; }
+.meta-top .title { min-width: 0; }
+.feed .meta-top .ss.lg:not(.sync) { font-size: clamp(15px, calc((100cqi - 70px - (var(--n, 5) - 1) * 3px) / (var(--n, 5) * 1.45)), 22px); }
 .meta-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 .title { display: grid; gap: 2px; min-width: 0; }
 .title .pname { font-weight: 700; font-size: 15px; }
@@ -447,8 +460,9 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .modal-card.not-thrown .meta { padding-top: 22px; }
 .modal-card.not-thrown .meta-top { padding-right: 48px; }
 .not-yet { justify-self: start; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 4px 10px; }
-.pop-diff { position: relative; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
-.pop-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+/* Rating and Difficulty: labels in a fixed-width column, so both rows of stars start at the same place */
+.pop-row { position: relative; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.pop-label { flex: none; width: 7.6em; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .pop-diff .tip-text { right: auto; left: 0; }
 
 /* ---------- home: date filter, pages of videos, YouTube link ---------- */
@@ -466,7 +480,14 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
   font: 500 16px/1.2 var(--f-body);
 }
 .feed { margin-bottom: 16px; }
+.feed-wrap { display: flex; flex-direction: column; }
 .pager { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; }
+.pager[hidden] { display: none; }
+/* on a phone the arrows sit above the video, so they stay in reach */
+@media (max-width: 599px) {
+  .pager { order: -1; justify-content: space-between; margin-bottom: 12px; }
+  .page-btn { width: 40px; height: 40px; }
+}
 .page-btn {
   width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
   border: 1px solid var(--line); background: var(--surface); color: var(--ink);
@@ -569,7 +590,6 @@ details.req header b { display: none; } /* already in the summary */
 .req-status { flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
 .req.no .req-status { color: var(--no); }
 .req.done .req-status { color: var(--done); }
-.seg [data-status="no"] { border-color: var(--no); }
 .seg [data-status="no"][aria-pressed="true"] { border-color: var(--no); box-shadow: inset 0 0 0 1px var(--no); background: var(--no-soft); }
 .req header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 .req header a { color: var(--orbit); }

@@ -100,9 +100,11 @@
   let query = "";
   let dateFrom = "", dateTo = ""; // YYYY-MM-DD, both inclusive; empty = no limit
   let customDates = false; // "Choose dates…" picked: keep showing the two date fields
-  let page = 0;
-  const narrow = window.matchMedia("(max-width: 700px)");
-  const pageSize = () => (narrow.matches ? 3 : 6);
+  let first = 0; // the first video shown (0 = the newest)
+  // as many videos side by side as the columns in style.css: 3 on a wide screen, 2 on a tablet, 1 on a phone
+  const wide = window.matchMedia("(min-width: 1040px)");
+  const phone = window.matchMedia("(max-width: 599px)");
+  const pageSize = () => (wide.matches ? 3 : phone.matches ? 1 : 2);
 
   function matches(p, q) {
     if (dateFrom && (!p.date || p.date < dateFrom)) return false;
@@ -165,7 +167,7 @@
         ${player(p)}
         <div class="meta">
           <div class="meta-top">
-            <div class="title">${siteswap(p.siteswap, "lg", p.colors)}${p.name ? `<span class="pname">${esc(p.name)}</span>` : ""}</div>
+            <div class="title" style="--n:${[...(p.siteswap || "")].length}">${siteswap(p.siteswap, "lg", p.colors)}${p.name ? `<span class="pname">${esc(p.name)}</span>` : ""}</div>
             ${likes.button(p.youtubeId)}
           </div>
           <span class="fam">${esc(p.family)}</span>
@@ -184,11 +186,10 @@
       ? `${vids.length} of ${plural(allVids.length)} match`
       : `${plural(allVids.length)}, newest first`;
 
-    // only one page of videos at a time: 3 on a phone, 6 on a wider screen
+    // one row of videos; the arrows move it one video at a time through the timeline
     const size = pageSize();
-    const pages = Math.max(1, Math.ceil(vids.length / size));
-    page = Math.min(Math.max(0, page), pages - 1);
-    const shown = vids.slice(page * size, page * size + size);
+    first = Math.min(Math.max(0, first), Math.max(0, vids.length - size));
+    const shown = vids.slice(first, first + size);
 
     const restMatch = d.patterns.some((p) => !p.youtubeId && matches(p, q));
     const what = [q && `“${esc(query.trim())}”`, (dateFrom || dateTo) && "these dates"].filter(Boolean).join(" in ");
@@ -198,9 +199,10 @@
     $("#feed").innerHTML = shown.length ? shown.map(card).join("") : none;
 
     $("#pager").hidden = vids.length <= size;
-    $("#newer").disabled = page === 0;
-    $("#older").disabled = page >= pages - 1;
-    $("#page-info").textContent = vids.length ? `${page * size + 1}–${page * size + shown.length} of ${vids.length}` : "";
+    $("#newer").disabled = first === 0;
+    $("#older").disabled = first + size >= vids.length;
+    $("#page-info").textContent = !vids.length ? ""
+      : shown.length === 1 ? `${first + 1} of ${vids.length}` : `${first + 1}–${first + shown.length} of ${vids.length}`;
 
     const rest = d.patterns.filter((p) => !p.youtubeId && matches(p, q));
     $("#rest-wrap").hidden = !rest.length;
@@ -210,7 +212,7 @@
   }
 
   function go(step) {
-    page += step;
+    first += step;
     renderFeed(DATA);
     const head = document.getElementById("h-feed");
     if (head && head.getBoundingClientRect().top < 0) head.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -219,7 +221,7 @@
   // ---------- events ----------
   $("#search").addEventListener("input", (ev) => {
     query = ev.target.value;
-    page = 0;
+    first = 0;
     saveUrl();
     if (DATA) renderFeed(DATA);
   });
@@ -228,20 +230,20 @@
     const v = ev.target.value;
     customDates = v === "custom";
     if (!customDates) [dateFrom, dateTo] = quickRange(v);
-    page = 0;
+    first = 0;
     syncDateUi(); saveUrl();
     if (DATA) renderFeed(DATA);
   });
   for (const id of ["from", "to"]) {
     $("#" + id).addEventListener("change", (ev) => {
       if (id === "from") dateFrom = ev.target.value; else dateTo = ev.target.value;
-      page = 0;
+      first = 0;
       saveUrl(); $("#date-clear").hidden = !dateFrom && !dateTo;
       if (DATA) renderFeed(DATA);
     });
   }
   $("#date-clear").addEventListener("click", () => {
-    dateFrom = dateTo = ""; page = 0; customDates = false;
+    dateFrom = dateTo = ""; first = 0; customDates = false;
     $("#date").value = ""; syncDateUi(); saveUrl();
     if (DATA) renderFeed(DATA);
   });
@@ -259,7 +261,7 @@
     if (dx < 0 && !$("#older").disabled) go(1);
     if (dx > 0 && !$("#newer").disabled) go(-1);
   }, { passive: true });
-  narrow.addEventListener("change", () => { if (DATA) renderFeed(DATA); });
+  for (const mq of [wide, phone]) mq.addEventListener("change", () => { if (DATA) renderFeed(DATA); });
 
   document.addEventListener("click", (ev) => {
     // the orbit explanation in the intro folds open and closed
