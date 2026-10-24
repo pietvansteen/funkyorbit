@@ -6,8 +6,8 @@
 (function () {
   "use strict";
 
-  // ---------- still to fill in (see #44) ----------
-  const BIRTHDAYS = { Piet: "", Mees: "" }; // "MM-DD"
+  // ---------- people and patterns (#44) ----------
+  const BIRTHDAYS = { Piet: "07-14", Mees: "07-08", Hanna: "09-21", Janne: "10-06" }; // "MM-DD"
   // Pattern keys (as in data.json "key"), still to be identified
   const SPECIAL = {
     brookFirst: "", brookLast: "", brookFavourite: "", jamesFavourite: "",
