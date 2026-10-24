@@ -668,6 +668,7 @@ details.req header b { display: none; } /* already in the summary */
 .rate-row .reset { margin-left: auto; }
 .add-foot { margin: 8px 0 0; }
 .add-foot .reset { padding-left: 0; }
+.add-foot small { display: block; color: var(--muted); font-size: 13px; }
 /* generator, logged-in devices only: the drawn pattern to the Add page */
 .pick-add { display: inline-flex; align-items: center; min-height: 44px; margin-top: 14px; padding: 0 18px; border: 1px solid var(--orbit); border-radius: 12px; color: var(--orbit); font-weight: 600; text-decoration: none; }
 .pick-add:hover { background: var(--track); }

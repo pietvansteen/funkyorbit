@@ -90,7 +90,7 @@ Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallow
 
 The hidden page `/add/` (not in the menu for visitors, `noindex`, disallowed in `robots.txt`) asks for the same password as `/requests/`, once per device. After that the menu shows **Add**. Type the siteswap (suggestions appear while typing, in any rotation, sync too), pick the date and time (now by default) and a rating in half stars (how much fun it is), and save.
 
-The likes API checks the password and passes the pattern to the Apps Script, which writes date and time (in one cell, `dd/mm/yyyy hh:mm`), pattern and rating in the first empty row of *Done* (`nr` is filled in already; `known name` and `family` are formulas). Then the sync runs at once, so the site has the new pattern within seconds. Otherwise the sync runs once a day.
+The likes API checks the password and passes the pattern to the Apps Script, which writes date and time (in one cell, `dd/mm/yyyy hh:mm`), pattern and rating in the first empty row of *Done* (`nr` is filled in already; `known name` and `family` are formulas). Then the sync runs at once, so the site has the new pattern within seconds. Otherwise the sync runs once a day. After changing or deleting a row in *Done* by hand, press **Update the site from the Sheet** at the bottom of the Add page (`POST /api/sync`), so the site follows within a minute instead of the next day.
 
 Setting up the Apps Script (once):
 

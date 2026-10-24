@@ -322,6 +322,22 @@
     }
   });
 
+  // ---------- after changing or deleting a row in Done: let the sync run now instead of tonight ----------
+  $("#sync-now").addEventListener("click", async (ev) => {
+    const b = ev.currentTarget;
+    b.disabled = true;
+    try {
+      const r = await fetch("/api/sync", { method: "POST", headers: auth() });
+      if (r.status === 401) return logout("Wrong password.");
+      if (!r.ok) throw new Error();
+      say("The site is updated from the Sheet within a minute. Reload this page after that.", true);
+    } catch (e) {
+      say("The update could not be started. Please try again in a moment.");
+    } finally {
+      b.disabled = false;
+    }
+  });
+
   // ---------- logging in (once per device, remembered) ----------
   function showLogin(message) {
     $("#add").hidden = true;

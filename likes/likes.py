@@ -24,6 +24,7 @@ Logging a pattern we juggled (hidden Add page, admin only):
                                     -> {"ok": true, "nr", "name", "family"}
                                     Written to the Done tab by the Sheet's Apps Script (SHEET_WRITE_URL, SHEET_WRITE_SECRET),
                                     then the sync is asked to run right away (the file sync-now next to data.json).
+  POST  /api/sync                   admin: ask the sync to run right away (after a row in Done was changed or deleted)
 
 Admin calls need the header  Authorization: Bearer <ADMIN_TOKEN>  (ADMIN_TOKEN from the environment).
 """
@@ -113,6 +114,18 @@ def known_videos():
     except (OSError, ValueError):
         pass
     return _known["ids"]
+
+
+def ask_sync(flag):
+    """Write data/sync-now: the sync checks for it every few seconds and then runs at once.
+    With {"nr": n} it tries again until that row is in Google's CSV export."""
+    try:
+        with open(SYNC_FLAG, "w", encoding="utf-8") as f:
+            json.dump(flag, f)
+        return True
+    except OSError as e:
+        print(f"could not ask for a sync: {e}", flush=True)
+        return False
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -249,11 +262,7 @@ class Handler(BaseHTTPRequestHandler):
             print(f"done: the Sheet said: {result}", flush=True)
             return self._send(502, {"error": f"The Sheet said: {(result or {}).get('error', 'no answer')}"})
         # ask the sync to run now (it checks every few seconds), so the site has the new pattern at once
-        try:
-            with open(SYNC_FLAG, "w", encoding="utf-8") as f:
-                json.dump({"nr": result.get("nr")}, f)
-        except OSError as e:
-            print(f"done: could not ask for a sync: {e}", flush=True)
+        ask_sync({"nr": result.get("nr")})
         self._send(201, {k: result.get(k) for k in ("ok", "nr", "name", "family")})
 
     def do_GET(self):
@@ -275,8 +284,17 @@ class Handler(BaseHTTPRequestHandler):
                 liked = [r[0] for r in con.execute("SELECT video FROM likes WHERE visitor = ?", (visitor,))]
         self._send(200, {"counts": counts, "liked": liked})
 
+    def _sync_post(self):
+        if not self._admin():
+            return
+        if not ask_sync({}):
+            return self._send(500, {"error": "The sync could not be asked to run."})
+        self._send(202, {"ok": True})
+
     def do_POST(self):
         path = urlparse(self.path).path.rstrip("/")
+        if path == "/api/sync":
+            return self._sync_post()
         if path == "/api/requests" or path.startswith("/api/requests/"):
             return self._requests_post(path)
         if path == "/api/done":

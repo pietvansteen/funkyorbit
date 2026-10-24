@@ -558,7 +558,7 @@ def main():
             break
         asked = wait()
         if asked is not None:
-            log(f"sync asked for (new pattern nr {asked or '?'})")
+            log(f"sync asked for (new pattern nr {asked})" if asked else "sync asked for (update from the Sheet)")
 
 
 if __name__ == "__main__":

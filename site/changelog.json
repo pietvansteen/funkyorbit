@@ -1,5 +1,13 @@
 [
   {
+    "version": "2.2.0",
+    "date": "2026-10-24",
+    "changes": [
+      "Add: the time is saved in our own time zone (it showed as 09:00)",
+      "Add: a button to update the site from our practice list right away, after changing or deleting a pattern there"
+    ]
+  },
+  {
     "version": "2.1.0",
     "date": "2026-10-24",
     "changes": [
