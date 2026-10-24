@@ -95,7 +95,7 @@
         <div><dt>Difficulty</dt><dd>${p.stars != null
           ? difficulty(p, Math.max(...PATTERNS.map((x) => x.score || 0)))
           : "–"}</dd></div>
-      </dl>`;
+      </dl>${addButton(p)}`;
     if (hidden) {
       // every grey digit can be tapped (or chosen with the keyboard) to show its colour
       box.querySelectorAll(".pick-pat .ss b").forEach((b, i) => {
@@ -106,6 +106,16 @@
         b.setAttribute("aria-label", `Show the colour of ${b.textContent}`);
       });
     }
+  }
+
+  // On our own (logged-in) devices only: log the drawn pattern on the Add page, with the siteswap filled in.
+  // Written as the Done tab writes it: vanilla as drawn, sync "a b", popcorn in its own notation.
+  function addButton(p) {
+    let token = "";
+    try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
+    if (!token) return "";
+    const ss = p.ss || p.alt || `${p.a} ${p.b}`;
+    return `<a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Juggled it → Add</a>`;
   }
 
   // Tap one digit open. "Hide colours" switches itself off at the first one (the next pattern comes in colour);
