@@ -20,7 +20,7 @@
       <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${d.total}" aria-valuenow="${d.done}" aria-label="Total progress"><i style="width:${pct}%"></i></div>
       <div class="hero-body">
       <div class="intro">
-        <p>We are passing all ${fmt.format(d.total)} club patterns from James Francis' <a href="https://docs.google.com/spreadsheets/d/1NpMVAcPrU1GTDfDsnxD0ERQxB7KFjGT_iaI7GU5Sw_Q/edit?usp=sharing" target="_blank" rel="noopener">list</a>. Many passers have already done some of these patterns (Brook almost finished the whole list and only has 5 left). Our goal: every pattern for at least 2 rounds (3 for period 3), recorded on video. Follow along and cheer us on!</p>
+        <p>We are passing all ${fmt.format(d.total)} club patterns from James Francis' <a href="https://docs.google.com/spreadsheets/d/1NpMVAcPrU1GTDfDsnxD0ERQxB7KFjGT_iaI7GU5Sw_Q/edit?usp=sharing" target="_blank" rel="noopener">list</a>. Many passers have already done some of these patterns (Brook almost finished the whole list). Our goal: every pattern for at least 2 rounds (3 for period 3), recorded on video. Follow along and cheer us on!</p>
         <div class="more" id="intro-more" aria-hidden="true" inert><div>
           <p>Most patterns are made up of different orbits: groups of clubs that follow their own path through the pattern. We use clubs in different colours so you can see each orbit, which makes it a lot easier to follow what's going on.</p>
         </div></div>
