@@ -88,9 +88,9 @@ Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallow
 
 ## Logging a pattern (Add page)
 
-The hidden page `/add/` (not in the menu for visitors, `noindex`, disallowed in `robots.txt`) asks for the same password as `/requests/`, once per device. After that the menu shows **Add**. Type the siteswap (suggestions appear while typing, in any rotation, sync too), pick the date (today by default) and a rating in half stars (how much fun it is), and save.
+The hidden page `/add/` (not in the menu for visitors, `noindex`, disallowed in `robots.txt`) asks for the same password as `/requests/`, once per device. After that the menu shows **Add**. Type the siteswap (suggestions appear while typing, in any rotation, sync too), pick the date and time (now by default) and a rating in half stars (how much fun it is), and save.
 
-The likes API checks the password and passes the pattern to the Apps Script, which writes date, pattern and rating in the first empty row of *Done* (`nr` is filled in already; `known name` and `family` are formulas). Then the sync runs at once, so the site has the new pattern within seconds. Otherwise the sync runs once a day.
+The likes API checks the password and passes the pattern to the Apps Script, which writes date and time (in one cell, `dd/mm/yyyy hh:mm`), pattern and rating in the first empty row of *Done* (`nr` is filled in already; `known name` and `family` are formulas). Then the sync runs at once, so the site has the new pattern within seconds. Otherwise the sync runs once a day.
 
 Setting up the Apps Script (once):
 
@@ -99,13 +99,13 @@ Setting up the Apps Script (once):
 3. *Deploy > New deployment*, type *Web app*, execute as *Me*, access *Anyone*. Allow the access it asks for and copy the `/exec` URL.
 4. Put `SHEET_WRITE_URL` (the URL) and `SHEET_WRITE_SECRET` (the same secret) in `.env` and run `docker compose up -d`.
 
-After saving, a pop-up shows a random GIF from `site/gifs/` (never the same one twice in a row). To add one, put the file (`.gif`, `.webp`, `.png`, `.jpg`, `.mp4` or `.webm`) in `site/gifs/` and run `python3 tools/release.py`, which lists it in `site/gifs/gifs.json`. The four `funky-*.gif` files are our own, made with `python3 tools/make_gifs.py`; the `.mp4` files are well-known reaction GIFs from GIPHY (giphy.com), as MP4 because that is far smaller.
+After saving, a pop-up shows a random GIF from `site/gifs/`; a GIF comes back only after all the others that fit were shown (remembered per device). To add one, put the file (`.gif`, `.webp`, `.png`, `.jpg`, `.mp4` or `.webm`) in `site/gifs/` and run `python3 tools/release.py`, which lists it in `site/gifs/gifs.json`. The four `funky-*.gif` files are our own, made with `python3 tools/make_gifs.py`; the `.mp4` files are well-known reaction GIFs from GIPHY (giphy.com), as MP4 because that is far smaller.
 
 ### Milestones
 
 The pop-up also celebrates milestones (`site/add/milestones.js`): the last patterns (countdown, the final one), every new whole percent with the expected completion date, every 25th and 100th pattern, a complete family, the first and last sync pattern, the first pattern with 5, 6, 7, 8 or 9 clubs, dragons (a 9 and a 5 one throw apart, as the Sheet counts them), the most zaps, triples or dragons, colours (all four, no orange, the last all-orange one), the hardest pattern so far, a new favourite or lowest rating, streaks, daily records, a new day of the week, a comeback after two weeks, the time of day and more. The most special one gives the title and the GIF, a few others are listed below it. They are worked out against what was done before, so logging a pattern again never repeats a progress milestone.
 
-A GIF named after a milestone id (such as `birthday-cake.mp4` for `birthday`, `countdown-…` or `three-am-…`) is used only for that milestone; the ids are in `RULES` in `milestones.js`. Birthdays are in `BIRTHDAYS`; still to fill in is `SPECIAL` (Brook's first, last and favourite pattern, James's favourite and the patterns Brook has done). "A pattern that took a long time to get right" needs data we don't have yet.
+A GIF named after a milestone id (such as `birthday-cake.mp4` for `birthday`, `countdown-…` or `three-am-…`) is used only for that milestone; the ids are in `RULES` in `milestones.js`. `difficult-…` GIFs are for patterns with 5 difficulty stars and `hard-…` for 4 to 4½ stars; they are used when the most special milestone has no GIF of its own. `rating-high-…` is for a rating of 4 to 4½, `rating-low-…` for 2 or less, `again-…` (keep going, let's go) for another pattern right after a hard one, and `wow-…` faces go with surprises that have no GIF of their own (`GROUPS` and `ALIASES`). Every other name is a random "well done" GIF. Birthdays are in `BIRTHDAYS`; still to fill in is `SPECIAL` (Brook's first, last and favourite pattern, James's favourite and the patterns Brook has done). "A pattern that took a long time to get right" needs data we don't have yet.
 
 After a change to `FunkyOrbit.gs`: *Deploy > Manage deployments*, edit, *New version*; the URL stays the same.
 

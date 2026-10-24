@@ -185,12 +185,14 @@
   });
   $("#rate-clear").addEventListener("click", () => setRating(0));
 
-  // ---------- date: today by default ----------
+  // ---------- date and time: now by default ----------
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const nowTime = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
   function resetForm(ss) {
     input.value = ss || "";
     $("#date").value = $("#date").max = today();
+    $("#time").value = nowTime();
     setRating(0);
     showPicked();
   }
@@ -198,7 +200,8 @@
   // ---------- success pop-up: a GIF from site/gifs/ (#12) with our milestones (#44) ----------
   // The list comes from site/gifs/gifs.json, written by tools/release.py: a new GIF there joins in by itself.
   // A GIF named after a milestone ("birthday-cake.mp4" for the milestone "birthday") is only shown for that
-  // milestone; the others are shown at random, never the same one twice in a row. Stays until we tap it away.
+  // milestone; the others are shown at random. Stays until we tap it away.
+  // A GIF comes back only after all the others that fit were shown (fo_gifs_seen, per device).
   const CHEERS = ["Nailed it!", "Clubs caught!", "Another one down!", "Pass it on!", "Smooth!", "Orbit reached!", "That's a keeper!"];
   const MS = window.FO_MILESTONES;
   let gifs = [];
@@ -206,19 +209,32 @@
   const isVideo = (f) => /\.(mp4|webm)$/i.test(f);
   const base = (f) => f.replace(/\.[^.]+$/, "");
   // the milestone a GIF belongs to: the longest id its name starts with ("rating-max-…" is rating-max, not rating)
-  const gifMilestone = (f) => MS.ids.filter((id) => base(f) === id || base(f).startsWith(id + "-")).sort((a, b) => b.length - a.length)[0] || "";
+  const GIF_IDS = [...MS.ids, ...MS.GROUPS];
+  const gifMilestone = (f) => GIF_IDS.filter((id) => base(f) === id || base(f).startsWith(id + "-")).sort((a, b) => b.length - a.length)[0] || "";
   const preload = (f) => (isVideo(f) ? fetch(`/gifs/${encodeURIComponent(f)}`).catch(() => {}) : (new Image().src = `/gifs/${encodeURIComponent(f)}`));
 
-  function gifFor(id) {
-    let last = "";
-    try { last = localStorage.getItem("fo_gif_last") || ""; } catch (e) {}
-    const own = gifs.filter((f) => id && gifMilestone(f) === id);
-    // an alias is a GIF's name without extension, or another milestone (then its GIFs)
+  // The GIF for the most special milestone: its own GIFs, else the difficulty of the pattern (5 stars, or 4 to 4½),
+  // else a GIF of a related milestone (ALIASES), else a random "well done" one.
+  function gifFor(milestones) {
+    const id = milestones[0] && milestones[0].id;
+    const own = (m) => gifs.filter((f) => m && gifMilestone(f) === m);
+    // an alias is a GIF's name without extension, or another milestone or group (then its GIFs)
     const alias = gifs.filter((f) => id && (MS.ALIASES[id] || []).some((a) => base(f) === a || gifMilestone(f) === a));
-    const generic = gifs.filter((f) => !gifMilestone(f));
-    const list = own.length ? own : alias.length ? alias : generic;
-    return list.length ? pick(list, last) : "";
+    const level = milestones.find((m) => m.id === "difficult" || m.id === "hard");
+    const list = [own(id), own(level && level.id), alias, gifs.filter((f) => !gifMilestone(f))].find((l) => l.length) || [];
+    if (!list.length) return "";
+    let seen = [];
+    try { seen = JSON.parse(localStorage.getItem("fo_gifs_seen") || "[]"); } catch (e) {}
+    if (!Array.isArray(seen)) seen = [];
+    const fresh = list.filter((f) => !seen.includes(f));
+    const gif = fresh.length ? pick(fresh) : pick(list, seen[seen.length - 1]);
+    // when all of this list were shown, they start again (and the others keep their place)
+    seen = [...(fresh.length ? seen : seen.filter((f) => !list.includes(f))).filter((f) => f !== gif), gif];
+    try { localStorage.setItem("fo_gifs_seen", JSON.stringify(seen)); } catch (e) {}
+    return gif;
   }
+  // the old memory (only the last GIF) is no longer used
+  try { localStorage.removeItem("fo_gif_last"); } catch (e) {}
 
   async function loadGifs() {
     try {
@@ -231,9 +247,9 @@
   // milestones: most special first; the first gives the title and the GIF, a few more are listed below
   function celebrate({ milestones = [], saved = "", estimate = "" } = {}) {
     document.querySelector(".celebrate")?.remove();
-    const [top, ...more] = [...milestones].sort((a, b) => b.prio - a.prio);
-    const gif = gifFor(top && top.id);
-    try { if (gif) localStorage.setItem("fo_gif_last", gif); } catch (e) {}
+    const sorted = [...milestones].sort((a, b) => b.prio - a.prio);
+    const [top, ...more] = sorted;
+    const gif = gifFor(sorted);
     const src = `/gifs/${encodeURIComponent(gif)}`;
     const media = !gif ? "" : isVideo(gif)
       ? `<video src="${src}" autoplay muted loop playsinline aria-hidden="true"></video>`
@@ -260,7 +276,7 @@
   const msg = $("#add-msg"), send = $("#add-send");
   let saveId = "", saveFor = "";
   function pendingId() {
-    const what = [normalize(input.value), $("#date").value, rating].join("|");
+    const what = [normalize(input.value), $("#date").value, $("#time").value, rating].join("|");
     if (!saveId || saveFor !== what) {
       saveId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
       saveFor = what;
@@ -272,7 +288,7 @@
   $("#add").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     // the same id when we try again after an error, so the Sheet never gets the same pattern twice
-    const body = { id: pendingId(), pattern: normalize(input.value), date: $("#date").value, rating: rating || null };
+    const body = { id: pendingId(), pattern: normalize(input.value), date: $("#date").value, time: $("#time").value || null, rating: rating || null };
     if (!body.pattern) { say("Please fill in the siteswap."); return input.focus(); }
     if (!body.date) return say("Please choose a date.");
     say("");
@@ -285,9 +301,7 @@
       if (!r.ok) throw new Error(j.error || "");
       saveId = "";
       const key = keyOf(body.pattern);
-      // the time only when we log it on the day itself (for the night owl milestones)
-      const now = new Date();
-      const time = body.date === today() ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` : "";
+      const time = body.time || ""; // for the time-of-day milestones
       let ms = { list: [], estimate: "" };
       try {
         ms = MS.check({ item: BY_KEY.get(key) || null, key, rating: body.rating, date: body.date, time, before: STATE, list: BY_KEY, total: BY_KEY.size });

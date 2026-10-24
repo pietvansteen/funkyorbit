@@ -19,8 +19,14 @@
     "clubs-first": ["juggler-agt"], favourite: ["dicaprio-cheers"],
     "rating-max": ["dicaprio-cheers"], hundred: ["obama-mic-drop"], final: ["obama-mic-drop"],
     "family-complete": ["success-kid-mission"], "sync-last": ["sync-first"], "clubs-many": ["juggler-agt"],
-    "round": ["hundred"], "difficult": ["hardest"], "after-hard": ["repeat"], "hard-low": ["lowest"],
+    "round": ["hundred"], "difficult": ["hardest"], "after-hard": ["again"], "hard-low": ["lowest", "rating-low"],
+    // surprises without GIFs of their own get a "wow" face
+    "zaps-most": ["wow"], "triples-most": ["wow"], "b-first": ["wow"], "period-long": ["wow"], "orange-last": ["wow"],
+    "weekday-all": ["wow"], "year": ["wow"], brook: ["wow"], notation: ["wow"],
   };
+  // GIF groups that are no milestone themselves, only used through ALIASES (never as a random GIF):
+  // "wow" for surprises, "again" for keeping going ("more, let's go")
+  const GROUPS = ["wow", "again"];
 
   const SYNC_THROW = /[0-9a-oq-z]p?/g;
   const val = (c) => parseInt(c, 36);
@@ -143,7 +149,9 @@
     { id: "named", prio: 38, test: (c) => c.item.name && { title: `“${c.item.name.split(";")[0].trim()}”`, text: "A pattern with a name!" } },
     { id: "notation", prio: 37, test: (c) => c.item.alt && { title: "Popcorn!", text: "That doesn't look legal." } },
     { id: "period-long", prio: 36, test: (c) => c.f.period === c.maxOf("period") && { title: `Period ${c.f.period}!`, text: "Blink and you'll miss the pattern." } },
-    { id: "difficult", prio: 35, test: (c) => (c.item.stars || 0) >= 4 && { title: "That's a hard one!", text: "We make this look easy. It isn't." } },
+    // difficulty of the pattern: 5 stars, or 4 to 4½ stars
+    { id: "difficult", prio: 35, test: (c) => (c.item.stars || 0) >= 5 && { title: "Five-star difficulty!", text: ["About as hard as it gets.", "We make this look easy. It isn't."] } },
+    { id: "hard", prio: 35, test: (c) => (c.item.stars || 0) >= 4 && c.item.stars < 5 && { title: "That's a hard one!", text: "We make this look easy. It isn't." } },
     { id: "after-hard", prio: 34, test: (c) => {
       const prev = c.before.rows.filter((r) => r.date === c.date).at(-1);
       const p = prev && c.list.get(prev.key);
@@ -162,13 +170,13 @@
     { id: "clubs-few", prio: 24, test: (c) => c.f.clubs <= 5 && { title: `${c.f.clubs} clubs`, text: "Less is more. Sometimes." } },
     { id: "repeat", prio: 22, test: (c) => !c.isNew && { title: "Again!", text: "We did this one before. Practice makes perfect." } },
     { id: "rating-max", prio: 21, test: (c) => c.rating === 5 && { title: "Five stars!", text: ["Flawless. Someone stop us.", "We should probably do that one again."] } },
-    { id: "rating", prio: 20, test: (c) => {
-      if (!c.rating || c.rating === 5) return null;
+    { id: "rating-high", prio: 20, test: (c) => c.rating >= 4 && c.rating < 5 && { title: "Nice one!", text: "Okay, we're actually good at this." } },
+    { id: "rating-low", prio: 20, test: (c) => {
+      if (!c.rating || c.rating > 2) return null;
       if (c.rating <= 1) return { title: "Well…", text: ["We tried our best. The rating disagrees.", "It worked. Let's never do it again."] };
-      if (c.rating <= 2) return { title: "Done!", text: "It worked. Let's leave it at that." };
-      if (c.rating <= 3) return { title: "Done!", text: "Technically a success." };
-      return { title: "Nice one!", text: "Okay, we're actually good at this." };
+      return { title: "Done!", text: "It worked. Let's leave it at that." };
     } },
+    { id: "rating", prio: 20, test: (c) => c.rating > 2 && c.rating < 4 && { title: "Done!", text: "Technically a success." } },
   ];
 
   // Expected completion date at the pace so far (unique patterns per calendar day since the first one)
@@ -205,7 +213,7 @@
     c.left = total - c.doneAfter;
     c.estimate = estimate(c.doneAfter, total, [...datesBefore, date], date);
     // a pattern that is not on the list only gets the milestones that are not about the pattern
-    const ANY = ["birthday", "favourite", "lowest", "weekday-all", "weekday-first", "streak", "busiest", "year", "comeback", "session-first", "late-many", "after-midnight", "three-am", "morning", "weekday-morning", "lunch", "late-session", "rating-max", "rating"];
+    const ANY = ["birthday", "favourite", "lowest", "weekday-all", "weekday-first", "streak", "busiest", "year", "comeback", "session-first", "late-many", "after-midnight", "three-am", "morning", "weekday-morning", "lunch", "late-session", "rating-max", "rating-high", "rating-low", "rating"];
     const out = [];
     for (const r of RULES) {
       if (!item && !ANY.includes(r.id)) continue;
@@ -214,9 +222,9 @@
       if (m) out.push({ id: r.id, prio: r.prio, title: m.title, text: pick(m.text) });
     }
     // two rating messages say the same thing twice
-    if (out.some((m) => m.id === "favourite" || m.id === "lowest")) return { list: out.filter((m) => m.id !== "rating" && m.id !== "rating-max"), estimate: c.estimate };
+    if (out.some((m) => m.id === "favourite" || m.id === "lowest")) return { list: out.filter((m) => !/^rating(-|$)/.test(m.id)), estimate: c.estimate };
     return { list: out, estimate: c.estimate };
   }
 
-  window.FO_MILESTONES = { check, facts, ids: RULES.map((r) => r.id), ALIASES };
+  window.FO_MILESTONES = { check, facts, ids: RULES.map((r) => r.id), ALIASES, GROUPS };
 })();

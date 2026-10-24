@@ -639,6 +639,7 @@ details.req header b { display: none; } /* already in the summary */
 
 /* ---------- Add page (hidden): log a pattern we juggled ---------- */
 .add-form { gap: 20px; }
+.date-time { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ss-field { display: grid; gap: 6px; scroll-margin-top: 12px; }
 .ss-field > label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
 .add-form #ss { font: 600 20px/1.3 var(--f-mono); letter-spacing: .04em; }

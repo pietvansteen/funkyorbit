@@ -100,17 +100,20 @@ FILE_TS = re.compile(r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})")
 
 
 def parse_datetime(date_str, file_name):
-    """Date from the 'date' column (dd/mm/yyyy), time from the DJI file name."""
+    """Date from the 'date' column (dd/mm/yyyy, with hh:mm when the Add page logged it),
+    time from that column or else from the DJI file name."""
     date_iso, time_str = None, None
     m = FILE_TS.search(file_name or "")
     if m:
         y, mo, d, h, mi, s = m.groups()
         date_iso = f"{y}-{mo}-{d}"
         time_str = f"{h}:{mi}"
-    dm = re.match(r"(\d{1,2})[/-](\d{1,2})[/-](\d{4})", date_str or "")
+    dm = re.match(r"(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:\s+(\d{1,2}):(\d{2}))?", date_str or "")
     if dm:
-        d, mo, y = dm.groups()
+        d, mo, y, h, mi = dm.groups()
         date_iso = f"{y}-{int(mo):02d}-{int(d):02d}"  # the 'date' column takes precedence
+        if h is not None and (int(h), int(mi)) != (0, 0):  # 00:00 is a date without a time
+            time_str = f"{int(h):02d}:{mi}"
     return date_iso, time_str
 
 

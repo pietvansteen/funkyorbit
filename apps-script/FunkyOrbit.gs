@@ -11,10 +11,10 @@
  *   4. On the server, in .env: SHEET_WRITE_URL=<the /exec URL> and SHEET_WRITE_SECRET=<the same SECRET>.
  * After changing this file: Deploy > Manage deployments > edit > New version (the URL stays the same).
  *
- * Request body (JSON): {"secret", "id", "pattern", "date": "YYYY-MM-DD", "rating": 0.5..5 | null}
+ * Request body (JSON): {"secret", "id", "pattern", "date": "YYYY-MM-DD", "time": "HH:MM" | "", "rating": 0.5..5 | null}
  * Answer: {"ok": true, "row", "nr", "name", "family"} or {"error": "..."}
  *
- * Only date, pattern and rating are written: "nr" is already filled in on the empty rows (and added when missing),
+ * Only date (with the time, when given), pattern and rating are written: "nr" is already filled in on the empty rows (and added when missing),
  * "known name" and "family" are formulas over the whole column.
  */
 
@@ -33,6 +33,7 @@ function doPost(e) {
 
   const pattern = String(body.pattern || "").trim();
   const date = /^(\d{4})-(\d{2})-(\d{2})$/.exec(body.date || "");
+  const time = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(body.time || "");
   const rating = body.rating == null || body.rating === "" ? "" : Number(body.rating);
   if (!pattern || !date) return doneAnswer({ error: "pattern and date are needed" });
   if (rating !== "" && !(rating >= 0.5 && rating <= 5)) return doneAnswer({ error: "rating goes from 0.5 to 5" });
@@ -61,7 +62,9 @@ function doPost(e) {
       nr = (row > 2 ? Number(sheet.getRange(row - 1, DONE_COL.nr).getValue()) || 0 : 0) + 1;
       sheet.getRange(row, DONE_COL.nr).setValue(nr);
     }
-    sheet.getRange(row, DONE_COL.date).setNumberFormat("dd/mm/yyyy").setValue(new Date(+date[1], +date[2] - 1, +date[3]));
+    // date and time in one cell; the Progress formulas round it down to the day where they count days
+    const when = time ? new Date(+date[1], +date[2] - 1, +date[3], +time[1], +time[2]) : new Date(+date[1], +date[2] - 1, +date[3]);
+    sheet.getRange(row, DONE_COL.date).setNumberFormat(time ? "dd/mm/yyyy hh:mm" : "dd/mm/yyyy").setValue(when);
     // as text, so 8556666 stays a siteswap and 1e3 never turns into a number
     sheet.getRange(row, DONE_COL.pattern).setNumberFormat("@").setValue(pattern);
     if (rating !== "") sheet.getRange(row, DONE_COL.rating).setValue(rating);

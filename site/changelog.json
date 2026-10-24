@@ -1,5 +1,13 @@
 [
   {
+    "version": "2.1.0",
+    "date": "2026-10-24",
+    "changes": [
+      "Add: a time next to the date, set to now, saved with the pattern; the site shows that time when there is no camera file yet",
+      "Add: 40 new GIFs, with their own ones for very hard patterns (5 stars), hard patterns (4 to 4½ stars), high and low ratings and surprises; a GIF only comes back after all the others were shown"
+    ]
+  },
+  {
     "version": "2.0.0",
     "date": "2026-10-24",
     "changes": [

@@ -20,7 +20,7 @@ Feature requests (stored in REQUESTS_DB, never shown publicly):
 Logging a pattern we juggled (hidden Add page, admin only):
 
   GET   /api/auth                   admin: {"ok": true} when the password is right
-  POST  /api/done                   admin: body {"id", "pattern", "date": "YYYY-MM-DD", "rating": 0.5..5 | null}
+  POST  /api/done                   admin: body {"id", "pattern", "date": "YYYY-MM-DD", "time": "HH:MM" | null, "rating": 0.5..5 | null}
                                     -> {"ok": true, "nr", "name", "family"}
                                     Written to the Done tab by the Sheet's Apps Script (SHEET_WRITE_URL, SHEET_WRITE_SECRET),
                                     then the sync is asked to run right away (the file sync-now next to data.json).
@@ -218,6 +218,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": "invalid JSON"})
         pattern = re.sub(r"\s*\|\s*|\s+", " ", str(body.get("pattern") or "").strip().lower())
         date, rating = str(body.get("date") or ""), body.get("rating")
+        clock = str(body.get("time") or "")
         if not PATTERN_RE.match(pattern):
             return self._send(400, {"error": "That does not look like a siteswap."})
         try:
@@ -226,13 +227,15 @@ class Handler(BaseHTTPRequestHandler):
             time.strptime(date, "%Y-%m-%d")
         except ValueError:
             return self._send(400, {"error": "Please choose a date."})
+        if clock and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", clock):
+            return self._send(400, {"error": "Please choose a valid time."})
         if rating is not None and not (isinstance(rating, (int, float)) and 0.5 <= rating <= 5 and rating * 2 == int(rating * 2)):
             return self._send(400, {"error": "The rating goes from ½ to 5 stars."})
         if not (SHEET_WRITE_URL and SHEET_WRITE_SECRET):
             return self._send(503, {"error": "Saving to the Sheet is not set up yet (SHEET_WRITE_URL)."})
         req_id = str(body.get("id") or "")
         payload = {"secret": SHEET_WRITE_SECRET, "id": req_id if ID_RE.match(req_id) else "",
-                   "pattern": pattern, "date": date, "rating": rating}
+                   "pattern": pattern, "date": date, "time": clock, "rating": rating}
         try:
             # Apps Script answers with a redirect to the result, which urllib follows as a GET
             req = urllib.request.Request(SHEET_WRITE_URL, data=json.dumps(payload).encode(),
