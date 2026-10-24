@@ -190,6 +190,56 @@
     showPicked();
   }
 
+  // ---------- success pop-up: a random GIF from site/gifs/ (#12) ----------
+  // The list comes from site/gifs/gifs.json, written by tools/release.py: a new GIF there joins in by itself.
+  // Never the same one twice in a row (also not across visits). Goes away after a few seconds or with a tap.
+  const CHEERS = ["Nailed it!", "Clubs caught!", "Another one down!", "Pass it on!", "Smooth!", "Orbit reached!", "That's a keeper!"];
+  const SHOW_MS = 6000;
+  let gifs = [], nextGif = "";
+  const pick = (list, not) => { const pool = list.length > 1 ? list.filter((x) => x !== not) : list; return pool[Math.floor(Math.random() * pool.length)]; };
+  const isVideo = (f) => /\.(mp4|webm)$/i.test(f);
+
+  function chooseNext() {
+    let last = "";
+    try { last = localStorage.getItem("fo_gif_last") || ""; } catch (e) {}
+    nextGif = gifs.length ? pick(gifs, last) : "";
+    if (nextGif && !isVideo(nextGif)) new Image().src = `/gifs/${encodeURIComponent(nextGif)}`; // ready before we need it
+  }
+
+  async function loadGifs() {
+    try {
+      const list = await (await fetch("/gifs/gifs.json", { cache: "no-cache" })).json();
+      gifs = Array.isArray(list) ? list.filter((f) => typeof f === "string") : [];
+    } catch (e) { gifs = []; }
+    chooseNext();
+  }
+
+  // `title` and `text` can come from a milestone later (#44); without them a random cheer.
+  function celebrate({ title, text } = {}) {
+    document.querySelector(".celebrate")?.remove();
+    const gif = nextGif;
+    try { if (gif) localStorage.setItem("fo_gif_last", gif); } catch (e) {}
+    const src = `/gifs/${encodeURIComponent(gif)}`;
+    const media = !gif ? "" : isVideo(gif)
+      ? `<video src="${src}" autoplay muted loop playsinline aria-hidden="true"></video>`
+      : `<img src="${src}" alt="">`;
+    const box = document.createElement("div");
+    box.className = "celebrate";
+    box.setAttribute("role", "status");
+    box.innerHTML = `<div class="celebrate-card">${media}
+      <b class="celebrate-title">${esc(title || pick(CHEERS))}</b>
+      ${text ? `<p>${esc(text)}</p>` : ""}
+      <small>Tap to close</small>
+      <span class="celebrate-timer" style="animation-duration:${SHOW_MS}ms"></span></div>`;
+    const close = () => { clearTimeout(timer); document.removeEventListener("keydown", onKey); box.remove(); };
+    const onKey = (ev) => { if (ev.key === "Escape" || ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); close(); } };
+    const timer = setTimeout(close, SHOW_MS);
+    box.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(box);
+    chooseNext();
+  }
+
   // ---------- saving ----------
   const msg = $("#add-msg"), send = $("#add-send");
   let saveId = "", saveFor = "";
@@ -201,7 +251,7 @@
     }
     return saveId;
   }
-  const say = (text) => { msg.textContent = text; msg.hidden = !text; };
+  const say = (text, ok = false) => { msg.textContent = text; msg.hidden = !text; msg.classList.toggle("ok", ok); };
 
   $("#add").addEventListener("submit", async (ev) => {
     ev.preventDefault();
@@ -222,7 +272,9 @@
       if (!DONE_DATES.has(key)) DONE_DATES.set(key, []);
       DONE_DATES.get(key).unshift(body.date);
       resetForm("");
-      say(`Saved as nr ${j.nr}: ${body.pattern}${j.family ? ` (${j.family})` : ""}. The site has it in a few seconds.`); // the success gif comes with #12
+      say(`Saved as nr ${j.nr}: ${body.pattern}${j.family ? ` (${j.family})` : ""}. The site has it in a few seconds.`, true);
+      input.blur(); // the phone keyboard out of the way of the pop-up
+      celebrate({ text: [`nr ${j.nr}`, body.pattern, j.name || j.family].filter(Boolean).join(" · ") });
     } catch (e) {
       say(e.message || "Saving did not work. Please try again in a moment.");
     } finally {
@@ -256,6 +308,7 @@
     $("#add").hidden = false;
     // the Add item in the menu, now that we know we are logged in
     if (!document.querySelector('.nav a[href="/add/"]')) document.querySelector(".nav").insertAdjacentHTML("beforeend", '<a href="/add/" aria-current="page">Add</a>');
+    loadGifs();
     try { await loadData(); } catch (e) { /* without data.json: no suggestions, saving still works */ }
     resetForm(new URLSearchParams(location.search).get("ss") || "");
   }
