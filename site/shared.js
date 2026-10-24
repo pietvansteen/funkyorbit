@@ -182,7 +182,7 @@
   // ---------- visitor statistics (Umami, self-hosted: web/nginx.conf passes /u/ on to it) ----------
   // Page views, referrers, countries, devices and visit times come with the tracker; track() adds our own events.
   // Not on our own devices (admin password saved), not in the preview and not on localhost.
-  const UMAMI_ID = ""; // the website ID from the Umami dashboard; empty = no statistics
+  const UMAMI_ID = "fd019cf8-5568-45b0-8e3e-d16b7b38c1fe"; // the website ID from the Umami dashboard; empty = no statistics
   let ADMIN = false;
   try { ADMIN = !!localStorage.getItem("fo_admin"); } catch (e) {}
   const STANDALONE = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
