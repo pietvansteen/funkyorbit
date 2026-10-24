@@ -280,6 +280,30 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
 .ss.sync .jug { display: inline-flex; gap: 3px; white-space: nowrap; }
 .ss.sync b { min-width: 1.45em; padding: 2px 3px; }
 .pat { max-width: 100%; }
+/* variations (#28): a main pattern with a pill; opened, its variations follow below it in the same columns */
+.pats.has-vars { grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--w, 5) * 1.72em + 84px)), 1fr)); }
+.pat .vars {
+  order: 3; min-height: 28px; padding: 4px 9px; border-radius: 99px; border: 1px solid var(--line); background: var(--paper);
+  color: var(--muted); font: 700 12px/1 var(--f-body); font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer;
+}
+.pat { grid-template-columns: auto auto auto; }
+.pat .tick { order: 2; }
+.pat small { order: 4; }
+.pat .vars.some { color: var(--done); border-color: color-mix(in srgb, var(--done) 55%, transparent); }
+.pat .vars[aria-expanded="true"] { background: var(--orbit-soft); color: var(--orbit); border-color: var(--orbit); }
+.pat .vars:hover { border-color: var(--orbit); }
+.pat .vars:focus-visible { outline: 2px solid var(--club); outline-offset: 2px; }
+.grp, .grp > ul { display: contents; }
+.grp:not(.open) .var { display: none; }
+.grp.open { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; gap: inherit; position: relative; margin: 4px 0; }
+.grp.open > ul { display: contents; list-style: none; }
+.grp.open > ul > .pat:first-child { grid-column: 1 / -1; }
+.grp.open::before {
+  content: ""; position: absolute; inset: -5px -6px; border: 1px dashed color-mix(in srgb, var(--orbit) 55%, transparent);
+  border-radius: 12px; pointer-events: none;
+}
+.fam-tools { display: flex; justify-content: flex-end; margin: -4px 0 8px; }
+.fam-tools .reset { font-size: 14px; }
 @media (max-width: 700px) { .toolbar { position: static; } }
 .ss .sep { width: 2px; align-self: stretch; margin: 0 3px; background: var(--muted); border-radius: 2px; opacity: .6; }
 

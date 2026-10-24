@@ -388,7 +388,26 @@ def parse_all_patterns(fam_rows, colors, sync_colors, difficulty, done_keys):
                         name="; ".join(names.get(mr, [])) or None)
             item.update(difficulty.get(mr, {}))
         out.append(item)
+    add_variation_groups(out)
     return out
+
+
+def add_variation_groups(items):
+    """Variations (#28): within a family, vanilla siteswaps with the same throws in another order
+    form one group, which follows the dashed boxes (or rows) in the Sheet. The first one is the
+    main pattern; every member gets "group" = the main pattern's key. Sync patterns are not
+    grouped: in the Sheet each of them has its own row."""
+    last = {}
+    for item in items:
+        if "ss" not in item:
+            continue
+        sig = "".join(sorted(item["ss"].lower()))
+        prev = last.get(item["family"])
+        if prev and prev[0] == sig:
+            item["group"] = prev[1]["key"]
+        else:
+            item.update(group=item["key"], main=True)
+            last[item["family"]] = (sig, item)
 
 
 def parse_summary(rows):

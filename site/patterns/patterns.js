@@ -8,6 +8,8 @@
   let ITEMS = [];
   let MAX_SCORE = 0;
   const userOpen = new Set([0]); // families the visitor opened (by number); the first one starts open
+  const groupOpen = new Set(); // variation groups the visitor opened ("family nr:group key")
+  const groupClosed = new Set(); // groups the visitor closed while a search had opened them (until the search changes)
   const filtering = () => !!query.trim() || colorFilter.size > 0;
   const DONE = new Map(); // key -> the Done row to show: the newest with a video, else the newest
   let query = "";
@@ -18,13 +20,13 @@
   const minRotation = (ss) => { ss = (ss || "").toLowerCase(); let m = ss; for (let i = 1; i < ss.length; i++) { const r = ss.slice(i) + ss.slice(0, i); if (r < m) m = r; } return m; };
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
 
-  function chip(p, i) {
+  function chip(p, i, extra = "") {
     const pat = p.ss ? siteswap(p.ss, "sm", p.colors) : syncPattern(p.a, p.b, "sm", p.colors);
     const title = [label(p), p.name, p.family, p.done ? "done" : ""].filter(Boolean).join(" · ");
     // every chip has a tick slot, so done chips don't shift the rest; the name line only when there is a name
     const open = ` role="button" tabindex="0" data-open="${esc(p.key)}" aria-label="${esc(label(p))}: show ${p.done ? "video and " : ""}details"`;
     return `<li class="pat${p.done ? " done" : ""}" data-i="${i}" title="${esc(title)}"${open}>
-      ${pat}<svg class="tick" width="14" height="14" viewBox="0 0 24 24" ${p.done ? 'aria-label="done"' : 'aria-hidden="true"'}><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      ${pat}${extra}<svg class="tick" width="14" height="14" viewBox="0 0 24 24" ${p.done ? 'aria-label="done"' : 'aria-hidden="true"'}><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <small>${esc(p.name || "")}</small>
     </li>`;
   }
@@ -59,9 +61,12 @@
         // all chips in a family get the width of its longest pattern
         const width = Math.max(...idx.map((i) => throwWidth(ITEMS[i])));
         const nr = famNr++;
+        const groups = variationGroups(idx);
+        const anyVars = groups.some((g) => g.length > 1);
         html += `<details class="fam-block" data-fam="${nr}"${userOpen.has(nr) ? " open" : ""}>
           <summary><h3>${esc(fam)} <span>${f.done} / ${f.total} ${chev}</span></h3></summary>
-          <ul class="pats" style="--w:${width}">${idx.map((i) => chip(ITEMS[i], i)).join("")}</ul></details>`;
+          ${anyVars ? `<div class="fam-tools"><button type="button" class="reset" data-allvars aria-expanded="false">Show all variations</button></div>` : ""}
+          <ul class="pats${anyVars ? " has-vars" : ""}" style="--w:${width}">${groups.map((g) => groupHtml(g, nr)).join("")}</ul></details>`;
       }
       html += `</section>`;
     }
@@ -87,12 +92,18 @@
   function applyFilter() {
     const active = !!query.trim() || colorFilter.size > 0;
     const shownKeys = new Set();
+    groupClosed.clear();
     document.querySelectorAll(".pat").forEach((el) => {
       const p = ITEMS[+el.dataset.i];
       const ok = matches(p);
       el.hidden = !ok;
       if (ok) shownKeys.add(p.key);
     });
+    // a main pattern stays in view when one of its variations matches, for context
+    document.querySelectorAll(".grp").forEach((el) => {
+      if (el.querySelector(".var:not([hidden])")) el.querySelector(".pat").hidden = false;
+    });
+    updateGroups();
     document.querySelectorAll(".fam-block, .kind").forEach((el) => {
       el.hidden = !el.querySelector(".pat:not([hidden])");
     });
@@ -121,6 +132,44 @@
   // ---------- pop-up for a pattern we have thrown: video and details, as on the home page ----------
   // Every pattern opens a pop-up: thrown ones with their video and our rating, the others as "Not thrown yet".
   // Both show the families, the known name and the difficulty.
+  // Variations (#28): a main pattern and the patterns after it with the same group, in Sheet order
+  function variationGroups(idx) {
+    const groups = [];
+    for (const i of idx) {
+      const p = ITEMS[i];
+      if (p.group && !p.main && groups.length && ITEMS[groups[groups.length - 1][0]].group === p.group) groups[groups.length - 1].push(i);
+      else groups.push([i]);
+    }
+    return groups;
+  }
+
+  // A group shows its main pattern with a pill (+6, or 2/9 ✓ when some are done); the pill opens the variations below it
+  function groupHtml(g, nr) {
+    if (g.length === 1) return chip(ITEMS[g[0]], g[0]);
+    const [main, ...vars] = g;
+    const id = `${nr}:${ITEMS[main].group}`, done = g.filter((i) => ITEMS[i].done).length;
+    const label = done ? `${done}/${g.length} ✓` : `+${vars.length}`;
+    const aria = `${vars.length} variation${vars.length === 1 ? "" : "s"}${done ? `, ${done} of ${g.length} done` : ""}`;
+    const pill = `<button type="button" class="vars${done ? " some" : ""}" data-grp="${esc(id)}" aria-expanded="false" aria-label="${esc(aria)}">${esc(label)}</button>`;
+    return `<li class="grp" data-g="${esc(id)}"><ul>${chip(ITEMS[main], main, pill)}${vars.map((i) => chip(ITEMS[i], i).replace('class="pat', 'class="pat var')).join("")}</ul></li>`;
+  }
+
+  // open/closed state of every group: the visitor's choice, or open when a search finds one of its variations
+  function updateGroups() {
+    const active = filtering();
+    document.querySelectorAll(".grp").forEach((el) => {
+      const id = el.dataset.g;
+      const open = groupOpen.has(id) || (active && !groupClosed.has(id) && !!el.querySelector(".var:not([hidden])"));
+      el.classList.toggle("open", open);
+      el.querySelector("[data-grp]").setAttribute("aria-expanded", String(open));
+    });
+    document.querySelectorAll("[data-allvars]").forEach((b) => {
+      const all = [...b.closest(".fam-block").querySelectorAll(".grp")].every((el) => el.classList.contains("open"));
+      b.textContent = all ? "Hide all variations" : "Show all variations";
+      b.setAttribute("aria-expanded", String(all));
+    });
+  }
+
   function openModal(key) {
     const items = ITEMS.filter((x) => x.key === key);
     if (!items.length) return;
@@ -167,6 +216,7 @@
   $("#modal").addEventListener("click", (ev) => { if (ev.target === ev.currentTarget) closeModal(); });
   $("#modal-close").addEventListener("click", closeModal);
   document.addEventListener("keydown", (ev) => {
+    if (ev.target.closest && ev.target.closest("button")) return; // a pill or button inside a chip handles its own keys
     const el = ev.target.closest && ev.target.closest("[data-open]");
     if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openModal(el.dataset.open); }
   });
@@ -216,6 +266,25 @@
       return;
     }
     if (ev.target.closest("#reset, [data-reset]")) { reset(); return; }
+    const grp = ev.target.closest("[data-grp]");
+    if (grp) {
+      const id = grp.closest(".grp").dataset.g;
+      if (grp.getAttribute("aria-expanded") === "true") { groupOpen.delete(id); groupClosed.add(id); }
+      else { groupOpen.add(id); groupClosed.delete(id); }
+      updateGroups();
+      return;
+    }
+    const allVars = ev.target.closest("[data-allvars]");
+    if (allVars) {
+      const grps = [...allVars.closest(".fam-block").querySelectorAll(".grp")];
+      const open = !grps.every((el) => el.classList.contains("open"));
+      for (const el of grps) {
+        const id = el.dataset.g;
+        if (open) { groupOpen.add(id); groupClosed.delete(id); } else { groupOpen.delete(id); groupClosed.add(id); }
+      }
+      updateGroups();
+      return;
+    }
     const pat = ev.target.closest("[data-open]");
     if (pat) openModal(pat.dataset.open);
   });
@@ -239,7 +308,7 @@
     const keys = new Map(ITEMS.map((p) => [p.key, p.done]));
     const done = [...keys.values()].filter(Boolean).length;
     $("#title").innerHTML = `${fmt.format(keys.size)}<span class="of">patterns · ${fmt.format(done)} done</span>`;
-    $("#intro").textContent = "Every pattern on the list, in the order of our spreadsheet. Each digit has the colour of the club it throws. Patterns we have already thrown are marked green: click one to watch its video, or any other pattern for its details. A few patterns fit two families, so they appear twice.";
+    $("#intro").textContent = "Every pattern on the list, in the order of our spreadsheet. Each digit has the colour of the club it throws. Patterns we have already thrown are marked green: click one to watch its video, or any other pattern for its details. Variations (the same throws in another order) are folded under the first pattern of their group: tap +3 to show them. A few patterns fit two families, so they appear twice.";
     $("#updated").textContent = updated(data.updated);
     render();
     const params = new URLSearchParams(location.search);
