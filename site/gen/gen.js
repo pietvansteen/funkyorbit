@@ -115,7 +115,7 @@
     try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
     if (!token) return "";
     const ss = p.ss || p.alt || `${p.a} ${p.b}`;
-    return `<a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Juggled it → Add</a>`;
+    return `<a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Passed it → Add</a>`;
   }
 
   // Tap one digit open. "Hide colours" switches itself off at the first one (the next pattern comes in colour);
