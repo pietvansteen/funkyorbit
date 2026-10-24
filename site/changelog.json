@@ -8,7 +8,8 @@
       "Add: a random celebration GIF after saving a pattern, never the same one twice in a row; it stays until you tap it away",
       "Add: milestones after saving, each with its own GIF and message: the last patterns, every new percent with the expected completion date, complete families, first sync, first 8-club pattern, dragons, new favourite, daily records, late-night sessions and many more",
       "Generator: on our own devices, a button to log the drawn pattern on the Add page with the siteswap filled in",
-      "Progress, stats and all patterns are updated as soon as we log a pattern, instead of every hour"
+      "Progress, stats and all patterns are updated as soon as we log a pattern, instead of every hour",
+      "Stats: a calculator under Juggling time that shows how many years and weeks the whole list takes, with sliders for practice days per week and hours per session"
     ]
   },
   {

@@ -531,6 +531,21 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 .juggle .stat-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 .juggle-note { position: relative; margin-top: 12px; font-size: 13px; color: var(--muted); }
 @media (max-width: 600px) { .juggle { grid-template-columns: 1fr; } }
+/* practice calculator: whole list in years and weeks */
+.plan { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.plan h4 { margin: 0 0 2px; font: 600 15px/1.3 var(--f-body); }
+.plan-row { display: grid; grid-template-columns: 190px 1fr 64px; align-items: center; gap: 14px; font-size: 15px; color: var(--muted); }
+.plan-row b { color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plan-row input { width: 100%; height: 44px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.plan-row input::-webkit-slider-runnable-track { height: 6px; border-radius: 99px; background: linear-gradient(var(--orbit), var(--orbit)) 0 / var(--fill, 0%) 100% no-repeat, var(--track); }
+.plan-row input::-moz-range-track { height: 6px; border-radius: 99px; background: linear-gradient(var(--orbit), var(--orbit)) 0 / var(--fill, 0%) 100% no-repeat, var(--track); }
+.plan-row input::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; margin-top: -11px; border-radius: 50%; background: var(--surface); border: 3px solid var(--orbit); }
+.plan-row input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 3px solid var(--orbit); }
+.plan-row input:focus-visible { outline: 2px solid var(--club); outline-offset: 2px; border-radius: 8px; }
+.plan-out { margin: 4px 0 0; display: grid; gap: 2px; }
+.plan-out b { font: 500 clamp(22px, 4vw, 30px)/1.2 var(--f-display); color: var(--orbit); }
+.plan-out span { font-size: 14px; color: var(--muted); }
+@media (max-width: 600px) { .plan-row { grid-template-columns: 1fr auto; gap: 0 12px; } .plan-row input { grid-column: 1 / -1; grid-row: 2; } }
 
 /* ---------- home: orbit explanation behind Read more ---------- */
 .hero .more { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease, opacity .35s ease; opacity: 0; }
