@@ -62,8 +62,10 @@ function doPost(e) {
       nr = (row > 2 ? Number(sheet.getRange(row - 1, DONE_COL.nr).getValue()) || 0 : 0) + 1;
       sheet.getRange(row, DONE_COL.nr).setValue(nr);
     }
-    // date and time in one cell; the Progress formulas round it down to the day where they count days
-    const when = time ? new Date(+date[1], +date[2] - 1, +date[3], +time[1], +time[2]) : new Date(+date[1], +date[2] - 1, +date[3]);
+    // date and time in one cell; the Progress formulas round it down to the day where they count days.
+    // Read in the Sheet's own time zone: the script's time zone may differ (then 00:00 here showed as 09:00 there).
+    const tz = SpreadsheetApp.getActive().getSpreadsheetTimeZone();
+    const when = Utilities.parseDate(body.date + " " + (time ? time[0] : "00:00"), tz, "yyyy-MM-dd HH:mm");
     sheet.getRange(row, DONE_COL.date).setNumberFormat(time ? "dd/mm/yyyy hh:mm" : "dd/mm/yyyy").setValue(when);
     // as text, so 8556666 stays a siteswap and 1e3 never turns into a number
     sheet.getRange(row, DONE_COL.pattern).setNumberFormat("@").setValue(pattern);

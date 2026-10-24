@@ -46,7 +46,7 @@ echo "UMAMI_APP_SECRET=$(openssl rand -hex 32)" >> .env
 docker compose up -d
 ```
 
-The site is then available on port 8088. In the Cloudflare Tunnel, point the public hostname to `http://web:80`. After `git pull`, changes in `site/` are live right away; restart the containers after changes to `sync.py` or `likes.py`.
+The site is then available on port 8088. In the Cloudflare Tunnel, point the public hostname to `http://web:80`. After `git pull`, changes in `site/` are live right away. After changes to `sync.py`, `likes.py` or `web/nginx.conf`, restart those containers with `docker compose restart likes sync web` (`up -d` does not restart a container when only its mounted files changed); after changes to `docker-compose.yml`, run `docker compose up -d`. The Sheet's time zone (*File > Settings*) must be Europe/Amsterdam.
 
 ## Visitor statistics (Umami)
 
