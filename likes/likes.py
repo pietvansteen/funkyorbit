@@ -17,6 +17,14 @@ Feature requests (stored in REQUESTS_DB, never shown publicly):
   POST  /api/requests/<id>/status   admin: body {"status": "new" | "planned" | "done" | "no"}
   GET   /api/requests.csv           admin: all requests as CSV
 
+Logging a pattern we juggled (hidden Add page, admin only):
+
+  GET   /api/auth                   admin: {"ok": true} when the password is right
+  POST  /api/done                   admin: body {"id", "pattern", "date": "YYYY-MM-DD", "rating": 0.5..5 | null}
+                                    -> {"ok": true, "nr", "name", "family"}
+                                    Written to the Done tab by the Sheet's Apps Script (SHEET_WRITE_URL, SHEET_WRITE_SECRET),
+                                    then the sync is asked to run right away (the file sync-now next to data.json).
+
 Admin calls need the header  Authorization: Bearer <ADMIN_TOKEN>  (ADMIN_TOKEN from the environment).
 """
 
@@ -29,6 +37,8 @@ import re
 import sqlite3
 import threading
 import time
+import urllib.error
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -37,12 +47,20 @@ DATA_FILE = os.environ.get("DATA_FILE", "/data/data.json")
 PORT = int(os.environ.get("PORT", "8000"))
 REQUESTS_DB = os.environ.get("REQUESTS_DB", "/data/requests.db")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
+SHEET_WRITE_URL = os.environ.get("SHEET_WRITE_URL", "")  # the Apps Script web app (apps-script/FunkyOrbit.gs)
+SHEET_WRITE_SECRET = os.environ.get("SHEET_WRITE_SECRET", "")
+SYNC_FLAG = os.path.join(os.path.dirname(os.path.abspath(DATA_FILE)), "sync-now")
 
 EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$")
 STATUSES = ("new", "planned", "done", "no")
 LIMITS = {"name": 80, "email": 120, "request": 2000}
 PER_HOUR = 3  # requests per visitor per hour
 _recent = {}  # visitor -> timestamps of their last requests (in memory only)
+
+# vanilla "8556666", sync "33p3 4p44" (as the Done tab writes it) or popcorn "(6x,a)(6,6)*"
+PATTERN_RE = re.compile(r"^(?:[0-9a-z]{1,15}|[0-9a-oq-z]p?(?:[0-9a-oq-z]p?){0,14} [0-9a-oq-z]p?(?:[0-9a-oq-z]p?){0,14}|[0-9a-z(),x*]{3,40})$")
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+ID_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 
 VIDEO_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 VISITOR_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
@@ -192,11 +210,56 @@ class Handler(BaseHTTPRequestHandler):
                         (int(time.time()), fields["name"], fields["email"], fields["request"]))
         self._send(201, {"ok": True})
 
+    def _done_post(self):
+        if not self._admin():
+            return
+        body = self._body(1024)
+        if body is None:
+            return self._send(400, {"error": "invalid JSON"})
+        pattern = re.sub(r"\s*\|\s*|\s+", " ", str(body.get("pattern") or "").strip().lower())
+        date, rating = str(body.get("date") or ""), body.get("rating")
+        if not PATTERN_RE.match(pattern):
+            return self._send(400, {"error": "That does not look like a siteswap."})
+        try:
+            if not DATE_RE.match(date):
+                raise ValueError
+            time.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            return self._send(400, {"error": "Please choose a date."})
+        if rating is not None and not (isinstance(rating, (int, float)) and 0.5 <= rating <= 5 and rating * 2 == int(rating * 2)):
+            return self._send(400, {"error": "The rating goes from ½ to 5 stars."})
+        if not (SHEET_WRITE_URL and SHEET_WRITE_SECRET):
+            return self._send(503, {"error": "Saving to the Sheet is not set up yet (SHEET_WRITE_URL)."})
+        req_id = str(body.get("id") or "")
+        payload = {"secret": SHEET_WRITE_SECRET, "id": req_id if ID_RE.match(req_id) else "",
+                   "pattern": pattern, "date": date, "rating": rating}
+        try:
+            # Apps Script answers with a redirect to the result, which urllib follows as a GET
+            req = urllib.request.Request(SHEET_WRITE_URL, data=json.dumps(payload).encode(),
+                                         headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+        except (urllib.error.URLError, OSError, ValueError) as e:
+            print(f"done: the Sheet could not be reached: {e}", flush=True)
+            return self._send(502, {"error": "The Sheet could not be reached. Please try again in a moment."})
+        if not isinstance(result, dict) or not result.get("ok"):
+            print(f"done: the Sheet said: {result}", flush=True)
+            return self._send(502, {"error": f"The Sheet said: {(result or {}).get('error', 'no answer')}"})
+        # ask the sync to run now (it checks every few seconds), so the site has the new pattern at once
+        try:
+            with open(SYNC_FLAG, "w", encoding="utf-8") as f:
+                json.dump({"nr": result.get("nr")}, f)
+        except OSError as e:
+            print(f"done: could not ask for a sync: {e}", flush=True)
+        self._send(201, {k: result.get(k) for k in ("ok", "nr", "name", "family")})
+
     def do_GET(self):
         url = urlparse(self.path)
         path = url.path.rstrip("/")
         if path == "/api/health":
             return self._send(200, {"ok": True})
+        if path == "/api/auth":
+            return self._admin() and self._send(200, {"ok": True})
         if path in ("/api/requests", "/api/requests/count", "/api/requests.csv"):
             return self._requests_get(path)
         if path != "/api/likes":
@@ -213,6 +276,8 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path.rstrip("/")
         if path == "/api/requests" or path.startswith("/api/requests/"):
             return self._requests_post(path)
+        if path == "/api/done":
+            return self._done_post()
         if path != "/api/like":
             return self._send(404, {"error": "not found"})
         try:

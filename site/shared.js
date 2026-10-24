@@ -244,10 +244,15 @@
     }
   });
 
-  // On our own (logged-in) devices only: the number of new feature requests in the footer
+  // On our own (logged-in) devices only: "Add" in the menu (to log a pattern we juggled),
+  // and the number of new feature requests in the footer
   (function adminCount() {
     let token = "";
     try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
+    const nav = document.querySelector(".nav");
+    if (token && nav && !nav.querySelector('a[href="/add/"]')) {
+      nav.insertAdjacentHTML("beforeend", `<a href="/add/"${location.pathname.startsWith("/add") ? ' aria-current="page"' : ""}>Add</a>`);
+    }
     const links = document.querySelector("footer .foot-links");
     if (!token || !links || location.pathname.startsWith("/requests")) return;
     fetch("/api/requests/count", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })

@@ -1,4 +1,4 @@
-/* Funky Orbit — reads data.json (refreshed hourly by the sync) and the likes API. */
+/* Funky Orbit — reads data.json (refreshed by the sync daily and when we log a pattern) and the likes API. */
 (function () {
   "use strict";
 

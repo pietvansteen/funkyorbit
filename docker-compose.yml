@@ -1,4 +1,4 @@
-# Funky Orbit: website, hourly sync and likes API (docker compose up -d)
+# Funky Orbit: website, daily sync and likes API (docker compose up -d)
 services:
   web:
     image: nginx:1.27-alpine
@@ -23,7 +23,7 @@ services:
       FAMILIES_GID: "777000111"
       SYNC_COLORS_GID: "7703"
       DIFFICULTY_GID: "7710"
-      INTERVAL: "3600"       # every hour
+      INTERVAL: "86400"      # once a day; at once after logging a pattern on the Add page
       OUT_FILE: /data/data.json
       TZ: Europe/Amsterdam
     volumes:
@@ -38,7 +38,9 @@ services:
       DB_FILE: /data/likes.db
       DATA_FILE: /data/data.json
       REQUESTS_DB: /data/requests.db
-      ADMIN_TOKEN: ${ADMIN_TOKEN:-}   # password for the requests page, from .env
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}   # password for the requests and Add pages, from .env
+      SHEET_WRITE_URL: ${SHEET_WRITE_URL:-}        # Apps Script web app that writes to Done (apps-script/FunkyOrbit.gs), from .env
+      SHEET_WRITE_SECRET: ${SHEET_WRITE_SECRET:-}  # its SECRET script property, from .env
     volumes:
       - ./likes:/app:ro
       - ./data:/data

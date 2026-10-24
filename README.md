@@ -1,20 +1,21 @@
 # Funky Orbit — funkyorbit.nl
 
-Follow our progress through 913 club passing patterns, with a video of every pattern we land. Progress and videos come straight from our practice spreadsheet (Google Sheets) and are refreshed every hour.
+Follow our progress through 913 club passing patterns, with a video of every pattern we land. Progress and videos come straight from our practice spreadsheet (Google Sheets) and are refreshed once a day, and right away when we log a new pattern.
 
 ## How it works
 
 ```
-Google Sheet ──(hourly)──> sync ──> data/data.json ──┐
-                                                    ├──> web (nginx) ──> funkyorbit.nl
-visitors ──like──> likes API ──> data/likes.db ─────┘
+Google Sheet ──(daily, or at once)──> sync ──> data/data.json ──┐
+     ^                                                         ├──> web (nginx) ──> funkyorbit.nl
+     └── Apps Script <── /add/ <── likes API ──> data/*.db ─────┘
 ```
 
 | Folder | What |
 |---|---|
 | `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats), `gen/` (pattern generator, installable as an app and usable offline), `changes/` (release notes), `shared.js`, `style.css`, icons |
 | `sync/sync.py` | Fetches the Sheet tabs as CSV and writes `data/data.json` |
-| `likes/likes.py` | Small API: likes (one per visitor per video, via a cookie) and feature requests, both in SQLite |
+| `likes/likes.py` | Small API: likes (one per visitor per video, via a cookie) and feature requests, both in SQLite, and logging a pattern we juggled (via the Apps Script) |
+| `apps-script/FunkyOrbit.gs` | Apps Script bound to the Sheet: writes a logged pattern as a new row in *Done* |
 | `web/nginx.conf` | Serves the site and `data.json`, and forwards `/api/` to the likes API |
 | `tools/release.py` | Puts the newest version from `site/changelog.json` in the footer, the asset links and the service worker |
 | `docker-compose.yml` | Runs everything with Docker Compose, plus a Cloudflare Tunnel |
@@ -37,7 +38,9 @@ The Sheet must be shared as *Anyone with the link can view*.
 git clone https://github.com/pietvansteen/funkyorbit.git
 cd funkyorbit
 echo "TUNNEL_TOKEN=<cloudflare-tunnel-token>" > .env
-echo "ADMIN_TOKEN=<password for /requests/>" >> .env
+echo "ADMIN_TOKEN=<password for /requests/ and /add/>" >> .env
+echo "SHEET_WRITE_URL=<Apps Script web app /exec URL>" >> .env
+echo "SHEET_WRITE_SECRET=<the SECRET script property>" >> .env
 docker compose up -d
 ```
 
@@ -48,6 +51,21 @@ The site is then available on port 8088. In the Cloudflare Tunnel, point the pub
 Visitors send ideas via **Request a feature** in the footer (`/request/`): name, email and request. They are stored on the server in `data/requests.db`, never on the public site. Spam is kept out with a hidden honeypot field, a limit of 3 requests per visitor per hour and maximum field lengths.
 
 Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallowed in `robots.txt`) asks for the password set as `ADMIN_TOKEN` in `.env`. There you can give each request a status (new, planned, done, no) and download all of them as CSV. A device that is logged in also shows the number of new requests in the footer.
+
+## Logging a pattern (Add page)
+
+The hidden page `/add/` (not in the menu for visitors, `noindex`, disallowed in `robots.txt`) asks for the same password as `/requests/`, once per device. After that the menu shows **Add**. Type the siteswap (suggestions appear while typing, in any rotation, sync too), pick the date (today by default) and a rating in half stars (how much fun it is), and save.
+
+The likes API checks the password and passes the pattern to the Apps Script, which writes date, pattern and rating in the first empty row of *Done* (`nr` is filled in already; `known name` and `family` are formulas). Then the sync runs at once, so the site has the new pattern within seconds. Otherwise the sync runs once a day.
+
+Setting up the Apps Script (once):
+
+1. In the Sheet: *Extensions > Apps Script*, add a script file `FunkyOrbit` (*+ > Script*) and paste `apps-script/FunkyOrbit.gs` in it. Existing files such as `Code.gs` stay; the project must have no other `doPost`.
+2. *Project Settings > Script properties*: add `SECRET` with a long random value.
+3. *Deploy > New deployment*, type *Web app*, execute as *Me*, access *Anyone*. Allow the access it asks for and copy the `/exec` URL.
+4. Put `SHEET_WRITE_URL` (the URL) and `SHEET_WRITE_SECRET` (the same secret) in `.env` and run `docker compose up -d`.
+
+After a change to `FunkyOrbit.gs`: *Deploy > Manage deployments*, edit, *New version*; the URL stays the same.
 
 ## Versions and release notes
 

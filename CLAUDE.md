@@ -34,18 +34,19 @@ python3 tools/release.py
 
 There are no tests or linters. Verify in a browser; the service worker cannot run in the app's in-app browser, so test it in headless Chrome.
 
-Production: `docker compose up -d` (services `web` nginx on port 8088, `sync`, `likes`, `tunnel` cloudflared). Secrets `TUNNEL_TOKEN` and `ADMIN_TOKEN` live in `.env` on the server only. Deploy = push to GitHub, then the owner runs `git pull` on the server: `site/` changes are live at once; changes to `sync.py`, `likes.py`, `docker-compose.yml` or `nginx.conf` need the containers restarted (`docker compose up -d`).
+Production: `docker compose up -d` (services `web` nginx on port 8088, `sync`, `likes`, `tunnel` cloudflared). Secrets `TUNNEL_TOKEN`, `ADMIN_TOKEN`, `SHEET_WRITE_URL` and `SHEET_WRITE_SECRET` live in `.env` on the server only. `apps-script/FunkyOrbit.gs` is pasted into the Sheet's Apps Script by hand and deployed as a web app (see README). Deploy = push to GitHub, then the owner runs `git pull` on the server: `site/` changes are live at once; changes to `sync.py`, `likes.py`, `docker-compose.yml` or `nginx.conf` need the containers restarted (`docker compose up -d`).
 
 ## Architecture
 
 ```
-Google Sheet ──CSV──> sync/sync.py (hourly) ──> data/data.json ──> nginx ──> site/ pages
-                                                       └──> likes/likes.py (/api/, SQLite)
+Google Sheet ──CSV──> sync/sync.py (daily, or at once on data/sync-now) ──> data/data.json ──> nginx ──> site/ pages
+     ^                                                                          └──> likes/likes.py (/api/, SQLite)
+     └── apps-script/FunkyOrbit.gs (web app) <── POST /api/done (likes.py, writes data/sync-now)
 ```
 
 - **sync/sync.py** fetches the Sheet tabs by gid (defaults in `sync.py`, overridable via `docker-compose.yml`; `<NAME>_CSV` env vars read a local file instead): Done, Progress (Statistics block in columns G+ → total, tiles, funny stats), Kleuren (siteswap → colour code W/B/O/R), Kleuren sync, Families, Moeilijkheid (score; stars are the formula in column J). Optional tabs only log a WARNING when missing. Writes `data.json` atomically with keys `updated, total, done, summary, statBlocks, groups, all, patterns, stats`. `all` is every pattern on the list (family, kind Standard/Zaps/Sync, key, done, colours, score, stars); `patterns` is the Done rows, newest first, with YouTube id, date, rating and key.
-- **likes/likes.py**: `GET /api/likes`, `POST /api/like`, `/api/health`, and feature requests (`POST /api/requests` with a honeypot field and 3/hour per IP). Admin endpoints (`GET /api/requests`, `/api/requests/count`, `/api/requests.csv`, `POST /api/requests/<id>/status`) need `Authorization: Bearer <ADMIN_TOKEN>`.
-- **site/shared.js** (`window.FO`) holds everything shared between pages: siteswap/sync rendering in club colours, stars/difficulty, dates, the video player, likes, and `startHands`/`startHtml`. Each page has its own folder and script: `/` (`app.js`, progress feed), `/stats/`, `/patterns/` (families + pattern pop-up), `/gen/` (generator, options in `localStorage fo_gen`), `/changes/` (renders `changelog.json`), `/request/`, `/requests/` (admin, noindex). The whole site is one PWA: `site/manifest.webmanifest` (scope `/`, opens on `/gen/`) and `site/sw.js` (scope `/`, registered from `shared.js`; pages and data network-first, assets cache-first, so every page works offline).
+- **likes/likes.py**: `GET /api/likes`, `POST /api/like`, `/api/health`, and feature requests (`POST /api/requests` with a honeypot field and 3/hour per IP). Admin endpoints (`GET /api/requests`, `/api/requests/count`, `/api/requests.csv`, `POST /api/requests/<id>/status`, `GET /api/auth`, `POST /api/done`) need `Authorization: Bearer <ADMIN_TOKEN>`. `POST /api/done` passes the pattern to the Apps Script (`SHEET_WRITE_URL` + `SHEET_WRITE_SECRET`), which fills date, pattern and rating in the first empty row of Done, then writes `data/sync-now` so the sync runs at once (it retries until the new `nr` is in Google's CSV export).
+- **site/shared.js** (`window.FO`) holds everything shared between pages: siteswap/sync rendering in club colours, stars/difficulty, dates, the video player, likes, and `startHands`/`startHtml`. Each page has its own folder and script: `/` (`app.js`, progress feed), `/stats/`, `/patterns/` (families + pattern pop-up), `/gen/` (generator, options in `localStorage fo_gen`), `/changes/` (renders `changelog.json`), `/request/`, `/requests/` and `/add/` (admin, noindex; "Add" is put in the menu by `shared.js` only on devices with the admin password in `localStorage fo_admin`). The whole site is one PWA: `site/manifest.webmanifest` (scope `/`, opens on `/gen/`) and `site/sw.js` (scope `/`, registered from `shared.js`; pages and data network-first, assets cache-first, so every page works offline).
 
 ## Domain rules (easy to get wrong)
 

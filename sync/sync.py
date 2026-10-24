@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Funky Orbit sync: fetches the "Done" and "Progress" tabs from the Google Sheet
-and writes a single data.json for the website. Runs every hour by default.
+and writes a single data.json for the website. Runs once a day by default, and at once
+when the likes API asks for it (after we log a pattern on the Add page: the file sync-now next to data.json).
 
 Standard library only, no pip needed.
 
@@ -14,7 +15,7 @@ Settings via environment variables (see docker-compose.yml):
   SYNC_COLORS_GID gid of the "Kleuren sync" tab (colour code per sync pattern)
   DIFFICULTY_GID  gid of the "Moeilijkheid" tab (difficulty score and stars per pattern)
   OUT_FILE        output path (default /data/data.json)
-  INTERVAL        seconds between two syncs (default 3600); 0 = run once
+  INTERVAL        seconds between two syncs (default 86400); 0 = run once
   DONE_CSV / PROGRESS_CSV / COLORS_CSV / FAMILIES_CSV / SYNC_COLORS_CSV / DIFFICULTY_CSV   optional: local CSV files instead of Google (for testing)
 """
 
@@ -36,7 +37,8 @@ FAMILIES_GID = os.environ.get("FAMILIES_GID", "777000111")
 SYNC_COLORS_GID = os.environ.get("SYNC_COLORS_GID", "7703")
 DIFFICULTY_GID = os.environ.get("DIFFICULTY_GID", "7710")
 OUT_FILE = os.environ.get("OUT_FILE", "/data/data.json")
-INTERVAL = int(os.environ.get("INTERVAL", "3600"))
+INTERVAL = int(os.environ.get("INTERVAL", "86400"))
+SYNC_FLAG = os.path.join(os.path.dirname(os.path.abspath(OUT_FILE)), "sync-now")
 
 EXPORT_URL = "https://docs.google.com/spreadsheets/d/{sheet}/export?format=csv&gid={gid}"
 
@@ -493,19 +495,48 @@ def sync_once():
     write_atomic(data, OUT_FILE)
     log(f"OK: {data['done']}/{data['total']} patterns, {data['stats']['videos']} videos, "
         f"{len(data['all'])} in overview -> {OUT_FILE}")
+    return data
+
+
+def wait():
+    """Sleep INTERVAL seconds, or less when the likes API asks for a sync. Returns the asked-for row nr, or None."""
+    end = time.time() + INTERVAL
+    while time.time() < end:
+        if os.path.exists(SYNC_FLAG):
+            try:
+                with open(SYNC_FLAG, encoding="utf-8") as f:
+                    nr = json.load(f).get("nr")
+            except (OSError, ValueError, AttributeError):
+                nr = None
+            try:
+                os.remove(SYNC_FLAG)  # first, so a new pattern during this sync asks again
+            except OSError:
+                pass
+            return str(nr) if nr is not None else ""
+        time.sleep(2)
+    return None
 
 
 def main():
+    asked = None
     while True:
-        try:
-            sync_once()
-        except Exception as e:  # the old data.json stays in place
-            log(f"ERROR: {e}")
-            if INTERVAL == 0:
-                sys.exit(1)
+        # Google's CSV export can lag a few seconds behind a change: try again until the new row is in
+        for attempt in range(6 if asked else 1):
+            try:
+                data = sync_once()
+                if not asked or any(p.get("nr") == asked for p in data["patterns"]):
+                    break
+                log(f"pattern nr {asked} not in the export yet, trying again")
+            except Exception as e:  # the old data.json stays in place
+                log(f"ERROR: {e}")
+                if INTERVAL == 0:
+                    sys.exit(1)
+            time.sleep(5)
         if INTERVAL == 0:
             break
-        time.sleep(INTERVAL)
+        asked = wait()
+        if asked is not None:
+            log(f"sync asked for (new pattern nr {asked or '?'})")
 
 
 if __name__ == "__main__":
