@@ -38,6 +38,8 @@
   // ---------- the list: data.json "all", once per pattern (a pattern can be in more than one family) ----------
   let ITEMS = [], BY_KEY = new Map(), MAX_SCORE = 0;
   const DONE_DATES = new Map(); // key -> dates we did it, newest first
+  // for the milestones: what was done before the next save (kept up to date after each save, also before the sync)
+  const STATE = { done: new Set(), rows: [] };
 
   async function loadData() {
     const data = await (await fetch("/data.json", { cache: "no-cache" })).json();
@@ -51,6 +53,9 @@
       if (!DONE_DATES.has(p.key)) DONE_DATES.set(p.key, []);
       if (p.date) DONE_DATES.get(p.key).push(p.date);
     }
+    ITEMS.forEach((p) => p.done && STATE.done.add(p.key));
+    STATE.rows = (data.patterns || []).filter((p) => p.date).reverse() // oldest first
+      .map((p) => ({ key: p.key, date: p.date, time: p.time || "", rating: p.rating ?? null }));
   }
 
   const pattern = (p, size) => (p.ss ? siteswap(p.ss, size, p.colors) : syncPattern(p.a, p.b, size, p.colors));
@@ -190,20 +195,29 @@
     showPicked();
   }
 
-  // ---------- success pop-up: a random GIF from site/gifs/ (#12) ----------
+  // ---------- success pop-up: a GIF from site/gifs/ (#12) with our milestones (#44) ----------
   // The list comes from site/gifs/gifs.json, written by tools/release.py: a new GIF there joins in by itself.
-  // Never the same one twice in a row (also not across visits). Stays until we tap it away.
+  // A GIF named after a milestone ("birthday-cake.mp4" for the milestone "birthday") is only shown for that
+  // milestone; the others are shown at random, never the same one twice in a row. Stays until we tap it away.
   const CHEERS = ["Nailed it!", "Clubs caught!", "Another one down!", "Pass it on!", "Smooth!", "Orbit reached!", "That's a keeper!"];
-  let gifs = [], nextGif = "";
+  const MS = window.FO_MILESTONES;
+  let gifs = [];
   const pick = (list, not) => { const pool = list.length > 1 ? list.filter((x) => x !== not) : list; return pool[Math.floor(Math.random() * pool.length)]; };
   const isVideo = (f) => /\.(mp4|webm)$/i.test(f);
+  const base = (f) => f.replace(/\.[^.]+$/, "");
+  // the milestone a GIF belongs to: the longest id its name starts with ("rating-max-…" is rating-max, not rating)
+  const gifMilestone = (f) => MS.ids.filter((id) => base(f) === id || base(f).startsWith(id + "-")).sort((a, b) => b.length - a.length)[0] || "";
+  const preload = (f) => (isVideo(f) ? fetch(`/gifs/${encodeURIComponent(f)}`).catch(() => {}) : (new Image().src = `/gifs/${encodeURIComponent(f)}`));
 
-  function chooseNext() {
+  function gifFor(id) {
     let last = "";
     try { last = localStorage.getItem("fo_gif_last") || ""; } catch (e) {}
-    nextGif = gifs.length ? pick(gifs, last) : "";
-    // ready before we need it (videos end up in the service worker's cache)
-    if (nextGif) isVideo(nextGif) ? fetch(`/gifs/${encodeURIComponent(nextGif)}`).catch(() => {}) : (new Image().src = `/gifs/${encodeURIComponent(nextGif)}`);
+    const own = gifs.filter((f) => id && gifMilestone(f) === id);
+    // an alias is a GIF's name without extension, or another milestone (then its GIFs)
+    const alias = gifs.filter((f) => id && (MS.ALIASES[id] || []).some((a) => base(f) === a || gifMilestone(f) === a));
+    const generic = gifs.filter((f) => !gifMilestone(f));
+    const list = own.length ? own : alias.length ? alias : generic;
+    return list.length ? pick(list, last) : "";
   }
 
   async function loadGifs() {
@@ -211,31 +225,35 @@
       const list = await (await fetch("/gifs/gifs.json", { cache: "no-cache" })).json();
       gifs = Array.isArray(list) ? list.filter((f) => typeof f === "string") : [];
     } catch (e) { gifs = []; }
-    chooseNext();
+    gifs.filter((f) => !gifMilestone(f)).slice(0, 3).forEach(preload); // a few, so the first one shows at once
   }
 
-  // `title` and `text` can come from a milestone later (#44); without them a random cheer.
-  function celebrate({ title, text } = {}) {
+  // milestones: most special first; the first gives the title and the GIF, a few more are listed below
+  function celebrate({ milestones = [], saved = "", estimate = "" } = {}) {
     document.querySelector(".celebrate")?.remove();
-    const gif = nextGif;
+    const [top, ...more] = [...milestones].sort((a, b) => b.prio - a.prio);
+    const gif = gifFor(top && top.id);
     try { if (gif) localStorage.setItem("fo_gif_last", gif); } catch (e) {}
     const src = `/gifs/${encodeURIComponent(gif)}`;
     const media = !gif ? "" : isVideo(gif)
       ? `<video src="${src}" autoplay muted loop playsinline aria-hidden="true"></video>`
       : `<img src="${src}" alt="">`;
+    const extra = more.filter((m) => m.prio >= 30).slice(0, 4);
     const box = document.createElement("div");
     box.className = "celebrate";
     box.setAttribute("role", "status");
     box.innerHTML = `<div class="celebrate-card">${media}
-      <b class="celebrate-title">${esc(title || pick(CHEERS))}</b>
-      ${text ? `<p>${esc(text)}</p>` : ""}
+      <b class="celebrate-title">${esc(top ? top.title : pick(CHEERS))}</b>
+      ${top && top.text ? `<p>${esc(top.text)}</p>` : ""}
+      ${extra.length ? `<ul class="celebrate-more">${extra.map((m) => `<li><b>${esc(m.title)}</b> ${esc(m.text)}</li>`).join("")}</ul>` : ""}
+      ${saved ? `<p class="celebrate-saved">${esc(saved)}</p>` : ""}
+      ${estimate && !milestones.some((m) => m.id === "percent") ? `<p class="celebrate-saved">Expected project completion date: ${esc(estimate)}</p>` : ""}
       <small>Tap to close</small></div>`;
     const close = () => { document.removeEventListener("keydown", onKey); box.remove(); };
     const onKey = (ev) => { if (ev.key === "Escape" || ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); close(); } };
     box.addEventListener("click", close);
     document.addEventListener("keydown", onKey);
     document.body.appendChild(box);
-    chooseNext();
   }
 
   // ---------- saving ----------
@@ -267,12 +285,21 @@
       if (!r.ok) throw new Error(j.error || "");
       saveId = "";
       const key = keyOf(body.pattern);
+      // the time only when we log it on the day itself (for the night owl milestones)
+      const now = new Date();
+      const time = body.date === today() ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` : "";
+      let ms = { list: [], estimate: "" };
+      try {
+        ms = MS.check({ item: BY_KEY.get(key) || null, key, rating: body.rating, date: body.date, time, before: STATE, list: BY_KEY, total: BY_KEY.size });
+      } catch (e) { /* no milestones, still a GIF */ }
+      if (BY_KEY.has(key)) STATE.done.add(key);
+      STATE.rows.push({ key, date: body.date, time, rating: body.rating });
       if (!DONE_DATES.has(key)) DONE_DATES.set(key, []);
       DONE_DATES.get(key).unshift(body.date);
       resetForm("");
       say(`Saved as nr ${j.nr}: ${body.pattern}${j.family ? ` (${j.family})` : ""}. The site has it in a few seconds.`, true);
       input.blur(); // the phone keyboard out of the way of the pop-up
-      celebrate({ text: [`nr ${j.nr}`, body.pattern, j.name || j.family].filter(Boolean).join(" · ") });
+      celebrate({ milestones: ms.list, estimate: ms.estimate, saved: [`nr ${j.nr}`, body.pattern, j.name || j.family].filter(Boolean).join(" · ") });
     } catch (e) {
       say(e.message || "Saving did not work. Please try again in a moment.");
     } finally {
