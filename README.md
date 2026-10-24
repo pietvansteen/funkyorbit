@@ -65,7 +65,7 @@ Setting up the Apps Script (once):
 3. *Deploy > New deployment*, type *Web app*, execute as *Me*, access *Anyone*. Allow the access it asks for and copy the `/exec` URL.
 4. Put `SHEET_WRITE_URL` (the URL) and `SHEET_WRITE_SECRET` (the same secret) in `.env` and run `docker compose up -d`.
 
-After saving, a pop-up shows a random GIF from `site/gifs/` (never the same one twice in a row). To add one, put the file (`.gif`, `.webp`, `.png`, `.jpg`, `.mp4` or `.webm`) in `site/gifs/` and run `python3 tools/release.py`, which lists it in `site/gifs/gifs.json`. The four `funky-*.gif` files are our own, made with `python3 tools/make_gifs.py`.
+After saving, a pop-up shows a random GIF from `site/gifs/` (never the same one twice in a row). To add one, put the file (`.gif`, `.webp`, `.png`, `.jpg`, `.mp4` or `.webm`) in `site/gifs/` and run `python3 tools/release.py`, which lists it in `site/gifs/gifs.json`. The four `funky-*.gif` files are our own, made with `python3 tools/make_gifs.py`; the `.mp4` files are well-known reaction GIFs from GIPHY (giphy.com), as MP4 because that is far smaller.
 
 After a change to `FunkyOrbit.gs`: *Deploy > Manage deployments*, edit, *New version*; the URL stays the same.
 

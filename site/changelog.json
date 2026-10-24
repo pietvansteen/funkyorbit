@@ -5,7 +5,7 @@
     "changes": [
       "Add: a page only for us to log a pattern we juggled, with suggestions while typing the siteswap, half-star ratings and a warning when a siteswap is not on the list",
       "Add: a logged pattern goes straight into our practice list, and the site has it within seconds",
-      "Add: a random celebration GIF after saving a pattern, never the same one twice in a row; tap to close",
+      "Add: a random celebration GIF after saving a pattern, never the same one twice in a row; it stays until you tap it away",
       "Progress, stats and all patterns are updated as soon as we log a pattern, instead of every hour"
     ]
   },

@@ -192,9 +192,8 @@
 
   // ---------- success pop-up: a random GIF from site/gifs/ (#12) ----------
   // The list comes from site/gifs/gifs.json, written by tools/release.py: a new GIF there joins in by itself.
-  // Never the same one twice in a row (also not across visits). Goes away after a few seconds or with a tap.
+  // Never the same one twice in a row (also not across visits). Stays until we tap it away.
   const CHEERS = ["Nailed it!", "Clubs caught!", "Another one down!", "Pass it on!", "Smooth!", "Orbit reached!", "That's a keeper!"];
-  const SHOW_MS = 6000;
   let gifs = [], nextGif = "";
   const pick = (list, not) => { const pool = list.length > 1 ? list.filter((x) => x !== not) : list; return pool[Math.floor(Math.random() * pool.length)]; };
   const isVideo = (f) => /\.(mp4|webm)$/i.test(f);
@@ -203,7 +202,8 @@
     let last = "";
     try { last = localStorage.getItem("fo_gif_last") || ""; } catch (e) {}
     nextGif = gifs.length ? pick(gifs, last) : "";
-    if (nextGif && !isVideo(nextGif)) new Image().src = `/gifs/${encodeURIComponent(nextGif)}`; // ready before we need it
+    // ready before we need it (videos end up in the service worker's cache)
+    if (nextGif) isVideo(nextGif) ? fetch(`/gifs/${encodeURIComponent(nextGif)}`).catch(() => {}) : (new Image().src = `/gifs/${encodeURIComponent(nextGif)}`);
   }
 
   async function loadGifs() {
@@ -229,11 +229,9 @@
     box.innerHTML = `<div class="celebrate-card">${media}
       <b class="celebrate-title">${esc(title || pick(CHEERS))}</b>
       ${text ? `<p>${esc(text)}</p>` : ""}
-      <small>Tap to close</small>
-      <span class="celebrate-timer" style="animation-duration:${SHOW_MS}ms"></span></div>`;
-    const close = () => { clearTimeout(timer); document.removeEventListener("keydown", onKey); box.remove(); };
+      <small>Tap to close</small></div>`;
+    const close = () => { document.removeEventListener("keydown", onKey); box.remove(); };
     const onKey = (ev) => { if (ev.key === "Escape" || ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); close(); } };
-    const timer = setTimeout(close, SHOW_MS);
     box.addEventListener("click", close);
     document.addEventListener("keydown", onKey);
     document.body.appendChild(box);
