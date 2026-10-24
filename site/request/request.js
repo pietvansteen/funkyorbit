@@ -24,6 +24,7 @@
       if (!r.ok) throw new Error(j.error || "");
       form.hidden = true;
       $("#req-thanks").hidden = false;
+      window.FO.track("Send request");
       form.reset();
     } catch (e) {
       say(e.message || "Sending did not work. Please try again in a moment.");

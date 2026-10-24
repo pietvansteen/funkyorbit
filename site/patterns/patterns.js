@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, when, player, likes } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, when, player, likes, track, trackSearch } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
@@ -207,6 +207,7 @@
       </article>`;
     const dlg = $("#modal");
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+    track("Open pattern", { siteswap: item.kind === "Sync" ? `${item.a} | ${item.b}` : item.ss || p.siteswap, family: families[0], done: !!p });
   }
 
 
@@ -260,13 +261,14 @@
     applyFilter();
   }
 
-  $("#q").addEventListener("input", (ev) => { query = ev.target.value; applyFilter(); });
+  $("#q").addEventListener("input", (ev) => { query = ev.target.value; trackSearch(query); applyFilter(); });
   document.addEventListener("click", (ev) => {
     const c = ev.target.closest("[data-c]");
     if (c) {
       const on = c.getAttribute("aria-pressed") !== "true";
       c.setAttribute("aria-pressed", String(on));
       on ? colorFilter.add(c.dataset.c) : colorFilter.delete(c.dataset.c);
+      if (on) track("Colour filter", { colour: c.dataset.c });
       applyFilter();
       return;
     }

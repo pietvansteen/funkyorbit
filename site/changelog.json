@@ -11,7 +11,8 @@
       "Progress, stats and all patterns are updated as soon as we log a pattern, instead of every hour",
       "Stats: a calculator under Juggling time that shows how many years and weeks the whole list takes, with sliders for practice days per week and hours per session",
       "Home: the intro no longer says how many patterns Brook has left",
-      "All patterns: variations (the same throws in another order) are folded under the first pattern of their group, with a button per pattern and per family to show them; you can see at once how many of a group we have done, and searching opens a group when a variation matches"
+      "All patterns: variations (the same throws in another order) are folded under the first pattern of their group, with a button per pattern and per family to show them; you can see at once how many of a group we have done, and searching opens a group when a variation matches",
+      "Visitor statistics with Umami, without cookies: page views, where visitors come from, and which videos and patterns are opened most"
     ]
   },
   {

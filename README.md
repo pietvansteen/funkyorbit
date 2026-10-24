@@ -16,9 +16,9 @@ Google Sheet ──(daily, or at once)──> sync ──> data/data.json ──
 | `sync/sync.py` | Fetches the Sheet tabs as CSV and writes `data/data.json` |
 | `likes/likes.py` | Small API: likes (one per visitor per video, via a cookie) and feature requests, both in SQLite, and logging a pattern we juggled (via the Apps Script) |
 | `apps-script/FunkyOrbit.gs` | Apps Script bound to the Sheet: writes a logged pattern as a new row in *Done* |
-| `web/nginx.conf` | Serves the site and `data.json`, and forwards `/api/` to the likes API |
+| `web/nginx.conf` | Serves the site and `data.json`, forwards `/api/` to the likes API and `/u/` (tracker only) to Umami |
 | `tools/release.py` | Puts the newest version from `site/changelog.json` in the footer, the asset links and the service worker |
-| `docker-compose.yml` | Runs everything with Docker Compose, plus a Cloudflare Tunnel |
+| `docker-compose.yml` | Runs everything with Docker Compose, plus Umami (visitor statistics) and a Cloudflare Tunnel |
 
 No pip packages needed: everything runs on standard Python.
 
@@ -41,10 +41,44 @@ echo "TUNNEL_TOKEN=<cloudflare-tunnel-token>" > .env
 echo "ADMIN_TOKEN=<password for /requests/ and /add/>" >> .env
 echo "SHEET_WRITE_URL=<Apps Script web app /exec URL>" >> .env
 echo "SHEET_WRITE_SECRET=<the SECRET script property>" >> .env
+echo "UMAMI_DB_PASSWORD=$(openssl rand -hex 16)" >> .env
+echo "UMAMI_APP_SECRET=$(openssl rand -hex 32)" >> .env
 docker compose up -d
 ```
 
 The site is then available on port 8088. In the Cloudflare Tunnel, point the public hostname to `http://web:80`. After `git pull`, changes in `site/` are live right away; restart the containers after changes to `sync.py` or `likes.py`.
+
+## Visitor statistics (Umami)
+
+[Umami](https://umami.is) runs next to the site (`umami` and `umami-db` in `docker-compose.yml`). It uses no cookies and stores no IP addresses, so no cookie banner is needed. Visitors load the tracker from `/u/script.js` on funkyorbit.nl itself and send to `/u/api/send`; nginx passes only those two to Umami, so the dashboard is not public.
+
+Setting it up (once):
+
+1. Put `UMAMI_DB_PASSWORD` and `UMAMI_APP_SECRET` in `.env` (see above) and run `docker compose up -d`.
+2. Open the dashboard on `http://<host>:3088`, log in as `admin` / `umami` and change that password right away (*Settings > Profile*).
+3. *Settings > Websites > Add website*: name *Funky Orbit*, domain `funkyorbit.nl`. Copy its *Website ID* into `UMAMI_ID` in `site/shared.js`, run `python3 tools/release.py`, commit and pull.
+
+Optionally, to see the dashboard from anywhere: add a public hostname such as `stats.funkyorbit.nl` → `http://umami:3000` to the Cloudflare Tunnel.
+
+Umami shows page views, visitors, bounce rate and visit duration per day, week or month, the most viewed pages, referrers (Google, Instagram, YouTube, forums), countries, devices and browsers, and page speed. Visits from the installed web app have the tag `app`. The site also sends these events (*Events* in the dashboard, with their properties):
+
+| Event | Properties | When |
+|---|---|---|
+| `Play video` | `siteswap`, `video` | a video is started on the site |
+| `Like` / `Unlike` | `video` | a heart is clicked |
+| `Open pattern` | `siteswap`, `family`, `done` | a pattern pop-up opens on All patterns |
+| `Search` | `query`, `page` | someone stops typing in a search box for 2 seconds |
+| `Colour filter` | `colour` | a colour filter is switched on (All patterns) |
+| `Date filter` | `range` | the date filter changes (home) |
+| `Open group` | `group` | a progress tile opens (home) |
+| `Draw pattern` | `period`, `stars`, `hide`, `found` | the generator draws a pattern |
+| `Send request` | | a feature request is sent |
+| `Outbound link` | `to` | the YouTube channel or James Francis' list is opened |
+| `Install app` | | the site is installed as an app (not every browser reports this) |
+
+Our own devices (with the admin password saved) are not counted, and neither are the preview and localhost. Searching changes the address with every letter; that is not counted as a new page view.
+
+To see visitors from Instagram even when the app hides the referrer, link to `https://funkyorbit.nl/?utm_source=instagram` in the bio (likewise `utm_source=youtube` in video descriptions); Umami shows these under *UTM*.
 
 ## Feature requests
 

@@ -1,4 +1,4 @@
-# Funky Orbit: website, daily sync and likes API (docker compose up -d)
+# Funky Orbit: website, daily sync, likes API and visitor statistics (docker compose up -d)
 services:
   web:
     image: nginx:1.27-alpine
@@ -9,7 +9,7 @@ services:
       - ./site:/usr/share/nginx/html:ro
       - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./data:/data:ro
-    depends_on: [likes]
+    depends_on: [likes, umami]
 
   sync:
     image: python:3.13-alpine
@@ -45,6 +45,38 @@ services:
       - ./likes:/app:ro
       - ./data:/data
 
+  # Visitor statistics (Umami). The site loads the tracker from /u/script.js and sends to /u/api/send (web/nginx.conf);
+  # the dashboard is on http://<host>:3088 (log in, change the password of user admin, add the website).
+  umami:
+    image: ghcr.io/umami-software/umami:3
+    restart: unless-stopped
+    ports:
+      - "3088:3000"          # dashboard: http://<host>:3088
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@umami-db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET}   # any long random string, from .env
+      CLIENT_IP_HEADER: cf-connecting-ip # the visitor's address from Cloudflare, not the tunnel's
+      DISABLE_TELEMETRY: "1"
+      TZ: Europe/Amsterdam
+    depends_on:
+      umami-db:
+        condition: service_healthy
+
+  umami-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}  # from .env
+    volumes:
+      - umami-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # Cloudflare Tunnel: makes funkyorbit.nl reachable without opening any ports.
   # The token goes in a .env file next to this file: TUNNEL_TOKEN=...
   tunnel:
@@ -54,3 +86,6 @@ services:
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN}
     depends_on: [web]
+
+volumes:
+  umami-db:

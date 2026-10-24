@@ -158,7 +158,7 @@
     const img = PREVIEW ? "" : `<img src="https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg" srcset="${srcset}" sizes="(max-width: 640px) 100vw, 400px" alt="" loading="lazy" onload="if(this.naturalWidth<200)this.onerror()" onerror="if(this.srcset){this.removeAttribute('srcset')}else{this.remove()}">`;
     const btn = PREVIEW
       ? `<a class="play" href="${url}" target="_blank" rel="noopener" aria-label="Watch ${esc(p.siteswap)} on YouTube">${play}</a>`
-      : `<button type="button" class="play" data-play="${p.youtubeId}" aria-label="Play video of ${esc(p.siteswap)}">${play}</button>`;
+      : `<button type="button" class="play" data-play="${p.youtubeId}" data-ss="${esc(p.siteswap)}" aria-label="Play video of ${esc(p.siteswap)}">${play}</button>`;
     return `<div class="player ${p.isShort ? "" : "wide"}">${poster}${img}${btn}</div>`;
   }
 
@@ -178,6 +178,44 @@
         Our patterns go from about 1 (easiest) to ${Math.ceil(maxScore)} (hardest).
         ½ ★ is a score below 4.5, 5 ★ is 17 or more, and in between every 1.5 points adds half a star.</span></span>`;
   }
+
+  // ---------- visitor statistics (Umami, self-hosted: web/nginx.conf passes /u/ on to it) ----------
+  // Page views, referrers, countries, devices and visit times come with the tracker; track() adds our own events.
+  // Not on our own devices (admin password saved), not in the preview and not on localhost.
+  const UMAMI_ID = ""; // the website ID from the Umami dashboard; empty = no statistics
+  let ADMIN = false;
+  try { ADMIN = !!localStorage.getItem("fo_admin"); } catch (e) {}
+  const STANDALONE = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (UMAMI_ID && !ADMIN && !PREVIEW && /(^|\.)funkyorbit\.nl$/.test(location.hostname)) {
+    // Searching changes ?q= in the address with every letter: count that as a page view only when the page itself changes.
+    let lastPath = null;
+    window.foBeforeSend = (type, payload) => {
+      if (type !== "event" || payload.name) return payload;
+      const path = new URL(payload.url, location.href).pathname;
+      if (path === lastPath) return null;
+      lastPath = path;
+      return payload;
+    };
+    const s = document.createElement("script");
+    s.defer = true;
+    s.src = "/u/script.js";
+    s.dataset.websiteId = UMAMI_ID;
+    s.dataset.beforeSend = "foBeforeSend";
+    s.dataset.performance = "true"; // page speed (Web Vitals)
+    if (STANDALONE) s.dataset.tag = "app"; // visits from the installed web app
+    document.head.appendChild(s);
+  }
+  function track(name, data) {
+    try { if (window.umami) window.umami.track(name, data); } catch (e) {}
+  }
+  // A search is counted once the visitor stops typing for 2 seconds, not with every letter
+  let searchTimer = null;
+  function trackSearch(q) {
+    clearTimeout(searchTimer);
+    q = String(q || "").trim().toLowerCase().slice(0, 50);
+    if (q) searchTimer = setTimeout(() => track("Search", { query: q, page: location.pathname }), 2000);
+  }
+  window.addEventListener("appinstalled", () => track("Install app"));
 
   // ---------- likes: one per visitor (cookie + localStorage), counted by the likes API ----------
   function visitorId() {
@@ -216,6 +254,7 @@
     },
     async toggle(id) {
       const on = !state.liked.has(id);
+      track(on ? "Like" : "Unlike", { video: id });
       // update right away (every button for this video), then confirm with the server
       on ? state.liked.add(id) : state.liked.delete(id);
       state.counts[id] = Math.max(0, (state.counts[id] || 0) + (on ? 1 : -1));
@@ -240,6 +279,7 @@
     if (like) { likes.toggle(like.dataset.like); return; }
     const play = ev.target.closest("[data-play]");
     if (play) {
+      track("Play video", { siteswap: play.dataset.ss || play.dataset.play, video: play.dataset.play });
       play.parentElement.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${play.dataset.play}?autoplay=1&playsinline=1&rel=0" title="YouTube video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
     }
   });
@@ -272,5 +312,5 @@
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
   }
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, day, ago, when, player, likes };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, day, ago, when, player, likes, track, trackSearch };
 })();

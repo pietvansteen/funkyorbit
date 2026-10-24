@@ -1,19 +1,19 @@
 /* Funky Orbit web app: works offline in a sports hall without (good) wifi, on every page.
    Pages and data.json come from the network when possible, otherwise the last copy we got.
    Scripts, styles and fonts come from the cache first. The cache name is set by tools/release.py. */
-const VERSION = "fo-site-2.0.0-afb86e";
+const VERSION = "fo-site-2.0.0-1cd836";
 const PAGES = ["/", "/stats/", "/patterns/", "/gen/", "/changes/", "/request/"];
 const FILES = [
   ...PAGES,
-  "/app.js?v=2.0.0-afb86e",
-  "/stats/stats.js?v=2.0.0-afb86e",
-  "/patterns/patterns.js?v=2.0.0-afb86e",
-  "/gen/gen.js?v=2.0.0-afb86e",
-  "/changes/changes.js?v=2.0.0-afb86e",
-  "/request/request.js?v=2.0.0-afb86e",
-  "/shared.js?v=2.0.0-afb86e",
-  "/style.css?v=2.0.0-afb86e",
-  "/favicon.svg?v=2.0.0-afb86e",
+  "/app.js?v=2.0.0-1cd836",
+  "/stats/stats.js?v=2.0.0-1cd836",
+  "/patterns/patterns.js?v=2.0.0-1cd836",
+  "/gen/gen.js?v=2.0.0-1cd836",
+  "/changes/changes.js?v=2.0.0-1cd836",
+  "/request/request.js?v=2.0.0-1cd836",
+  "/shared.js?v=2.0.0-1cd836",
+  "/style.css?v=2.0.0-1cd836",
+  "/favicon.svg?v=2.0.0-1cd836",
   "/manifest.webmanifest",
   "/changelog.json",
   "/icons/icon-192.png?v=2",

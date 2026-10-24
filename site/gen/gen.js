@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, difficulty, startHtml, updated } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, difficulty, startHtml, updated, track } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, hidehands: false, lo: 0.5, hi: 5 };
@@ -186,7 +186,11 @@
       return;
     }
     if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; pickHidden = false; changed(); show(current); return; }
-    if (ev.target.closest("#draw")) { draw(); return; }
+    if (ev.target.closest("#draw")) {
+      draw();
+      track("Draw pattern", { period: opts.period, stars: `${opts.lo}-${opts.hi}`, hide: opts.hide, found: !!current });
+      return;
+    }
     const digit = ev.target.closest("[data-digit]");
     if (digit) { reveal(+digit.dataset.digit); return; }
     if (ev.target.closest("#stars-reset")) { opts.lo = 0.5; opts.hi = 5; changed(); }
