@@ -158,13 +158,18 @@
   function updateGroups() {
     const active = filtering();
     document.querySelectorAll(".grp").forEach((el) => {
-      const id = el.dataset.g;
-      const open = groupOpen.has(id) || (active && !groupClosed.has(id) && !!el.querySelector(".var:not([hidden])"));
+      // a filter that leaves no variations of a group: no outline and no pill, only the main pattern (if it matches)
+      const id = el.dataset.g, some = !!el.querySelector(".var:not([hidden])");
+      const open = some && (groupOpen.has(id) || (active && !groupClosed.has(id)));
       el.classList.toggle("open", open);
-      el.querySelector("[data-grp]").setAttribute("aria-expanded", String(open));
+      const pill = el.querySelector("[data-grp]");
+      pill.hidden = active && !some;
+      pill.setAttribute("aria-expanded", String(open));
     });
     document.querySelectorAll("[data-allvars]").forEach((b) => {
-      const all = [...b.closest(".fam-block").querySelectorAll(".grp")].every((el) => el.classList.contains("open"));
+      const grps = [...b.closest(".fam-block").querySelectorAll(".grp")].filter((el) => !el.querySelector("[data-grp]").hidden);
+      const all = grps.length > 0 && grps.every((el) => el.classList.contains("open"));
+      b.parentElement.hidden = !grps.length;
       b.textContent = all ? "Hide all variations" : "Show all variations";
       b.setAttribute("aria-expanded", String(all));
     });
@@ -277,7 +282,7 @@
     const allVars = ev.target.closest("[data-allvars]");
     if (allVars) {
       const grps = [...allVars.closest(".fam-block").querySelectorAll(".grp")];
-      const open = !grps.every((el) => el.classList.contains("open"));
+      const open = allVars.getAttribute("aria-expanded") !== "true";
       for (const el of grps) {
         const id = el.dataset.g;
         if (open) { groupOpen.add(id); groupClosed.delete(id); } else { groupOpen.delete(id); groupClosed.add(id); }
