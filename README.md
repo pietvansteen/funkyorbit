@@ -38,6 +38,7 @@ The Sheet must be shared as *Anyone with the link can view*.
 git clone https://github.com/pietvansteen/funkyorbit.git
 cd funkyorbit
 echo "TUNNEL_TOKEN=<cloudflare-tunnel-token>" > .env
+sudo docker network create tunnel   # once; the tunnel shares it with puzzullu.funkyorbit.nl
 echo "ADMIN_TOKEN=<password for /requests/ and /add/>" >> .env
 echo "SHEET_WRITE_URL=<Apps Script web app /exec URL>" >> .env
 echo "SHEET_WRITE_SECRET=<the SECRET script property>" >> .env
@@ -46,7 +47,7 @@ echo "UMAMI_APP_SECRET=$(openssl rand -hex 32)" >> .env
 docker compose up -d
 ```
 
-The site is then available on port 8088. In the Cloudflare Tunnel, point the public hostname to `http://web:80`. After `git pull`, changes in `site/` are live right away. After changes to `sync.py`, `likes.py` or `web/nginx.conf`, restart those containers with `docker compose restart likes sync web` (`up -d` does not restart a container when only its mounted files changed); after changes to `docker-compose.yml`, run `docker compose up -d`. The Sheet's time zone (*File > Settings*) must be Europe/Amsterdam.
+The site is then available on port 8088. In the Cloudflare Tunnel, point the public hostname to `http://web:80`. The same tunnel serves `puzzullu.funkyorbit.nl` (→ `http://puzzullu-web:80`, from the separate puzzullu repo) through the shared Docker network `tunnel`. After `git pull`, changes in `site/` are live right away. After changes to `sync.py`, `likes.py` or `web/nginx.conf`, restart those containers with `docker compose restart likes sync web` (`up -d` does not restart a container when only its mounted files changed); after changes to `docker-compose.yml`, run `docker compose up -d`. The Sheet's time zone (*File > Settings*) must be Europe/Amsterdam.
 
 ## Visitor statistics (Umami)
 

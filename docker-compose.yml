@@ -79,13 +79,20 @@ services:
 
   # Cloudflare Tunnel: makes funkyorbit.nl reachable without opening any ports.
   # The token goes in a .env file next to this file: TUNNEL_TOKEN=...
+  # It also joins the shared network "tunnel" (once: sudo docker network create tunnel), so the same tunnel
+  # serves puzzullu.funkyorbit.nl (public hostname -> http://puzzullu-web:80, from the puzzullu repo).
   tunnel:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    networks: [default, tunnel]
     depends_on: [web]
 
 volumes:
   umami-db:
+
+networks:
+  tunnel:
+    external: true
