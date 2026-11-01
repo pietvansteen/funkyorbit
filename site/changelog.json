@@ -1,5 +1,13 @@
 [
   {
+    "version": "2.3.0",
+    "date": "2026-11-01",
+    "changes": [
+      "Generator: an option to hide the difficulty of the drawn pattern; tap to see the stars, and the next pattern hides them again",
+      "Generator: Hide colours now stays on after you tap a digit, so the next pattern starts grey again"
+    ]
+  },
+  {
     "version": "2.2.1",
     "date": "2026-10-27",
     "changes": [

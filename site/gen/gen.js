@@ -5,7 +5,7 @@
   const { esc, fmt, siteswap, syncPattern, difficulty, startHtml, updated, track } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
-  const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, hidehands: false, lo: 0.5, hi: 5 };
+  const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, hidehands: false, hidediff: false, lo: 0.5, hi: 5 };
   const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" };
   let opts = { ...DEFAULTS };
   try { opts = { ...DEFAULTS, ...JSON.parse(localStorage.getItem("fo_gen") || "{}") }; } catch (e) {}
@@ -22,6 +22,7 @@
   let current = null;
   let revealed = new Set(); // digits whose colour was tapped open on the current pick
   let pickHidden = false;    // the current pick was drawn with "Hide colours" on
+  let diffRevealed = false;  // "Hide difficulty": the stars of the current pick were tapped open
 
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
@@ -92,9 +93,9 @@
       <dl class="pick-meta">
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>
         <div><dt>Category</dt><dd>${esc(cat)}</dd></div>
-        <div><dt>Difficulty</dt><dd>${p.stars != null
-          ? difficulty(p, Math.max(...PATTERNS.map((x) => x.score || 0)))
-          : "–"}</dd></div>
+        <div><dt>Difficulty</dt><dd>${p.stars == null ? "–"
+          : opts.hidediff && !diffRevealed ? `<button type="button" class="reveal-diff" id="reveal-diff" aria-label="Show the difficulty"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>Tap to show</button>`
+          : difficulty(p, Math.max(...PATTERNS.map((x) => x.score || 0)))}</dd></div>
       </dl>${addButton(p)}`;
     if (hidden) {
       // every grey digit can be tapped (or chosen with the keyboard) to show its colour
@@ -118,12 +119,11 @@
     return `<a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Passed it → Add</a>`;
   }
 
-  // Tap one digit open. "Hide colours" switches itself off at the first one (the next pattern comes in colour);
-  // the other digits of this pattern stay grey until you tap them too.
+  // Tap one digit open: the other digits of this pattern stay grey until you tap them too.
+  // "Hide colours" stays on, so the next pattern starts grey again.
   function reveal(i, fromKeyboard) {
     if (!current) return;
     revealed.add(i);
-    if (opts.hide) { opts.hide = false; changed(); }
     const total = current.ss ? current.ss.length : (current.colors ? current.colors.join("").length : 0);
     if (revealed.size >= total) { pickHidden = false; revealed = new Set(); }
     show(current);
@@ -138,6 +138,7 @@
     current = options.length ? options[Math.floor(Math.random() * options.length)] : null;
     revealed = new Set();
     pickHidden = opts.hide;
+    diffRevealed = false;
     show(current);
     $("#pick-note").hidden = true;
   }
@@ -153,6 +154,7 @@
     $("#skipdone").checked = opts.skipdone;
     $("#hide").checked = opts.hide;
     $("#hidehands").checked = opts.hidehands;
+    $("#hidediff").checked = opts.hidediff;
     $("#lo").value = opts.lo;
     $("#hi").value = opts.hi;
     const full = opts.lo <= 0.5 && opts.hi >= 5;
@@ -185,7 +187,7 @@
       changed();
       return;
     }
-    if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; pickHidden = false; changed(); show(current); return; }
+    if (ev.target.closest("#reset-all")) { opts = { ...DEFAULTS, colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [] }; pickHidden = false; diffRevealed = false; changed(); show(current); return; }
     if (ev.target.closest("#draw")) {
       draw();
       track("Draw pattern", { period: opts.period, stars: `${opts.lo}-${opts.hi}`, hide: opts.hide, found: !!current });
@@ -193,6 +195,7 @@
     }
     const digit = ev.target.closest("[data-digit]");
     if (digit) { reveal(+digit.dataset.digit); return; }
+    if (ev.target.closest("#reveal-diff")) { diffRevealed = true; show(current); return; }
     if (ev.target.closest("#stars-reset")) { opts.lo = 0.5; opts.hi = 5; changed(); }
   });
   document.addEventListener("keydown", (ev) => {
@@ -206,6 +209,7 @@
     opts.hide = ev.target.checked; pickHidden = opts.hide; revealed = new Set(); changed(); show(current);
   });
   $("#hidehands").addEventListener("change", (ev) => { opts.hidehands = ev.target.checked; changed(); show(current); });
+  $("#hidediff").addEventListener("change", (ev) => { opts.hidediff = ev.target.checked; diffRevealed = false; changed(); show(current); });
   for (const id of ["lo", "hi"]) {
     $("#" + id).addEventListener("input", (ev) => {
       let v = parseFloat(ev.target.value);
