@@ -62,10 +62,12 @@
   }
 
   // ---------- the rules; each gives null or { title, text } (text may be a list: one is picked) ----------
-  // ctx: item (the pattern on the list, or null), key, isNew, rating, date, time ("HH:MM", only when logged today),
-  //      before / after: { done: Set of keys, rows: [{ key, date, time, rating }] }, list: Map key -> item, total
+  // ctx: item (the pattern on the list, or null), key, isNew, rating, firstTry, date, time ("HH:MM", only when logged today),
+  //      before / after: { done: Set of keys, rows: [{ key, date, time, rating, firstTry }] }, list: Map key -> item, total
   const RULES = [
     { id: "final", prio: 100, test: (c) => c.isNew && c.left === 0 && { title: "This is your last pattern! Hooray!", text: "We came. We passed. We can finally rest." } },
+    // once per pattern, also when we log it again later (#51)
+    { id: "first-try", prio: 95, test: (c) => c.firstTry && !c.before.rows.some((r) => r.key === c.key && r.firstTry) && { title: "Hoppa, eerste keer!", text: "It worked the first time after we started filming." } },
     { id: "countdown", prio: 90, test: (c) => c.isNew && c.left > 0 && c.left <= 10 && { title: c.left === 1 ? "1 more pattern to go!" : `${c.left} more patterns to go!`, text: "The end is in sight." } },
     { id: "birthday", prio: 88, test: (c) => {
       const who = Object.keys(BIRTHDAYS).filter((n) => BIRTHDAYS[n] && c.date.slice(5) === BIRTHDAYS[n]);
@@ -189,13 +191,13 @@
   }
 
   // All milestones for logging `key` (item = the pattern on the list, or null when it is not on it), most special first.
-  function check({ item, key, rating, date, time, before, list, total }) {
-    const after = { done: new Set(before.done).add(key), rows: [...before.rows, { key, date, time, rating }] };
+  function check({ item, key, rating, firstTry, date, time, before, list, total }) {
+    const after = { done: new Set(before.done).add(key), rows: [...before.rows, { key, date, time, rating, firstTry }] };
     const doneItemsBefore = [...before.done].map((k) => list.get(k)).filter(Boolean);
     const datesBefore = new Set(before.rows.map((r) => r.date));
     const maxes = {};
     const c = {
-      item, key, rating, date, time, before, after, list, total, doneItemsBefore, datesBefore,
+      item, key, rating, firstTry, date, time, before, after, list, total, doneItemsBefore, datesBefore,
       isNew: !!item && !before.done.has(key),
       f: item ? facts(item) : null,
       countDoneBefore: (fn) => doneItemsBefore.filter(fn).length,
@@ -213,7 +215,7 @@
     c.left = total - c.doneAfter;
     c.estimate = estimate(c.doneAfter, total, [...datesBefore, date], date);
     // a pattern that is not on the list only gets the milestones that are not about the pattern
-    const ANY = ["birthday", "favourite", "lowest", "weekday-all", "weekday-first", "streak", "busiest", "year", "comeback", "session-first", "late-many", "after-midnight", "three-am", "morning", "weekday-morning", "lunch", "late-session", "rating-max", "rating-high", "rating-low", "rating"];
+    const ANY = ["first-try", "birthday", "favourite", "lowest", "weekday-all", "weekday-first", "streak", "busiest", "year", "comeback", "session-first", "late-many", "after-midnight", "three-am", "morning", "weekday-morning", "lunch", "late-session", "rating-max", "rating-high", "rating-low", "rating"];
     const out = [];
     for (const r of RULES) {
       if (!item && !ANY.includes(r.id)) continue;

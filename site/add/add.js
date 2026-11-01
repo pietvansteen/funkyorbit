@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, siteswap, syncPattern, cyclicIncludes, difficulty, day } = window.FO;
+  const { esc, siteswap, syncPattern, cyclicIncludes, day } = window.FO;
   const $ = (sel) => document.querySelector(sel);
   const KEY = "fo_admin"; // the same password as the requests page
   const MAX_SUGGEST = 8;
@@ -36,7 +36,7 @@
   }
 
   // ---------- the list: data.json "all", once per pattern (a pattern can be in more than one family) ----------
-  let ITEMS = [], BY_KEY = new Map(), MAX_SCORE = 0;
+  let ITEMS = [], BY_KEY = new Map();
   const DONE_DATES = new Map(); // key -> dates we did it, newest first
   // for the milestones: what was done before the next save (kept up to date after each save, also before the sync)
   const STATE = { done: new Set(), rows: [] };
@@ -48,14 +48,13 @@
       BY_KEY.get(p.key).families.push(p.family);
     }
     ITEMS = [...BY_KEY.values()];
-    MAX_SCORE = Math.max(0, ...ITEMS.map((p) => p.score || 0));
     for (const p of data.patterns || []) {
       if (!DONE_DATES.has(p.key)) DONE_DATES.set(p.key, []);
       if (p.date) DONE_DATES.get(p.key).push(p.date);
     }
     ITEMS.forEach((p) => p.done && STATE.done.add(p.key));
     STATE.rows = (data.patterns || []).filter((p) => p.date).reverse() // oldest first
-      .map((p) => ({ key: p.key, date: p.date, time: p.time || "", rating: p.rating ?? null }));
+      .map((p) => ({ key: p.key, date: p.date, time: p.time || "", rating: p.rating ?? null, firstTry: !!p.firstTry }));
   }
 
   const pattern = (p, size) => (p.ss ? siteswap(p.ss, size, p.colors) : syncPattern(p.a, p.b, size, p.colors));
@@ -114,6 +113,7 @@
   }
 
   // What we are about to save: the pattern from the list, or a warning when it is not on it.
+  // Without its generated difficulty, so that does not influence the difficulty we fill in ourselves (#51).
   function showPicked() {
     const q = normalize(input.value);
     const p = q && BY_KEY.get(keyOf(q));
@@ -131,7 +131,6 @@
       <div class="picked-info">
         ${p.name ? `<b>${esc(p.name)}</b>` : ""}
         <span>${esc(p.families.join(" · "))}</span>
-        ${p.stars != null ? `<span class="picked-diff">${difficulty(p, MAX_SCORE, false)}</span>` : ""}
         ${dates.length ? `<span class="picked-done">Done before: ${dates.map((d) => esc(day(d))).join(", ")}</span>` : ""}
       </div>
     </div>`;
@@ -157,33 +156,36 @@
     if (li) { ev.preventDefault(); choose(shown[+li.dataset.i]); }
   });
 
-  // ---------- rating: half stars, tap or drag over the stars, arrow keys ----------
-  const rate = $("#rate");
-  let rating = 0; // 0 = not rated
+  // ---------- rating and how hard it felt: half stars, tap or drag over the stars, arrow keys ----------
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
 
-  function setRating(r) {
-    rating = Math.max(0, Math.min(5, Math.round(r * 2) / 2));
-    const text = rating ? `${half(rating)} / 5` : "not rated";
-    rate.querySelector(".stars").style.setProperty("--pct", `${rating * 20}%`);
-    rate.setAttribute("aria-valuenow", String(rating));
-    rate.setAttribute("aria-valuetext", rating ? `${rating} out of 5 stars` : "not rated");
-    $("#rate-value").textContent = text;
-    $("#rate-clear").hidden = !rating;
+  function starField(id) {
+    const el = $(`#${id}`);
+    let value = 0; // 0 = not rated
+    function set(r) {
+      value = Math.max(0, Math.min(5, Math.round(r * 2) / 2));
+      el.querySelector(".stars").style.setProperty("--pct", `${value * 20}%`);
+      el.setAttribute("aria-valuenow", String(value));
+      el.setAttribute("aria-valuetext", value ? `${value} out of 5 stars` : "not rated");
+      $(`#${id}-value`).textContent = value ? `${half(value)} / 5` : "not rated";
+      $(`#${id}-clear`).hidden = !value;
+    }
+    function at(ev) {
+      const box = el.querySelector(".stars").getBoundingClientRect();
+      set(Math.max(0.5, Math.ceil(((ev.clientX - box.left) / box.width) * 10) / 2));
+    }
+    el.addEventListener("pointerdown", (ev) => { el.setPointerCapture(ev.pointerId); at(ev); });
+    el.addEventListener("pointermove", (ev) => { if (el.hasPointerCapture(ev.pointerId)) at(ev); });
+    el.addEventListener("keydown", (ev) => {
+      const step = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[ev.key];
+      if (step) { ev.preventDefault(); set(Math.max(value ? 0.5 : 0, value + step)); }
+      else if (ev.key === "Home") { ev.preventDefault(); set(0.5); }
+      else if (ev.key === "End") { ev.preventDefault(); set(5); }
+    });
+    $(`#${id}-clear`).addEventListener("click", () => set(0));
+    return { set, get value() { return value; } };
   }
-  function rateAt(ev) {
-    const box = rate.querySelector(".stars").getBoundingClientRect();
-    setRating(Math.max(0.5, Math.ceil(((ev.clientX - box.left) / box.width) * 10) / 2));
-  }
-  rate.addEventListener("pointerdown", (ev) => { rate.setPointerCapture(ev.pointerId); rateAt(ev); });
-  rate.addEventListener("pointermove", (ev) => { if (rate.hasPointerCapture(ev.pointerId)) rateAt(ev); });
-  rate.addEventListener("keydown", (ev) => {
-    const step = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[ev.key];
-    if (step) { ev.preventDefault(); setRating(Math.max(rating ? 0.5 : 0, rating + step)); }
-    else if (ev.key === "Home") { ev.preventDefault(); setRating(0.5); }
-    else if (ev.key === "End") { ev.preventDefault(); setRating(5); }
-  });
-  $("#rate-clear").addEventListener("click", () => setRating(0));
+  const rating = starField("rate"), felt = starField("felt");
 
   // ---------- date and time: now by default ----------
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
@@ -193,7 +195,9 @@
     input.value = ss || "";
     $("#date").value = $("#date").max = today();
     $("#time").value = nowTime();
-    setRating(0);
+    rating.set(0);
+    felt.set(0);
+    $("#first-try").checked = false;
     showPicked();
   }
 
@@ -276,7 +280,7 @@
   const msg = $("#add-msg"), send = $("#add-send");
   let saveId = "", saveFor = "";
   function pendingId() {
-    const what = [normalize(input.value), $("#date").value, $("#time").value, rating].join("|");
+    const what = [normalize(input.value), $("#date").value, $("#time").value, rating.value, felt.value, $("#first-try").checked].join("|");
     if (!saveId || saveFor !== what) {
       saveId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
       saveFor = what;
@@ -288,7 +292,7 @@
   $("#add").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     // the same id when we try again after an error, so the Sheet never gets the same pattern twice
-    const body = { id: pendingId(), pattern: normalize(input.value), date: $("#date").value, time: $("#time").value || null, rating: rating || null };
+    const body = { id: pendingId(), pattern: normalize(input.value), date: $("#date").value, time: $("#time").value || null, rating: rating.value || null, felt: felt.value || null, firstTry: $("#first-try").checked };
     if (!body.pattern) { say("Please fill in the siteswap."); return input.focus(); }
     if (!body.date) return say("Please choose a date.");
     say("");
@@ -304,10 +308,10 @@
       const time = body.time || ""; // for the time-of-day milestones
       let ms = { list: [], estimate: "" };
       try {
-        ms = MS.check({ item: BY_KEY.get(key) || null, key, rating: body.rating, date: body.date, time, before: STATE, list: BY_KEY, total: BY_KEY.size });
+        ms = MS.check({ item: BY_KEY.get(key) || null, key, rating: body.rating, firstTry: body.firstTry, date: body.date, time, before: STATE, list: BY_KEY, total: BY_KEY.size });
       } catch (e) { /* no milestones, still a GIF */ }
       if (BY_KEY.has(key)) STATE.done.add(key);
-      STATE.rows.push({ key, date: body.date, time, rating: body.rating });
+      STATE.rows.push({ key, date: body.date, time, rating: body.rating, firstTry: body.firstTry });
       if (!DONE_DATES.has(key)) DONE_DATES.set(key, []);
       DONE_DATES.get(key).unshift(body.date);
       resetForm("");

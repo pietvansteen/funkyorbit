@@ -4,7 +4,9 @@
     "date": "2026-11-01",
     "changes": [
       "Generator: an option to hide the difficulty of the drawn pattern; tap to see the stars, and the next pattern hides them again",
-      "Generator: Hide colours now stays on after you tap a digit, so the next pattern starts grey again"
+      "Generator: Hide colours now stays on after you tap a digit, so the next pattern starts grey again",
+      "Add: a field for how hard a pattern felt to us, and a First try checkbox with its own GIF",
+      "Add: the page no longer shows the difficulty from our rules, so it does not influence what we fill in"
     ]
   },
   {
