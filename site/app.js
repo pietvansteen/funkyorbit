@@ -3,7 +3,7 @@
   "use strict";
 
   const $ = (sel, el = document) => el.querySelector(sel);
-  const { esc, fmt, siteswap, cyclicIncludes, matchesLocal, localTag, stars, when, day, player, likes, track, trackSearch } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, matchesLocal, localTag, stars, when, day, thumb, likes, initPopup, openPattern, track, trackSearch } = window.FO;
 
   // ---------- formatting helpers ----------
   function splitGroup(name) {
@@ -95,16 +95,10 @@
     detail.innerHTML = blocks + note;
   }
 
-  // ---------- video feed ----------
-  // ---------- search, date filter and pages of videos ----------
+  // ---------- search and date filter ----------
   let query = "";
   let dateFrom = "", dateTo = ""; // YYYY-MM-DD, both inclusive; empty = no limit
   let customDates = false; // "Choose dates…" picked: keep showing the two date fields
-  let first = 0; // the first video shown (0 = the newest)
-  // as many videos side by side as the columns in style.css: 3 on a wide screen, 2 on a tablet, 1 on a phone
-  const wide = window.matchMedia("(min-width: 1040px)");
-  const phone = window.matchMedia("(max-width: 599px)");
-  const pageSize = () => (wide.matches ? 3 : phone.matches ? 1 : 2);
 
   function matches(p, q) {
     if (dateFrom && (!p.date || p.date < dateFrom)) return false;
@@ -162,70 +156,73 @@
     } catch (e) {}
   }
 
-  function card(p) {
-    return `
-      <article class="card">
-        ${player(p)}
-        <div class="meta">
-          <div class="meta-top">
-            <div class="title" style="--n:${[...(p.siteswap || "")].length}">${siteswap(p.siteswap, "lg", p.colors)}${p.name ? `<span class="pname">${esc(p.name)}</span>` : ""}${localTag(p.siteswap, p.name, query.trim().toLowerCase())}</div>
-            ${likes.button(p.youtubeId)}
-          </div>
-          <span class="fam">${esc(p.family)}</span>
-          <div class="meta-bottom">${stars(p.rating)}<span class="when">${esc(when(p))}</span></div>
-        </div>
-      </article>`;
-  }
+  // ---------- Latest patterns and Latest videos: both follow the search and the dates ----------
+  const ROW_STEP = 10, STILL_STEP = 12, AUTO_LOADS = 3; // after that a button, so the footer stays in reach
+  let rowsShown = ROW_STEP, stillsShown = STILL_STEP, autoLoads = 0;
+  let ROWS = [], VIDS = []; // what the filter leaves
 
-  function renderFeed(d) {
-    const q = query.trim().toLowerCase();
+  const throwCount = (s) => (s.match(/[0-9a-oq-z]p?/gi) || []).length;
+  const thrown = (p, size) => {
+    const item = (DATA.all || []).find((x) => x.key === p.key);
+    return item && item.kind === "Sync" ? syncPattern(item.a, item.b, size, item.colors) : siteswap(p.siteswap, size, p.colors);
+  };
+  const ICON_VIDEO = `<span class="row-icon has" title="Has a video" role="img" aria-label="Has a video"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>`;
+  const ICON_SOON = `<span class="row-icon" title="Video coming soon" role="img" aria-label="Video coming soon"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`;
+
+  function renderRows(q) {
     const filtering = !!q || !!dateFrom || !!dateTo;
-    const allVids = d.patterns.filter((p) => p.youtubeId);
-    const vids = allVids.filter((p) => matches(p, q)); // search and dates look at all videos
-    const plural = (n) => `${n} video${n === 1 ? "" : "s"}`;
-    $("#feed-count").textContent = filtering
-      ? `${vids.length} of ${plural(allVids.length)} match`
-      : `${plural(allVids.length)}, newest first`;
-
-    // one row of videos; the arrows move it one video at a time through the timeline
-    const size = pageSize();
-    first = Math.min(Math.max(0, first), Math.max(0, vids.length - size));
-    const shown = vids.slice(first, first + size);
-
-    const restMatch = d.patterns.some((p) => !p.youtubeId && matches(p, q));
+    const total = DATA.patterns.length;
+    const shown = ROWS.slice(0, rowsShown);
+    $("#rows-count").textContent = filtering ? `${ROWS.length} of ${total} match` : `${shown.length} of ${total}`;
     const what = [q && `“${esc(query.trim())}”`, (dateFrom || dateTo) && "these dates"].filter(Boolean).join(" in ");
-    const none = filtering
-      ? `<p class="empty">No video matches ${what}${restMatch ? " yet, but there are thrown patterns: see the list below." : "."}</p>`
-      : `<p class="empty">No videos yet. Check back soon!</p>`;
-    $("#feed").innerHTML = shown.length ? shown.map(card).join("") : none;
-
-    $("#pager").hidden = vids.length <= size;
-    $("#newer").disabled = first === 0;
-    $("#older").disabled = first + size >= vids.length;
-    $("#page-info").textContent = !vids.length ? ""
-      : shown.length === 1 ? `${first + 1} of ${vids.length}` : `${first + 1}–${first + shown.length} of ${vids.length}`;
-
-    const rest = d.patterns.filter((p) => !p.youtubeId && matches(p, q));
-    $("#rest-wrap").hidden = !rest.length;
-    $("#rest").innerHTML = rest.map((p) => `<tr>
-      <td>${siteswap(p.siteswap, "sm", p.colors)}${localTag(p.siteswap, p.name, q)}</td><td>${esc(p.name)}</td><td>${esc(p.family)}</td>
-      <td>${stars(p.rating)}</td><td class="num">${esc(when(p))}</td></tr>`).join("");
+    $("#rows").innerHTML = shown.length ? shown.map((p, i) => `<li class="row${throwCount(p.siteswap) > 8 ? " long" : ""}" data-row="${i}" role="button" tabindex="0" aria-label="${esc(p.siteswap)}: show details">
+        <span class="row-pat">${thrown(p, "sm")}${p.firstTry ? `<span class="first-try small">First try!</span>` : ""}${localTag(p.siteswap, p.name, q)}${p.name ? `<span class="row-name">${esc(p.name)}</span>` : ""}</span>
+        <span class="row-sub">${stars(p.rating)}<span class="when">${esc(when(p))}</span></span>
+        ${p.youtubeId ? ICON_VIDEO : ICON_SOON}
+      </li>`).join("") : `<li class="empty">${filtering ? `No pattern matches ${what}.` : "No patterns yet. Check back soon!"}</li>`;
+    $("#rows-more").hidden = ROWS.length <= rowsShown;
   }
 
-  function go(step) {
-    first += step;
-    renderFeed(DATA);
-    const head = document.getElementById("h-feed");
-    if (head && head.getBoundingClientRect().top < 0) head.scrollIntoView({ behavior: "smooth", block: "start" });
+  function renderStills(q) {
+    const filtering = !!q || !!dateFrom || !!dateTo;
+    const all = DATA.patterns.filter((p) => p.youtubeId).length;
+    const plural = (n) => `${n} video${n === 1 ? "" : "s"}`;
+    $("#feed-count").textContent = filtering ? `${VIDS.length} of ${plural(all)} match` : `${plural(all)}, newest first`;
+    const what = [q && `“${esc(query.trim())}”`, (dateFrom || dateTo) && "these dates"].filter(Boolean).join(" in ");
+    $("#stills").innerHTML = VIDS.length
+      ? VIDS.slice(0, stillsShown).map((p, i) => `<button type="button" class="still" data-still="${i}" style="--n:${throwCount(p.siteswap)}" aria-label="Play video of ${esc(p.siteswap)}">
+          ${thumb(p, "(max-width: 599px) 33vw, 200px")}<span class="still-ss">${thrown(p, "sm")}</span></button>`).join("")
+      : `<p class="empty">${filtering ? `No video matches ${what}.` : "No videos yet. Check back soon!"}</p>`;
+    const more = VIDS.length > stillsShown;
+    $("#stills-more").hidden = !more || autoLoads < AUTO_LOADS;
+    // scrolling to the end loads more by itself a few times
+    stillWatcher.disconnect();
+    if (more && autoLoads < AUTO_LOADS) stillWatcher.observe($("#stills-end"));
+  }
+
+  const stillWatcher = new IntersectionObserver((seen) => {
+    if (!seen.some((e) => e.isIntersecting)) return;
+    autoLoads++;
+    stillsShown += STILL_STEP;
+    renderStills(query.trim().toLowerCase());
+  }, { rootMargin: "200px" });
+
+  // after a new search or date: back to the start of both lists
+  function renderFeed() {
+    const q = query.trim().toLowerCase();
+    rowsShown = ROW_STEP; stillsShown = STILL_STEP; autoLoads = 0;
+    ROWS = DATA.patterns.filter((p) => matches(p, q));
+    VIDS = ROWS.filter((p) => p.youtubeId);
+    renderRows(q);
+    renderStills(q);
   }
 
   // ---------- events ----------
   $("#search").addEventListener("input", (ev) => {
     query = ev.target.value;
     trackSearch(query);
-    first = 0;
     saveUrl();
-    if (DATA) renderFeed(DATA);
+    if (DATA) renderFeed();
   });
 
   $("#date").addEventListener("change", (ev) => {
@@ -233,40 +230,38 @@
     customDates = v === "custom";
     track("Date filter", { range: v || "all" });
     if (!customDates) [dateFrom, dateTo] = quickRange(v);
-    first = 0;
     syncDateUi(); saveUrl();
-    if (DATA) renderFeed(DATA);
+    if (DATA) renderFeed();
   });
   for (const id of ["from", "to"]) {
     $("#" + id).addEventListener("change", (ev) => {
       if (id === "from") dateFrom = ev.target.value; else dateTo = ev.target.value;
-      first = 0;
-      saveUrl(); $("#date-clear").hidden = !dateFrom && !dateTo;
-      if (DATA) renderFeed(DATA);
+        saveUrl(); $("#date-clear").hidden = !dateFrom && !dateTo;
+      if (DATA) renderFeed();
     });
   }
   $("#date-clear").addEventListener("click", () => {
-    dateFrom = dateTo = ""; first = 0; customDates = false;
+    dateFrom = dateTo = ""; customDates = false;
     $("#date").value = ""; syncDateUi(); saveUrl();
-    if (DATA) renderFeed(DATA);
+    if (DATA) renderFeed();
   });
 
-  $("#newer").addEventListener("click", () => go(-1));
-  $("#older").addEventListener("click", () => go(1));
-  // swipe on a phone: to the left for older videos, to the right for newer ones
-  let touchX = null;
-  $("#feed").addEventListener("touchstart", (ev) => { touchX = ev.touches[0].clientX; }, { passive: true });
-  $("#feed").addEventListener("touchend", (ev) => {
-    if (touchX == null || $("#pager").hidden) return;
-    const dx = ev.changedTouches[0].clientX - touchX;
-    touchX = null;
-    if (Math.abs(dx) < 50) return;
-    if (dx < 0 && !$("#older").disabled) go(1);
-    if (dx > 0 && !$("#newer").disabled) go(-1);
-  }, { passive: true });
-  for (const mq of [wide, phone]) mq.addEventListener("change", () => { if (DATA) renderFeed(DATA); });
+
+  $("#rows-more").addEventListener("click", () => { rowsShown += ROW_STEP; renderRows(query.trim().toLowerCase()); });
+  $("#stills-more").addEventListener("click", () => { stillsShown += STILL_STEP; renderStills(query.trim().toLowerCase()); });
+  document.addEventListener("keydown", (ev) => {
+    if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches && ev.target.matches("[data-row]")) {
+      ev.preventDefault();
+      const p = ROWS[+ev.target.dataset.row];
+      openPattern(p.key, { row: p });
+    }
+  });
 
   document.addEventListener("click", (ev) => {
+    const row = ev.target.closest("[data-row]");
+    if (row) { const p = ROWS[+row.dataset.row]; openPattern(p.key, { row: p }); return; }
+    const still = ev.target.closest("[data-still]");
+    if (still) { const i = +still.dataset.still; openPattern(VIDS[i].key, { list: VIDS, index: i }); return; }
     // the orbit explanation in the intro folds open and closed
     const more = ev.target.closest(".read-more");
     if (more) {
@@ -313,8 +308,9 @@
     syncDateUi();
     renderHero(DATA);
     renderGroups(DATA);
+    initPopup(DATA);
     await likes.load();
-    renderFeed(DATA);
+    renderFeed();
   }
   start();
 })();

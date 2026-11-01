@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.4.0",
+    "date": "2026-11-01",
+    "changes": [
+      "Progress: a list of the latest patterns we threw, with or without a video; tap one for its pop-up",
+      "Progress: the latest videos as a grid of stills, with more when you scroll down",
+      "Progress: tap a still to watch it in the pop-up, and go through the videos with arrows, the arrow keys or by swiping",
+      "Progress: one search and date filter for the patterns and the videos; the list of patterns with a video still to come is now part of the latest patterns"
+    ]
+  },
+  {
     "version": "2.3.0",
     "date": "2026-11-01",
     "changes": [

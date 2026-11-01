@@ -179,17 +179,22 @@
     return p.time ? `${day(p.date)} · ${p.time}` : day(p.date);
   }
 
+  // Sharp thumbnails: in hqdefault (480×360) a short is only 202×360 pixels. hq720 has the short as 405×720 in its
+  // middle, oardefault (shorts only) the whole 1080×1920 frame; `w` counts the part we show, so sharp screens get the big one.
+  // object-fit: cover crops each to the video's shape. If a size is missing, hqdefault, else just the poster.
+  // A missing thumbnail comes with YouTube's small grey placeholder (a 404 that still loads), so check the size too.
+  function thumb(p, sizes) {
+    if (PREVIEW) return "";
+    const yt = `https://i.ytimg.com/vi_webp/${p.youtubeId}/`;
+    const srcset = p.isShort ? `${yt}hq720.webp 405w, ${yt}oardefault.webp 1080w` : `${yt}hq720.webp 1280w`;
+    return `<img src="https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg" srcset="${srcset}" sizes="${sizes}" alt="" loading="lazy" onload="if(this.naturalWidth<200)this.onerror()" onerror="if(this.srcset){this.removeAttribute('srcset')}else{this.remove()}">`;
+  }
+
   function player(p) {
     const url = p.isShort ? `https://www.youtube.com/shorts/${p.youtubeId}` : `https://www.youtube.com/watch?v=${p.youtubeId}`;
     const play = `<span><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>`;
     const poster = `<div class="poster">${esc(p.siteswap)}<small>${esc(p.name || p.family)}</small></div>`;
-    // Sharp thumbnails: in hqdefault (480×360) a short is only 202×360 pixels. hq720 has the short as 405×720 in its
-    // middle, oardefault (shorts only) the whole 1080×1920 frame; `w` counts the part we show, so sharp screens get the big one.
-    // object-fit: cover crops each to the video's shape. If a size is missing, hqdefault, else just the poster.
-    // A missing thumbnail comes with YouTube's small grey placeholder (a 404 that still loads), so check the size too.
-    const yt = `https://i.ytimg.com/vi_webp/${p.youtubeId}/`;
-    const srcset = p.isShort ? `${yt}hq720.webp 405w, ${yt}oardefault.webp 1080w` : `${yt}hq720.webp 1280w`;
-    const img = PREVIEW ? "" : `<img src="https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg" srcset="${srcset}" sizes="(max-width: 640px) 100vw, 400px" alt="" loading="lazy" onload="if(this.naturalWidth<200)this.onerror()" onerror="if(this.srcset){this.removeAttribute('srcset')}else{this.remove()}">`;
+    const img = thumb(p, "(max-width: 640px) 100vw, 400px");
     const btn = PREVIEW
       ? `<a class="play" href="${url}" target="_blank" rel="noopener" aria-label="Watch ${esc(p.siteswap)} on YouTube">${play}</a>`
       : `<button type="button" class="play" data-play="${p.youtubeId}" data-ss="${esc(p.siteswap)}" aria-label="Play video of ${esc(p.siteswap)}">${play}</button>`;
@@ -312,11 +317,128 @@
     const like = ev.target.closest("[data-like]");
     if (like) { likes.toggle(like.dataset.like); return; }
     const play = ev.target.closest("[data-play]");
-    if (play) {
-      track("Play video", { siteswap: play.dataset.ss || play.dataset.play, video: play.dataset.play });
-      play.parentElement.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${play.dataset.play}?autoplay=1&playsinline=1&rel=0" title="YouTube video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
-    }
+    if (play) playVideo(play);
   });
+
+  function playVideo(play) {
+    track("Play video", { siteswap: play.dataset.ss || play.dataset.play, video: play.dataset.play });
+    play.parentElement.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${play.dataset.play}?autoplay=1&playsinline=1&rel=0" title="YouTube video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  }
+
+  // ---------- pattern pop-up, on Progress and All patterns ----------
+  // Every pattern opens it: thrown ones with their video and our rating, the others as "Not thrown yet".
+  // All show the families, the known name and the difficulty. initPopup(data) first; then openPattern(key).
+  const POP = { items: new Map(), done: new Map(), firstTry: new Set(), maxScore: 0, list: null, index: 0, autoplay: false };
+  const doneRow = (key) => POP.done.get(key);
+
+  function initPopup(data) {
+    for (const p of data.all || []) {
+      if (!POP.items.has(p.key)) POP.items.set(p.key, []);
+      POP.items.get(p.key).push(p);
+      POP.maxScore = Math.max(POP.maxScore, p.score || 0);
+    }
+    for (const p of data.patterns || []) { // Done, newest first
+      const have = POP.done.get(p.key); // the row to show: the newest with a video, else the newest
+      if (!have || (!have.youtubeId && p.youtubeId)) POP.done.set(p.key, p);
+      if (p.firstTry) POP.firstTry.add(p.key);
+    }
+    const dlg = document.createElement("dialog");
+    dlg.className = "modal";
+    dlg.id = "modal";
+    dlg.setAttribute("aria-labelledby", "modal-title");
+    const icon = (d) => `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    dlg.innerHTML = `<button type="button" class="modal-close" id="modal-close" aria-label="Close">${icon("M6 6l12 12M18 6L6 18")}</button>
+      <button type="button" class="modal-close modal-nav up" id="modal-prev" aria-label="Previous video" hidden>${icon("M5 15l7-7 7 7")}</button>
+      <button type="button" class="modal-close modal-nav down" id="modal-next" aria-label="Next video" hidden>${icon("M5 9l7 7 7-7")}</button>
+      <div id="modal-body"></div>`;
+    document.body.appendChild(dlg);
+    // stop the video when the pop-up closes (button, Esc or a click next to it)
+    // (the close event comes a moment later: when another pop-up was opened in the meantime, keep that one)
+    dlg.addEventListener("close", () => { if (!dlg.open) dlg.querySelector("#modal-body").innerHTML = ""; });
+    dlg.addEventListener("click", (ev) => {
+      if (ev.target === dlg || ev.target.closest("#modal-close")) closePopup();
+      else if (ev.target.closest("#modal-prev")) stepPopup(-1);
+      else if (ev.target.closest("#modal-next")) stepPopup(1);
+    });
+    dlg.addEventListener("keydown", (ev) => {
+      if (!POP.list) return;
+      const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[ev.key];
+      if (step) { ev.preventDefault(); stepPopup(step); }
+    });
+    // swipe up for the next video, down for the previous one, unless the pop-up itself still has room to scroll.
+    // A playing video takes its own touches (YouTube's frame), so there the arrows are the way.
+    let start = null;
+    dlg.addEventListener("touchstart", (ev) => { start = ev.touches.length === 1 ? ev.touches[0] : null; }, { passive: true });
+    dlg.addEventListener("touchend", (ev) => {
+      if (!start || !POP.list) return;
+      const t = ev.changedTouches[0], dy = t.clientY - start.clientY, dx = t.clientX - start.clientX;
+      start = null;
+      if (Math.abs(dy) < 50 || Math.abs(dy) < Math.abs(dx) * 1.5) return;
+      const card = dlg.querySelector(".modal-card");
+      const atEnd = dy < 0 ? card.scrollTop + card.clientHeight >= card.scrollHeight - 1 : card.scrollTop <= 0;
+      if (atEnd) stepPopup(dy < 0 ? 1 : -1);
+    }, { passive: true });
+  }
+
+  // options: `row` (the Done row to show, when not the usual one), or `list` + `index` (a list of Done rows with
+  // videos to go through with the arrows or by swiping), which also starts the video.
+  function openPattern(key, { row = null, list = null, index = 0 } = {}) {
+    POP.list = list;
+    POP.index = index;
+    showPopup(key, list ? list[index] : row || POP.done.get(key), !!list);
+  }
+
+  function stepPopup(step) {
+    const next = POP.index + step;
+    if (!POP.list || next < 0 || next >= POP.list.length) return;
+    POP.index = next;
+    showPopup(POP.list[next].key, POP.list[next], true);
+  }
+
+  function closePopup() {
+    const dlg = document.getElementById("modal");
+    if (dlg.close) dlg.close(); else dlg.removeAttribute("open");
+  }
+
+  function showPopup(key, p, autoplay) {
+    const items = POP.items.get(key) || [];
+    if (!items.length && !p) return;
+    const item = items[0] || {}; // a pattern that is not on the list only has its Done row
+    const families = items.length ? [...new Set(items.map((x) => x.family))] : [p.family].filter(Boolean);
+    const name = (p && p.name) || item.name;
+    const pat = item.kind === "Sync"
+      ? syncPattern(item.a, item.b, "lg", item.colors)
+      : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
+    const diff = item.stars != null
+      ? `<div class="pop-row pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, POP.maxScore, false)}</div>` : "";
+    const video = !p ? "" : p.youtubeId
+      ? player(p)
+      : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;
+    const dlg = document.getElementById("modal");
+    dlg.querySelector("#modal-body").innerHTML = `
+      <article class="card modal-card${p ? "" : " not-thrown"}">
+        ${video}
+        <div class="meta">
+          <div class="meta-top">
+            <div class="title" id="modal-title"><div class="title-row">${pat}${POP.firstTry.has(key) ? `<span class="first-try">First try!</span>` : ""}</div>${name ? `<span class="pname">${esc(name)}</span>` : ""}</div>
+            ${p && p.youtubeId ? likes.button(p.youtubeId) : ""}
+          </div>
+          ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
+          <span class="fam">${families.map(esc).join("<br>")}</span>
+          ${items.length ? startHtml(item) : ""}
+          ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
+          ${diff}
+          ${p ? `<span class="when">${esc(when(p))}</span>` : ""}
+        </div>
+      </article>`;
+    const prev = dlg.querySelector("#modal-prev"), next = dlg.querySelector("#modal-next");
+    prev.hidden = next.hidden = !POP.list || POP.list.length < 2;
+    prev.disabled = POP.index === 0;
+    next.disabled = !POP.list || POP.index >= POP.list.length - 1;
+    if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); }
+    const play = autoplay && dlg.querySelector("[data-play]");
+    if (play) playVideo(play);
+  }
 
   // On our own (logged-in) devices only: "Add" in the menu (to log a pattern we juggled),
   // and the number of new feature requests in the footer
@@ -346,5 +468,5 @@
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
   }
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, likes, track, trackSearch };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, track, trackSearch };
 })();

@@ -2,11 +2,10 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, matchesLocal, localTag, updated, stars, difficulty, startHtml, when, player, likes, track, trackSearch } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, matchesLocal, localTag, updated, likes, initPopup, openPattern, doneRow, track, trackSearch } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
-  let MAX_SCORE = 0;
   const userOpen = new Set([0]); // families the visitor opened (by number); the first one starts open
   const groupOpen = new Set(); // variation groups the visitor opened ("family nr:group key")
   const groupClosed = new Set(); // groups the visitor closed while a search had opened them (until the search changes)
@@ -28,14 +27,10 @@
   const extraFilters = () => filters.clubs.size + filters.colorsIn.size + filters.colorsOut.size + filters.throwsIn.size + filters.throwsOut.size
     + (filters.period !== "all") + (filters.thrown !== "all") + filters.video + filters.named + !anyStars() + !anyRating();
   const filtering = () => !!query.trim() || extraFilters() > 0;
-  const DONE = new Map(); // key -> the Done row to show: the newest with a video, else the newest
   const BEST_RATING = new Map(); // key -> our highest rating, when we threw it more than once
-  const FIRST_TRY = new Set(); // keys we once threw first time after we started filming
   let query = "";
 
   const label = (p) => p.ss || `${p.a} | ${p.b}`;
-  // smallest rotation, the same unique key as in the Sheet
-  const minRotation = (ss) => { ss = (ss || "").toLowerCase(); let m = ss; for (let i = 1; i < ss.length; i++) { const r = ss.slice(i) + ss.slice(0, i); if (r < m) m = r; } return m; };
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
 
   function chip(p, i, extra = "", below = "") {
@@ -123,7 +118,7 @@
       const r = BEST_RATING.get(p.key);
       if (r == null || r < filters.rlo || r > filters.rhi) return false;
     }
-    const row = DONE.get(p.key);
+    const row = doneRow(p.key);
     if (filters.video && !(row && row.youtubeId)) return false;
     if (filters.named && !(p.name || (row && row.name))) return false;
     if (!anyStars() && (p.stars == null || p.stars < filters.lo || p.stars > filters.hi)) return false;
@@ -235,9 +230,6 @@
     $("#more-n").textContent = n ? ` · ${n}` : "";
   }
 
-  // ---------- pop-up for a pattern we have thrown: video and details, as on the home page ----------
-  // Every pattern opens a pop-up: thrown ones with their video and our rating, the others as "Not thrown yet".
-  // Both show the families, the known name and the difficulty.
   // Variations (#28): a main pattern and the patterns after it with the same group, in Sheet order
   function variationGroups(idx) {
     const groups = [];
@@ -281,56 +273,13 @@
     });
   }
 
-  function openModal(key) {
-    const items = ITEMS.filter((x) => x.key === key);
-    if (!items.length) return;
-    const item = items[0], p = DONE.get(key);
-    const families = [...new Set(items.map((x) => x.family))];
-    const name = (p && p.name) || item.name;
-    const pat = item.kind === "Sync"
-      ? syncPattern(item.a, item.b, "lg", item.colors)
-      : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
-    const diff = item.stars != null
-      ? `<div class="pop-row pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, MAX_SCORE, false)}</div>` : "";
-    const video = !p ? "" : p.youtubeId
-      ? player(p)
-      : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;
-    $("#modal-body").innerHTML = `
-      <article class="card modal-card${p ? "" : " not-thrown"}">
-        ${video}
-        <div class="meta">
-          <div class="meta-top">
-            <div class="title" id="modal-title"><div class="title-row">${pat}${FIRST_TRY.has(key) ? `<span class="first-try">First try!</span>` : ""}</div>${name ? `<span class="pname">${esc(name)}</span>` : ""}</div>
-            ${p && p.youtubeId ? likes.button(p.youtubeId) : ""}
-          </div>
-          ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
-          <span class="fam">${families.map(esc).join("<br>")}</span>
-          ${startHtml(item)}
-          ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
-          ${diff}
-          ${p ? `<span class="when">${esc(when(p))}</span>` : ""}
-        </div>
-      </article>`;
-    const dlg = $("#modal");
-    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
-    track("Open pattern", { siteswap: item.kind === "Sync" ? `${item.a} | ${item.b}` : item.ss || p.siteswap, family: families[0], done: !!p });
-  }
 
 
-  function closeModal() {
-    const dlg = $("#modal");
-    if (dlg.close) dlg.close(); else dlg.removeAttribute("open");
-  }
 
-  // stop the video when the pop-up closes (button, Esc or a click next to it)
-  // (the close event comes a moment later: when another pop-up was opened in the meantime, keep that one)
-  $("#modal").addEventListener("close", () => { if (!$("#modal").open) $("#modal-body").innerHTML = ""; });
-  $("#modal").addEventListener("click", (ev) => { if (ev.target === ev.currentTarget) closeModal(); });
-  $("#modal-close").addEventListener("click", closeModal);
   document.addEventListener("keydown", (ev) => {
     if (ev.target.closest && ev.target.closest("button")) return; // a pill or button inside a chip handles its own keys
     const el = ev.target.closest && ev.target.closest("[data-open]");
-    if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openModal(el.dataset.open); }
+    if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openPattern(el.dataset.open); }
   });
 
   function updateToggleAll() {
@@ -435,7 +384,7 @@
       return;
     }
     const pat = ev.target.closest("[data-open]");
-    if (pat) openModal(pat.dataset.open);
+    if (pat) openPattern(pat.dataset.open);
   });
 
   for (const [lo, hi] of [["lo", "hi"], ["rlo", "rhi"]]) {
@@ -452,14 +401,8 @@
       return;
     }
     ITEMS = data.all || [];
-    MAX_SCORE = Math.max(0, ...ITEMS.map((x) => x.score || 0));
-    for (const p of data.patterns || []) { // Done, newest first
-      const key = p.key || minRotation(p.siteswap); // older data.json without keys
-      const have = DONE.get(key);
-      if (!have || (!have.youtubeId && p.youtubeId)) DONE.set(key, p);
-      if (p.rating != null && !(BEST_RATING.get(key) >= p.rating)) BEST_RATING.set(key, p.rating);
-      if (p.firstTry) FIRST_TRY.add(key);
-    }
+    initPopup(data);
+    for (const p of data.patterns || []) if (p.rating != null && !(BEST_RATING.get(p.key) >= p.rating)) BEST_RATING.set(p.key, p.rating);
     likes.load();
     const keys = new Map(ITEMS.map((p) => [p.key, p.done]));
     const done = [...keys.values()].filter(Boolean).length;
