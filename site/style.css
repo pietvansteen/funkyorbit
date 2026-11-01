@@ -250,7 +250,7 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
   display: inline-flex; align-items: center; gap: 6px; font: 600 13px/1 var(--f-body); padding: 9px 12px;
   border-radius: 99px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
 }
-.chip[aria-pressed="true"] { border-color: var(--orbit); box-shadow: inset 0 0 0 1px var(--orbit); }
+.chip[aria-pressed="true"], .chip[aria-expanded="true"] { border-color: var(--orbit); box-shadow: inset 0 0 0 1px var(--orbit); }
 .reset {
   font: 600 13px/1 var(--f-body); padding: 9px 12px; border-radius: 99px; cursor: pointer;
   border: 0; background: transparent; color: var(--orbit); text-decoration: underline; text-underline-offset: 3px;
@@ -309,6 +309,14 @@ footer { padding-block: 24px 48px; color: var(--muted); font-size: 13px; border-
 .pat .local-tag { grid-column: 1 / -1; order: 5; justify-self: start; }
 .title .local-tag { display: block; width: fit-content; justify-self: start; align-self: start; margin-top: 6px; }
 td .local-tag { margin-left: 8px; }
+/* All patterns: the Filter & sort panel and the list sorted by difficulty (#50) */
+.filter-panel { display: grid; gap: 14px; padding: 14px 16px; margin: -6px 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.filter-panel[hidden] { display: none; }
+.f-row { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 8px 14px; align-items: center; }
+.f-range { max-width: 440px; }
+.pats.flat { grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); }
+.pats.flat .pat small { white-space: normal; }
+@media (max-width: 600px) { .f-row { grid-template-columns: 1fr; } }
 .fam-tools { display: flex; justify-content: flex-end; margin: -4px 0 8px; }
 .fam-tools .reset { font-size: 14px; }
 @media (max-width: 700px) { .toolbar { position: static; } }
@@ -377,8 +385,8 @@ td .local-tag { margin-left: 8px; }
 .seg button[aria-pressed="true"] { border-color: var(--orbit); box-shadow: inset 0 0 0 1px var(--orbit); background: var(--orbit-soft); }
 .seg .sw { width: 18px; height: 18px; border-radius: 5px; }
 /* Period: six choices on one row, even on a 360px phone */
-.seg[data-opt="period"] { flex-wrap: nowrap; max-width: 440px; }
-.seg[data-opt="period"] button { flex: 1 1 auto; min-width: 0; padding: 0 8px; }
+.seg[data-opt="period"], .seg[data-f="period"] { flex-wrap: nowrap; max-width: 440px; }
+.seg[data-opt="period"] button, .seg[data-f="period"] button { flex: 1 1 auto; min-width: 0; padding: 0 8px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* two-handle slider: two range inputs on top of one track */
 .range { position: relative; height: 44px; }
@@ -498,6 +506,8 @@ footer .version:hover { color: var(--orbit); text-decoration: underline; text-un
 @media (max-width: 560px) { .stat-groups .stat-grid dd { font-size: 17px; } }
 .modal-card.not-thrown .meta { padding-top: 22px; }
 .modal-card.not-thrown .meta-top { padding-right: 48px; }
+.title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.first-try { white-space: nowrap; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--star); background: color-mix(in srgb, var(--star) 14%, transparent); border: 1px solid color-mix(in srgb, var(--star) 55%, transparent); border-radius: 99px; padding: 4px 10px; }
 .not-yet { justify-self: start; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 4px 10px; }
 /* Rating and Difficulty: labels in a fixed-width column, so both rows of stars start at the same place */
 .pop-row { position: relative; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }

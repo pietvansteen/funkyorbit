@@ -14,16 +14,16 @@
 <style>html { background: #0d1322; color-scheme: dark; }</style>
 <title>All patterns · Project Funky Orbit</title>
 <meta name="description" content="Every club passing pattern on our list, coloured by club, with the ones we have already thrown marked.">
-<link rel="icon" href="/favicon.svg?v=2.3.0-c96132" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg?v=2.3.0-dd780b" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
-<link rel="stylesheet" href="/style.css?v=2.3.0-c96132">
+<link rel="stylesheet" href="/style.css?v=2.3.0-dd780b">
 </head>
 <body>
 <header class="wrap top">
   <a class="brand" href="/" aria-label="Funky Orbit, home">
-    <img src="/favicon.svg?v=2.3.0-c96132" width="46" height="46" alt="">
+    <img src="/favicon.svg?v=2.3.0-dd780b" width="46" height="46" alt="">
     <b>Funky Orbit</b>
   </a>
   <nav class="nav" aria-label="Pages">
@@ -46,16 +46,77 @@
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
       <input type="search" id="q" placeholder="Search by siteswap or name, e.g. 975 or dragon" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search patterns by siteswap or name">
     </label>
-    <div class="colors" role="group" aria-label="Only patterns with these club colours">
-      <button type="button" class="chip" data-c="W" aria-pressed="false"><i class="sw c-w"></i>white</button>
-      <button type="button" class="chip" data-c="B" aria-pressed="false"><i class="sw c-b"></i>blue</button>
-      <button type="button" class="chip" data-c="O" aria-pressed="false"><i class="sw c-o"></i>orange</button>
-      <button type="button" class="chip" data-c="R" aria-pressed="false"><i class="sw c-r"></i>pink</button>
-      <button type="button" class="reset" id="reset" hidden>Reset</button>
-    </div>
+    <button type="button" class="chip" id="more" aria-expanded="false" aria-controls="filter-panel">
+      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>Filter &amp; sort<span id="more-n"></span>
+    </button>
+    <button type="button" class="reset" id="reset" hidden>Reset</button>
     <span class="label" id="count" aria-live="polite"></span>
     <button type="button" class="reset" id="toggle-all" aria-controls="list">Expand all</button>
   </div>
+
+  <section class="filter-panel" id="filter-panel" aria-label="Filter and sort" hidden>
+    <div class="f-row"><span class="opt-name">Sort</span>
+      <div class="seg" data-f="sort">
+        <button type="button" data-v="family">Family order</button>
+        <button type="button" data-v="easy">Easiest first</button>
+        <button type="button" data-v="hard">Hardest first</button>
+        <button type="button" data-v="fun">Most fun first</button>
+        <button type="button" data-v="dull">Least fun first</button>
+      </div></div>
+    <div class="f-row"><span class="opt-name">Difficulty</span>
+      <div class="f-range">
+        <div class="range">
+          <input type="range" id="lo" min="0.5" max="5" step="0.5" value="0.5" aria-label="Minimum stars">
+          <input type="range" id="hi" min="0.5" max="5" step="0.5" value="5" aria-label="Maximum stars">
+          <div class="range-track"><i id="range-fill"></i></div>
+        </div>
+        <div class="range-label" id="range-label">Any difficulty</div>
+      </div></div>
+    <div class="f-row"><span class="opt-name">Clubs</span><div class="colors" id="f-clubs" role="group" aria-label="Number of clubs"></div></div>
+    <div class="f-row"><span class="opt-name">Period</span>
+      <div class="seg" data-f="period">
+        <button type="button" data-v="all">All</button>
+        <button type="button" data-v="3">3</button>
+        <button type="button" data-v="5">5</button>
+        <button type="button" data-v="7">7</button>
+        <button type="button" data-v="async">Async</button>
+        <button type="button" data-v="sync">Sync</button>
+      </div></div>
+    <div class="f-row"><span class="opt-name">Thrown</span>
+      <div class="seg" data-f="thrown">
+        <button type="button" data-v="all">All</button>
+        <button type="button" data-v="yes">Thrown</button>
+        <button type="button" data-v="no">Not thrown yet</button>
+      </div></div>
+    <div class="f-row"><span class="opt-name">Our rating</span>
+      <div class="f-range">
+        <div class="range">
+          <input type="range" id="rlo" min="0.5" max="5" step="0.5" value="0.5" aria-label="Minimum rating">
+          <input type="range" id="rhi" min="0.5" max="5" step="0.5" value="5" aria-label="Maximum rating">
+          <div class="range-track"><i id="rating-fill"></i></div>
+        </div>
+        <div class="range-label" id="rating-label">Any rating</div>
+      </div></div>
+    <div class="f-row"><span class="opt-name">Colours</span>
+      <div class="pair">
+        <span class="pair-label">Must contain</span>
+        <div class="multi" role="group" aria-label="Pattern must contain these club colours" data-list="colorsIn"><button type="button" data-v="W"><i class="sw c-w"></i>white</button><button type="button" data-v="B"><i class="sw c-b"></i>blue</button><button type="button" data-v="O"><i class="sw c-o"></i>orange</button><button type="button" data-v="R"><i class="sw c-r"></i>pink</button></div>
+        <span class="pair-label">Leave out</span>
+        <div class="multi out" role="group" aria-label="Pattern must not contain these club colours" data-list="colorsOut"><button type="button" data-v="W"><i class="sw c-w"></i>white</button><button type="button" data-v="B"><i class="sw c-b"></i>blue</button><button type="button" data-v="O"><i class="sw c-o"></i>orange</button><button type="button" data-v="R"><i class="sw c-r"></i>pink</button></div>
+      </div></div>
+    <div class="f-row"><span class="opt-name">Throws</span>
+      <div class="pair">
+        <span class="pair-label">Must contain</span>
+        <div class="multi throws" role="group" aria-label="Pattern must contain these throws" data-list="throwsIn"></div>
+        <span class="pair-label">Leave out</span>
+        <div class="multi throws out" role="group" aria-label="Pattern must not contain these throws" data-list="throwsOut"></div>
+      </div></div>
+    <div class="f-row"><span class="opt-name">Only</span>
+      <div class="colors">
+        <button type="button" class="chip" data-flag="video" aria-pressed="false">With video</button>
+        <button type="button" class="chip" data-flag="named" aria-pressed="false">With a name</button>
+      </div></div>
+  </section>
 
   <div id="list"></div>
   <p class="empty" id="none" hidden></p>
@@ -69,7 +130,7 @@
 </dialog>
 
 <footer class="wrap"><span>funkyorbit.nl · The list is updated as soon as we log a pattern. <span id="updated"></span></span> <span class="foot-links"><a class="version" href="/changes/">v2.3.0 · What's new</a> · <a class="request-link" href="/request/">Request a feature</a></span></footer>
-<script src="/shared.js?v=2.3.0-c96132"></script>
-<script src="/patterns/patterns.js?v=2.3.0-c96132"></script>
+<script src="/shared.js?v=2.3.0-dd780b"></script>
+<script src="/patterns/patterns.js?v=2.3.0-dd780b"></script>
 </body>
 </html>

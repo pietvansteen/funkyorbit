@@ -69,7 +69,9 @@ Umami shows page views, visitors, bounce rate and visit duration per day, week o
 | `Like` / `Unlike` | `video` | a heart is clicked |
 | `Open pattern` | `siteswap`, `family`, `done` | a pattern pop-up opens on All patterns |
 | `Search` | `query`, `page` | someone stops typing in a search box for 2 seconds |
-| `Colour filter` | `colour` | a colour filter is switched on (All patterns) |
+| `Colour filter` | `colour`, `list` | a colour filter is switched on (All patterns) |
+| `Pattern filter` | `filter`, `value` | another filter is chosen in Filter & sort (All patterns) |
+| `Sort patterns` | `sort` | the sort order is chosen (All patterns) |
 | `Date filter` | `range` | the date filter changes (home) |
 | `Open group` | `group` | a progress tile opens (home) |
 | `Draw pattern` | `period`, `stars`, `hide`, `found` | the generator draws a pattern |

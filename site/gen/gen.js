@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, difficulty, startHtml, updated, track } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, difficulty, startHtml, throwsOf, updated, track } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   const DEFAULTS = { period: "all", colorsIn: [], colorsOut: [], throwsIn: [], throwsOut: [], skipfam: true, skipdone: true, hide: false, hidehands: false, hidediff: false, lo: 0.5, hi: 5 };
@@ -26,17 +26,6 @@
 
   const half = (n) => (n % 1 ? `${Math.floor(n) || ""}½` : String(n));
   const colorsOf = (p) => (Array.isArray(p.colors) ? p.colors.join("") : p.colors || "");
-
-  // A sync throw counts as the siteswap throw with the same spin (as in the difficulty rules):
-  // 3p ~ 7 single pass, 4p ~ 9 double pass, 5p ~ b triple pass, 3 ~ 6, 4 ~ 8, 5 ~ a, 1 ~ 2 zip
-  const SYNC_AS = { "3p": "7", "4p": "9", "5p": "b", "3": "6", "4": "8", "5": "a", "1": "2" };
-  function throwsOf(p) {
-    if (p._throws) return p._throws;
-    const t = p.ss
-      ? [...p.ss.toLowerCase()]
-      : (((p.a || "") + " " + (p.b || "")).toLowerCase().match(/[0-9a-oq-z]p?/g) || []).map((x) => SYNC_AS[x] || x);
-    return (p._throws = new Set(t));
-  }
 
   // data.json "all" lists a pattern once per family; merge them by key.
   function build(data) {

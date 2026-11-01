@@ -7,7 +7,10 @@
       "Generator: Hide colours now stays on after you tap a digit, so the next pattern starts grey again",
       "Add: a field for how hard a pattern felt to us, and a First try checkbox with its own GIF",
       "Add: the page no longer shows the difficulty from our rules, so it does not influence what we fill in",
-      "Search on Progress and All patterns: also finds a pattern by its local siteswap (what one juggler throws), marked with a small label"
+      "Search on Progress and All patterns: also finds a pattern by its local siteswap (what one juggler throws), marked with a small label",
+      "Pattern pop-up: a First try! badge when a pattern worked the first time after we started filming",
+      "All patterns: sort by difficulty or by our rating (easiest, hardest, most fun or least fun first), in one list with the family of each pattern",
+      "All patterns: filter on difficulty, the number of clubs, period, our rating, colours, throws, thrown or not, with a video and with a name; the counts per family follow the filters and a link keeps them"
     ]
   },
   {

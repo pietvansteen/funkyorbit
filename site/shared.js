@@ -110,6 +110,24 @@
     return !!q && q.length <= ss.length && (ss + ss).includes(q);
   }
 
+  // The throws in a pattern. A sync throw counts as the siteswap throw with the same spin (as in the difficulty rules):
+  // 3p ~ 7 single pass, 4p ~ 9 double pass, 5p ~ b triple pass, 3 ~ 6, 4 ~ 8, 5 ~ a, 1 ~ 2 zip
+  const SYNC_AS = { "3p": "7", "4p": "9", "5p": "b", "3": "6", "4": "8", "5": "a", "1": "2" };
+  function throwsOf(p) {
+    if (p._throws) return p._throws;
+    const t = p.ss
+      ? [...p.ss.toLowerCase()]
+      : (((p.a || "") + " " + (p.b || "")).toLowerCase().match(SYNC_THROW) || []).map((x) => SYNC_AS[x] || x);
+    return (p._throws = new Set(t));
+  }
+
+  // Clubs = throw sum / period; a sync pattern counts the throws of both jugglers per beat.
+  function clubsOf(p) {
+    if (p.ss) return [...p.ss.toLowerCase()].reduce((s, c) => s + parseInt(c, 36), 0) / p.ss.length;
+    const ta = (p.a || "").toLowerCase().match(SYNC_THROW) || [], tb = (p.b || "").toLowerCase().match(SYNC_THROW) || [];
+    return [...ta, ...tb].reduce((s, t) => s + parseInt(t[0], 36), 0) / Math.max(1, ta.length);
+  }
+
   // What one juggler throws (#52): every second throw, so positions 0, 2, 4, … of an odd period, wrapping around.
   // "" for sync and popcorn patterns, which are only searched as they are written.
   function localSiteswap(ss) {
@@ -328,5 +346,5 @@
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
   }
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, likes, track, trackSearch };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, likes, track, trackSearch };
 })();

@@ -29,7 +29,6 @@
   const GROUPS = ["wow", "again"];
 
   const SYNC_THROW = /[0-9a-oq-z]p?/g;
-  const val = (c) => parseInt(c, 36);
   const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const pick = (x) => (Array.isArray(x) ? x[Math.floor(Math.random() * x.length)] : x);
@@ -47,7 +46,7 @@
       // a 9 and then a 5 by the same juggler, one of his throws later (two beats), cyclic: as the Sheet counts them
       for (let i = 0; i < n; i++) if (ss[i] === "9" && ss[(i + 2) % n] === "5") dragons++;
       return {
-        clubs: [...ss].reduce((s, c) => s + val(c), 0) / n, period: n, dragons,
+        clubs: window.FO.clubsOf(p), period: n, dragons,
         zaps: [...ss].filter((c) => c === "5").length, triples: [...ss].filter((c) => c === "a" || c === "b").length,
         hasB: ss.includes("b"), colors: new Set(p.colors || ""),
       };
@@ -55,7 +54,7 @@
     const ta = (p.a || "").toLowerCase().match(SYNC_THROW) || [], tb = (p.b || "").toLowerCase().match(SYNC_THROW) || [];
     const all = [...ta, ...tb], like = all.map((t) => SYNC_AS[t] || "");
     return {
-      clubs: all.reduce((s, t) => s + val(t[0]), 0) / Math.max(1, ta.length), period: ta.length, dragons: 0, zaps: 0,
+      clubs: window.FO.clubsOf(p), period: ta.length, dragons: 0, zaps: 0,
       triples: like.filter((c) => c === "a" || c === "b").length, hasB: like.includes("b"),
       colors: new Set((p.colors || []).join("")),
     };
