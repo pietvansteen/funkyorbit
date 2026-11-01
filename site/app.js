@@ -3,7 +3,7 @@
   "use strict";
 
   const $ = (sel, el = document) => el.querySelector(sel);
-  const { esc, fmt, siteswap, cyclicIncludes, stars, when, day, player, likes, track, trackSearch } = window.FO;
+  const { esc, fmt, siteswap, cyclicIncludes, matchesLocal, localTag, stars, when, day, player, likes, track, trackSearch } = window.FO;
 
   // ---------- formatting helpers ----------
   function splitGroup(name) {
@@ -111,8 +111,9 @@
     if (dateTo && (!p.date || p.date > dateTo)) return false;
     if (!q) return true;
     // A siteswap is cyclic, so 6966 also finds 9666: search in the pattern written twice.
-    if (cyclicIncludes(p.siteswap, q.replace(/\s+/g, ""))) return true;
-    return (p.name || "").toLowerCase().includes(q);
+    const qs = q.replace(/\s+/g, "");
+    if (cyclicIncludes(p.siteswap, qs)) return true;
+    return (p.name || "").toLowerCase().includes(q) || matchesLocal(p.siteswap, qs);
   }
 
   const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -167,7 +168,7 @@
         ${player(p)}
         <div class="meta">
           <div class="meta-top">
-            <div class="title" style="--n:${[...(p.siteswap || "")].length}">${siteswap(p.siteswap, "lg", p.colors)}${p.name ? `<span class="pname">${esc(p.name)}</span>` : ""}</div>
+            <div class="title" style="--n:${[...(p.siteswap || "")].length}">${siteswap(p.siteswap, "lg", p.colors)}${p.name ? `<span class="pname">${esc(p.name)}</span>` : ""}${localTag(p.siteswap, p.name, query.trim().toLowerCase())}</div>
             ${likes.button(p.youtubeId)}
           </div>
           <span class="fam">${esc(p.family)}</span>
@@ -207,7 +208,7 @@
     const rest = d.patterns.filter((p) => !p.youtubeId && matches(p, q));
     $("#rest-wrap").hidden = !rest.length;
     $("#rest").innerHTML = rest.map((p) => `<tr>
-      <td>${siteswap(p.siteswap, "sm", p.colors)}</td><td>${esc(p.name)}</td><td>${esc(p.family)}</td>
+      <td>${siteswap(p.siteswap, "sm", p.colors)}${localTag(p.siteswap, p.name, q)}</td><td>${esc(p.name)}</td><td>${esc(p.family)}</td>
       <td>${stars(p.rating)}</td><td class="num">${esc(when(p))}</td></tr>`).join("");
   }
 

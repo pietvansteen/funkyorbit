@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, when, player, likes, track, trackSearch } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, matchesLocal, localTag, updated, stars, difficulty, startHtml, when, player, likes, track, trackSearch } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
@@ -82,7 +82,7 @@
     if (!q) return true;
     const qs = q.replace(/\s+/g, "");
     if (p.ss) {
-      if (cyclicIncludes(p.ss, qs)) return true;
+      if (cyclicIncludes(p.ss, qs) || matchesLocal(p.ss, qs)) return true;
     } else if ([p.a, p.b, p.a + p.b, p.alt].some((s) => s && s.toLowerCase().replace(/\s+/g, "").includes(qs))) {
       return true;
     }
@@ -98,6 +98,9 @@
       const ok = matches(p);
       el.hidden = !ok;
       if (ok) shownKeys.add(p.key);
+      // found only through its local siteswap: say so
+      el.querySelector(".local-tag")?.remove();
+      if (ok && p.ss && query.trim()) el.insertAdjacentHTML("beforeend", localTag(p.ss, p.name, query.trim().toLowerCase()));
     });
     // a main pattern stays in view when one of its variations matches, for context
     document.querySelectorAll(".grp").forEach((el) => {

@@ -52,6 +52,7 @@ Google Sheet ──CSV──> sync/sync.py (daily, or at once on data/sync-now) 
 ## Domain rules (easy to get wrong)
 
 - **Pattern key**: vanilla siteswaps use the smallest rotation (`min_rotation`); sync patterns use `sync_canon` (minimum over rotations of both jugglers and swapping A/B); popcorn notation like `(6x,a)(6,6)*` is its own key. These match the Families tab's "Unique key (auto)". The Done tab's "Match keys (auto)" column is a list of rotations, **not** a per-row key. JS has a `minRotation` fallback.
+- **Local siteswap** (`FO.localSiteswap`, #52): every second throw of an odd period, for search only; sync and popcorn have none. It is not a pattern of its own, and a result found only that way gets a "local" label.
 - **Colours are rotation-aware**: the colour code rotates along with the pattern (`color_for`, `sync_lookup`).
 - **Sync throws** are tokens `[0-9a-oq-z]p?` and match vanilla throws by spin: 3p≈7, 4p≈9, 5p≈b, 3≈6, 4≈8, 5≈a, 1≈2.
 - **Start positions**: a club starts in the hand that throws it first. Non-sync: Piet is juggler 1, throws on even beats and starts with his right hand; Mees on odd beats. Sync: both throw every beat starting right; part A = Mees, part B = Piet (issue #41). Display is always **Mees left, Piet right** (as in the videos), with a "starts" badge after Piet for non-sync only. Don't show "Juggler 1/2", and don't show names under sync patterns.

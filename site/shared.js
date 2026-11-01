@@ -110,6 +110,22 @@
     return !!q && q.length <= ss.length && (ss + ss).includes(q);
   }
 
+  // What one juggler throws (#52): every second throw, so positions 0, 2, 4, … of an odd period, wrapping around.
+  // "" for sync and popcorn patterns, which are only searched as they are written.
+  function localSiteswap(ss) {
+    ss = (ss || "").toLowerCase();
+    const n = ss.length;
+    if (!/^[0-9a-z]+$/.test(ss) || n % 2 === 0) return "";
+    return Array.from({ length: n }, (_, i) => ss[(i * 2) % n]).join("");
+  }
+  // q (no spaces) finds this siteswap only through its local notation
+  const matchesLocal = (ss, q) => !cyclicIncludes(ss, q) && cyclicIncludes(localSiteswap(ss), q);
+  // The label that says why a search result is there; q is the lower case search text. Nothing when it also matches otherwise.
+  function localTag(ss, name, q) {
+    if (!matchesLocal(ss, q.replace(/\s+/g, "")) || (name || "").toLowerCase().includes(q)) return "";
+    return `<span class="local-tag">local ${esc(localSiteswap(ss))}</span>`;
+  }
+
   function updated(iso) {
     if (!iso) return "";
     return "Updated " + new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -312,5 +328,5 @@
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
   }
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, updated, stars, difficulty, startHtml, day, ago, when, player, likes, track, trackSearch };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, likes, track, trackSearch };
 })();
