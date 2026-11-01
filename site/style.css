@@ -424,6 +424,8 @@ td .local-tag { margin-left: 8px; }
   width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: var(--radius);
   background: transparent; color: var(--ink); overflow: visible;
 }
+.pop-open, .pop-open body { overflow: hidden; } /* the page stays put behind the pop-up */
+.modal, .modal-card { overscroll-behavior: contain; }
 .modal::backdrop { background: rgb(5 9 20 / .72); backdrop-filter: blur(2px); }
 .modal-card { max-height: calc(100dvh - 32px); overflow: auto; }
 /* In the pop-up the video sits above the details, as wide as the pop-up but less tall. The cut is placed so the

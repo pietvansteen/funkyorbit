@@ -1,5 +1,13 @@
 [
   {
+    "version": "2.4.1",
+    "date": "2026-11-01",
+    "changes": [
+      "Pop-up: the page behind it no longer scrolls along when you swipe",
+      "Web app: opens on the Progress page"
+    ]
+  },
+  {
     "version": "2.4.0",
     "date": "2026-11-01",
     "changes": [

@@ -361,7 +361,8 @@
     let r = null;
     try { r = await fetch("/api/auth", { headers: auth(), cache: "no-store" }); } catch (e) { /* offline: trust the saved password */ }
     if (r && r.status === 401) return logout("Wrong password.");
-    if (r && !r.ok) return showLogin("The password could not be checked (the server has no admin password yet?).");
+    if (r && r.status === 503) return showLogin("The server has no admin password yet (ADMIN_TOKEN).");
+    if (r && !r.ok) return showLogin("The server cannot be reached right now, so the password could not be checked. Please try again in a moment.");
     try { localStorage.setItem(KEY, token); } catch (e) {}
     $("#login").hidden = true;
     $("#add").hidden = false;

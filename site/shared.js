@@ -354,7 +354,11 @@
     document.body.appendChild(dlg);
     // stop the video when the pop-up closes (button, Esc or a click next to it)
     // (the close event comes a moment later: when another pop-up was opened in the meantime, keep that one)
-    dlg.addEventListener("close", () => { if (!dlg.open) dlg.querySelector("#modal-body").innerHTML = ""; });
+    dlg.addEventListener("close", () => {
+      if (dlg.open) return;
+      dlg.querySelector("#modal-body").innerHTML = "";
+      document.documentElement.classList.remove("pop-open");
+    });
     dlg.addEventListener("click", (ev) => {
       if (ev.target === dlg || ev.target.closest("#modal-close")) closePopup();
       else if (ev.target.closest("#modal-prev")) stepPopup(-1);
@@ -378,6 +382,11 @@
       const atEnd = dy < 0 ? card.scrollTop + card.clientHeight >= card.scrollHeight - 1 : card.scrollTop <= 0;
       if (atEnd) stepPopup(dy < 0 ? 1 : -1);
     }, { passive: true });
+    // a swipe never moves the page behind the pop-up; only a pop-up taller than the screen scrolls itself
+    dlg.addEventListener("touchmove", (ev) => {
+      const card = ev.target.closest(".modal-card");
+      if (!card || card.scrollHeight <= card.clientHeight) ev.preventDefault();
+    }, { passive: false });
   }
 
   // options: `row` (the Done row to show, when not the usual one), or `list` + `index` (a list of Done rows with
@@ -436,6 +445,8 @@
     prev.disabled = POP.index === 0;
     next.disabled = !POP.list || POP.index >= POP.list.length - 1;
     if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); }
+    document.documentElement.classList.add("pop-open");
+    track("Open pattern", { siteswap: item.kind === "Sync" ? `${item.a} | ${item.b}` : item.ss || p.siteswap, family: families[0], done: !!p });
     const play = autoplay && dlg.querySelector("[data-play]");
     if (play) playVideo(play);
   }
