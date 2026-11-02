@@ -1,5 +1,12 @@
 [
   {
+    "version": "2.4.3",
+    "date": "2026-11-02",
+    "changes": [
+      "Web app: the splash screen shows when the app starts, and no longer when you go to the Generator"
+    ]
+  },
+  {
     "version": "2.4.2",
     "date": "2026-11-02",
     "changes": [
