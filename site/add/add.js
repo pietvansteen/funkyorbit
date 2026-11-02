@@ -205,7 +205,10 @@
     return name;
   }
   function showLocations(selected) {
-    locationSelect.innerHTML = `<option value="">No location</option>${LOCATIONS.map((l) => `<option value="${esc(l)}">${esc(l)}</option>`).join("")}<option value="${NEW_LOCATION}">New location…</option>`;
+    // most used first; the same number of patterns keeps the order of the list
+    const used = (name) => STATE.rows.filter((r) => r.location.toLowerCase() === name.toLowerCase()).length;
+    const sorted = LOCATIONS.map((l) => [l, used(l)]).sort((a, b) => b[1] - a[1]).map(([l]) => l);
+    locationSelect.innerHTML = `<option value="">No location</option>${sorted.map((l) => `<option value="${esc(l)}">${esc(l)}</option>`).join("")}<option value="${NEW_LOCATION}">New location…</option>`;
     locationSelect.value = selected;
     locationNew.value = "";
     locationNew.hidden = true;

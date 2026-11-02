@@ -1,5 +1,13 @@
 [
   {
+    "version": "2.5.1",
+    "date": "2026-11-02",
+    "changes": [
+      "Add page: the most used locations are at the top of the list",
+      "Add page: Nice video / location now comes before First try"
+    ]
+  },
+  {
     "version": "2.5.0",
     "date": "2026-11-02",
     "changes": [
