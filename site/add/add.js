@@ -7,6 +7,9 @@
   const KEY = "fo_admin"; // the same password as the requests page
   const MAX_SUGGEST = 8;
   const SYNC_THROW = /[0-9a-oq-z]p?/g;
+  // A new location is added by saving a pattern with it: it comes back with the other locations in data.json.
+  const LOCATIONS = ["Circus Amersfoort", "Nederlands Jongleerfestival, Goirle", "Utrecht Centraal Station", "Kölnvention", "Neuss Convention", "PassOut, Kolding", "Herfst Jongleer Weekend", "Goirle Juggling Festival", "PassOut, Goirle", "British Juggling Convention, Forest Row", "München Con", "Coastless Con"];
+  const NEW_LOCATION = "__new";
 
   let token = "";
   try { token = localStorage.getItem(KEY) || ""; } catch (e) {}
@@ -54,7 +57,8 @@
     }
     ITEMS.forEach((p) => p.done && STATE.done.add(p.key));
     STATE.rows = (data.patterns || []).filter((p) => p.date).reverse() // oldest first
-      .map((p) => ({ key: p.key, date: p.date, time: p.time || "", rating: p.rating ?? null, firstTry: !!p.firstTry }));
+      .map((p) => ({ key: p.key, date: p.date, time: p.time || "", rating: p.rating ?? null, firstTry: !!p.firstTry, location: p.location || "" }));
+    for (const p of data.patterns || []) if (p.location) knownLocation(p.location);
   }
 
   const pattern = (p, size) => (p.ss ? siteswap(p.ss, size, p.colors) : syncPattern(p.a, p.b, size, p.colors));
@@ -191,6 +195,67 @@
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   const nowTime = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
+  // ---------- location: a name from the list or a new one, and the GPS position of the phone ----------
+  const locationSelect = $("#location"), locationNew = $("#location-new");
+  const tidy = (s) => String(s || "").trim().replace(/\s+/g, " ");
+  function knownLocation(name) { // the name as we know it, added to the list when it is new
+    const same = LOCATIONS.find((l) => l.toLowerCase() === name.toLowerCase());
+    if (same) return same;
+    LOCATIONS.push(name);
+    return name;
+  }
+  function showLocations(selected) {
+    locationSelect.innerHTML = `<option value="">No location</option>${LOCATIONS.map((l) => `<option value="${esc(l)}">${esc(l)}</option>`).join("")}<option value="${NEW_LOCATION}">New location…</option>`;
+    locationSelect.value = selected;
+    locationNew.value = "";
+    locationNew.hidden = true;
+  }
+  locationSelect.addEventListener("change", () => {
+    locationNew.hidden = locationSelect.value !== NEW_LOCATION;
+    if (!locationNew.hidden) locationNew.focus();
+  });
+  const chosenLocation = () => (locationSelect.value === NEW_LOCATION ? tidy(locationNew.value) : locationSelect.value);
+  // Most patterns of a session are in one place: the location of the last one, when that was less than 12 hours ago.
+  function recentLocation() {
+    const last = STATE.rows[STATE.rows.length - 1];
+    return last && Date.now() - new Date(`${last.date}T${last.time || "00:00"}`).getTime() < 12 * 3600e3 ? last.location || "" : "";
+  }
+
+  // Only for a pattern logged today: later on, the phone is no longer where we threw it.
+  const GPS_REFRESH = 10 * 60e3, GPS_MAX_AGE = 3600e3;
+  let gps = null, gpsAt = 0, gpsError = "";
+  const gpsNow = () => (gps && Date.now() - gpsAt < GPS_MAX_AGE ? gps : null);
+  function showGps() {
+    let text = gpsError;
+    if ($("#date").value !== today()) text = "No GPS: that is only saved for a pattern from today.";
+    else if (gps) text = `GPS: ${gps.replace(",", ", ")}`;
+    $("#gps-status").textContent = text;
+    $("#gps-retry").hidden = !(gpsError && !gps && $("#date").value === today());
+  }
+  function locate(timeout) {
+    return new Promise((done) => {
+      if (!navigator.geolocation) { gpsError = "No GPS on this device."; showGps(); return done(); }
+      navigator.geolocation.getCurrentPosition((pos) => {
+        gps = `${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`;
+        gpsAt = Date.now();
+        gpsError = "";
+        showGps();
+        done();
+      }, (err) => {
+        gpsError = err.code === 1 ? "No GPS: the phone does not allow it for this app." : "No GPS: the position could not be found.";
+        showGps();
+        done();
+      }, { enableHighAccuracy: true, timeout, maximumAge: 60e3 });
+    });
+  }
+  async function gpsForSave(date) {
+    if (date !== today()) return null;
+    if (!gps || Date.now() - gpsAt > GPS_REFRESH) await locate(5000);
+    return gpsNow();
+  }
+  $("#date").addEventListener("change", showGps);
+  $("#gps-retry").addEventListener("click", () => { gpsError = "Looking for the position…"; showGps(); locate(15000); });
+
   function resetForm(ss) {
     input.value = ss || "";
     $("#date").value = $("#date").max = today();
@@ -199,6 +264,8 @@
     felt.set(0);
     $("#first-try").checked = false;
     $("#nice-video").checked = false;
+    showLocations(recentLocation());
+    showGps();
     showPicked();
   }
 
@@ -281,7 +348,7 @@
   const msg = $("#add-msg"), send = $("#add-send");
   let saveId = "", saveFor = "";
   function pendingId() {
-    const what = [normalize(input.value), $("#date").value, $("#time").value, rating.value, felt.value, $("#first-try").checked, $("#nice-video").checked].join("|");
+    const what = [normalize(input.value), $("#date").value, $("#time").value, rating.value, felt.value, $("#first-try").checked, $("#nice-video").checked, chosenLocation()].join("|");
     if (!saveId || saveFor !== what) {
       saveId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
       saveFor = what;
@@ -296,10 +363,13 @@
     const body = { id: pendingId(), pattern: normalize(input.value), date: $("#date").value, time: $("#time").value || null, rating: rating.value || null, felt: felt.value || null, firstTry: $("#first-try").checked, niceVideo: $("#nice-video").checked };
     if (!body.pattern) { say("Please fill in the siteswap."); return input.focus(); }
     if (!body.date) return say("Please choose a date.");
+    if (locationSelect.value === NEW_LOCATION && !chosenLocation()) { say("Please fill in the new location."); return locationNew.focus(); }
+    body.location = chosenLocation() ? knownLocation(chosenLocation()) : null;
     say("");
     send.disabled = true;
     send.textContent = "Saving…";
     try {
+      body.gps = await gpsForSave(body.date);
       const r = await fetch("/api/done", { method: "POST", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => ({}));
       if (r.status === 401) return logout("Wrong password.");
@@ -312,7 +382,7 @@
         ms = MS.check({ item: BY_KEY.get(key) || null, key, rating: body.rating, firstTry: body.firstTry, date: body.date, time, before: STATE, list: BY_KEY, total: BY_KEY.size });
       } catch (e) { /* no milestones, still a GIF */ }
       if (BY_KEY.has(key)) STATE.done.add(key);
-      STATE.rows.push({ key, date: body.date, time, rating: body.rating, firstTry: body.firstTry });
+      STATE.rows.push({ key, date: body.date, time, rating: body.rating, firstTry: body.firstTry, location: body.location || "" });
       if (!DONE_DATES.has(key)) DONE_DATES.set(key, []);
       DONE_DATES.get(key).unshift(body.date);
       resetForm("");
@@ -372,6 +442,7 @@
     loadGifs();
     try { await loadData(); } catch (e) { /* without data.json: no suggestions, saving still works */ }
     resetForm(new URLSearchParams(location.search).get("ss") || "");
+    locate(15000);
   }
 
   $("#login").addEventListener("submit", (ev) => {

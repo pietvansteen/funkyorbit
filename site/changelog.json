@@ -3,7 +3,9 @@
     "version": "2.5.0",
     "date": "2026-11-02",
     "changes": [
-      "Add page: a new checkbox to mark a nice video or location"
+      "Add page: a new checkbox to mark a nice video or location",
+      "Add page: choose where we threw a pattern, or add a new location, and the GPS position is saved with it",
+      "Pop-up: shows where we threw a pattern, after the date and time"
     ]
   },
   {

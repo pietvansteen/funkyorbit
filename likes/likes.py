@@ -21,7 +21,8 @@ Logging a pattern we juggled (hidden Add page, admin only):
 
   GET   /api/auth                   admin: {"ok": true} when the password is right
   POST  /api/done                   admin: body {"id", "pattern", "date": "YYYY-MM-DD", "time": "HH:MM" | null, "rating": 0.5..5 | null,
-                                    "felt": 0.5..5 | null, "firstTry": true | false, "niceVideo": true | false}
+                                    "felt": 0.5..5 | null, "firstTry": true | false, "niceVideo": true | false,
+                                    "location": text | null, "gps": "lat,lng" | null}
                                     -> {"ok": true, "nr", "name", "family"}
                                     Written to the Done tab by the Sheet's Apps Script (SHEET_WRITE_URL, SHEET_WRITE_SECRET),
                                     then the sync is asked to run right away (the file sync-now next to data.json).
@@ -62,6 +63,7 @@ _recent = {}  # visitor -> timestamps of their last requests (in memory only)
 # vanilla "8556666", sync "33p3 4p44" (as the Done tab writes it) or popcorn "(6x,a)(6,6)*"
 PATTERN_RE = re.compile(r"^(?:[0-9a-z]{1,15}|[0-9a-oq-z]p?(?:[0-9a-oq-z]p?){0,14} [0-9a-oq-z]p?(?:[0-9a-oq-z]p?){0,14}|[0-9a-z(),x*]{3,40})$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+GPS_RE = re.compile(r"-?\d{1,2}\.\d{1,7},-?\d{1,3}\.\d{1,7}")
 ID_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 
 VIDEO_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
@@ -248,12 +250,19 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": "The rating goes from ½ to 5 stars."})
         if felt is not None and not half_stars(felt):
             return self._send(400, {"error": "The difficulty goes from ½ to 5 stars."})
+        where = re.sub(r"\s+", " ", str(body.get("location") or "")).strip()
+        if len(where) > 80:
+            return self._send(400, {"error": "The location can be 80 characters at most."})
+        gps = str(body.get("gps") or "")
+        if gps and not GPS_RE.fullmatch(gps):
+            return self._send(400, {"error": "That does not look like a GPS position."})
         if not (SHEET_WRITE_URL and SHEET_WRITE_SECRET):
             return self._send(503, {"error": "Saving to the Sheet is not set up yet (SHEET_WRITE_URL)."})
         req_id = str(body.get("id") or "")
         payload = {"secret": SHEET_WRITE_SECRET, "id": req_id if ID_RE.match(req_id) else "",
                    "pattern": pattern, "date": date, "time": clock, "rating": rating,
-                   "felt": felt, "firstTry": body.get("firstTry") is True, "niceVideo": body.get("niceVideo") is True}
+                   "felt": felt, "firstTry": body.get("firstTry") is True, "niceVideo": body.get("niceVideo") is True,
+                   "location": where, "gps": gps}
         try:
             # Apps Script answers with a redirect to the result, which urllib follows as a GET
             req = urllib.request.Request(SHEET_WRITE_URL, data=json.dumps(payload).encode(),

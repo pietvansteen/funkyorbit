@@ -660,12 +660,13 @@ footer .admin-count { color: var(--club) !important; font-weight: 600; }
 .req-form { display: grid; gap: 16px; max-width: 560px; margin-bottom: 48px; }
 .req-form label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
 .req-form label small { font-weight: 500; color: var(--muted); font-size: 13px; }
-.req-form input, .req-form textarea {
+.req-form input, .req-form textarea, .req-form select {
   font: 400 16px/1.4 var(--f-body); color: var(--ink); background: var(--surface);
   border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; width: 100%;
 }
 .req-form textarea { resize: vertical; min-height: 140px; }
-.req-form input:focus, .req-form textarea:focus { outline: none; border-color: var(--orbit); box-shadow: 0 0 0 1px var(--orbit); }
+.req-form select option { background: var(--surface); color: var(--ink); }
+.req-form input:focus, .req-form textarea:focus, .req-form select:focus { outline: none; border-color: var(--orbit); box-shadow: 0 0 0 1px var(--orbit); }
 .req-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .req-form .draw { justify-self: start; width: auto; padding: 14px 22px; font-size: 16px; }
 .req-msg { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--club-soft); font-size: 14px; }
@@ -702,6 +703,8 @@ details.req header b { display: none; } /* already in the summary */
 /* ---------- Add page (hidden): log a pattern we juggled ---------- */
 .add-form { gap: 20px; }
 .date-time { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.location-field { display: grid; gap: 8px; }
+.gps-status { margin: 0; font-size: 13px; color: var(--muted); }
 .ss-field { display: grid; gap: 6px; scroll-margin-top: 12px; }
 .ss-field > label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
 .add-form #ss { font: 600 20px/1.3 var(--f-mono); letter-spacing: .04em; }

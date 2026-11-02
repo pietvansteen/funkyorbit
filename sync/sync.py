@@ -141,6 +141,7 @@ def parse_done(rows):
     c_file = col("file name", "file", "bestand")
     c_felt = col("difficulty felt")
     c_first = col("first try")
+    c_location = col("location")
 
     # Column names are matched by prefix; Dutch names are accepted as well.
     patterns = []
@@ -163,6 +164,7 @@ def parse_done(rows):
             "rating": rating,
             "felt": to_number(cell(row, c_felt)),
             "firstTry": cell(row, c_first).lower() in ("true", "waar", "yes", "ja", "x", "1"),
+            "location": cell(row, c_location),
             "youtubeId": youtube_id(yt_url),
             "isShort": "/shorts/" in yt_url,
         })

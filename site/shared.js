@@ -437,7 +437,7 @@
           ${items.length ? startHtml(item) : ""}
           ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
           ${diff}
-          ${p ? `<span class="when">${esc(when(p))}</span>` : ""}
+          ${p ? `<span class="when">${esc(when(p))}${p.location ? ` · ${esc(p.location)}` : ""}</span>` : ""}
         </div>
       </article>`;
     const prev = dlg.querySelector("#modal-prev"), next = dlg.querySelector("#modal-next");
