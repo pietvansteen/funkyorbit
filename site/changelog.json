@@ -1,5 +1,12 @@
 [
   {
+    "version": "2.5.2",
+    "date": "2026-11-02",
+    "changes": [
+      "Request a feature: a checkbox for Mees, who no longer has to fill in an email address"
+    ]
+  },
+  {
     "version": "2.5.1",
     "date": "2026-11-02",
     "changes": [

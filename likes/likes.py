@@ -11,7 +11,7 @@ Only likes for videos listed in data.json are accepted.
 
 Feature requests (stored in REQUESTS_DB, never shown publicly):
 
-  POST  /api/requests               body {"name", "email", "request", "website"}  (website = honeypot, must be empty)
+  POST  /api/requests               body {"name", "email", "request", "website", "mees"}  (website = honeypot, must be empty; mees = true: no email needed)
   GET   /api/requests               admin: {"requests": [...], "new": n}
   GET   /api/requests/count         admin: {"new": n}
   POST  /api/requests/<id>/status   admin: body {"status": "new" | "planned" | "done" | "no"}
@@ -215,7 +215,9 @@ class Handler(BaseHTTPRequestHandler):
         fields = {k: str(body.get(k) or "").strip() for k in LIMITS}
         if not fields["name"] or not fields["request"]:
             return self._send(400, {"error": "Please fill in your name and your request."})
-        if not EMAIL_RE.match(fields["email"]):
+        if body.get("mees") is True:  # the checkbox "I'm Mees": no email
+            fields["email"] = ""
+        elif not EMAIL_RE.match(fields["email"]):
             return self._send(400, {"error": "Please enter a valid email address."})
         if any(len(fields[k]) > n for k, n in LIMITS.items()):
             return self._send(400, {"error": "Your request is too long."})

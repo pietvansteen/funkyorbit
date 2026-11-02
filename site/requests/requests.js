@@ -30,7 +30,7 @@
         ${folded ? `<summary><b>${esc(r.name)}</b><span class="req-line">${esc(r.request.split("\n")[0])}</span><span class="req-status">${esc(r.status)}</span></summary>` : ""}
         <header>
           <b>${esc(r.name)}</b>
-          <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>
+          ${r.email ? `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : "<span>no email</span>"}
           <time>${esc(day(d))} · ${time}</time>
         </header>
         <p>${esc(r.request).replace(/\n/g, "<br>")}</p>

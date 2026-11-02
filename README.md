@@ -85,7 +85,7 @@ To see visitors from Instagram even when the app hides the referrer, link to `ht
 
 ## Feature requests
 
-Visitors send ideas via **Request a feature** in the footer (`/request/`): name, email and request. They are stored on the server in `data/requests.db`, never on the public site. Spam is kept out with a hidden honeypot field, a limit of 3 requests per visitor per hour and maximum field lengths.
+Visitors send ideas via **Request a feature** in the footer (`/request/`): name, email and request (a checkbox for Mees replaces the email). They are stored on the server in `data/requests.db`, never on the public site. Spam is kept out with a hidden honeypot field, a limit of 3 requests per visitor per hour and maximum field lengths.
 
 Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallowed in `robots.txt`) asks for the password set as `ADMIN_TOKEN` in `.env`. There you can give each request a status (new, planned, done, no) and download all of them as CSV. A device that is logged in also shows the number of new requests in the footer.
 

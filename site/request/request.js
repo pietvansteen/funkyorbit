@@ -8,11 +8,16 @@
 
   const say = (text) => { msg.textContent = text; msg.hidden = !text; };
 
+  const mees = $("#req-mees");
+  const showEmail = () => { $("#req-email").hidden = mees.checked; };
+  mees.addEventListener("change", showEmail);
+
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const f = Object.fromEntries(new FormData(form));
     if (!f.name.trim() || !f.request.trim()) return say("Please fill in your name and your request.");
-    if (!EMAIL_RE.test(f.email.trim())) return say("Please enter a valid email address.");
+    if (mees.checked) { f.mees = true; f.email = ""; }
+    else if (!EMAIL_RE.test(f.email.trim())) return say("Please enter a valid email address.");
     say("");
     send.disabled = true;
     send.textContent = "Sending…";
@@ -26,6 +31,7 @@
       $("#req-thanks").hidden = false;
       window.FO.track("Send request");
       form.reset();
+      showEmail();
     } catch (e) {
       say(e.message || "Sending did not work. Please try again in a moment.");
     } finally {
