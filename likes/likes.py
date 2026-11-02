@@ -21,7 +21,7 @@ Logging a pattern we juggled (hidden Add page, admin only):
 
   GET   /api/auth                   admin: {"ok": true} when the password is right
   POST  /api/done                   admin: body {"id", "pattern", "date": "YYYY-MM-DD", "time": "HH:MM" | null, "rating": 0.5..5 | null,
-                                    "felt": 0.5..5 | null, "firstTry": true | false}
+                                    "felt": 0.5..5 | null, "firstTry": true | false, "niceVideo": true | false}
                                     -> {"ok": true, "nr", "name", "family"}
                                     Written to the Done tab by the Sheet's Apps Script (SHEET_WRITE_URL, SHEET_WRITE_SECRET),
                                     then the sync is asked to run right away (the file sync-now next to data.json).
@@ -253,7 +253,7 @@ class Handler(BaseHTTPRequestHandler):
         req_id = str(body.get("id") or "")
         payload = {"secret": SHEET_WRITE_SECRET, "id": req_id if ID_RE.match(req_id) else "",
                    "pattern": pattern, "date": date, "time": clock, "rating": rating,
-                   "felt": felt, "firstTry": body.get("firstTry") is True}
+                   "felt": felt, "firstTry": body.get("firstTry") is True, "niceVideo": body.get("niceVideo") is True}
         try:
             # Apps Script answers with a redirect to the result, which urllib follows as a GET
             req = urllib.request.Request(SHEET_WRITE_URL, data=json.dumps(payload).encode(),

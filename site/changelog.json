@@ -1,5 +1,12 @@
 [
   {
+    "version": "2.5.0",
+    "date": "2026-11-02",
+    "changes": [
+      "Add page: a new checkbox to mark a nice video or location"
+    ]
+  },
+  {
     "version": "2.4.3",
     "date": "2026-11-02",
     "changes": [

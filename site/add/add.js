@@ -198,6 +198,7 @@
     rating.set(0);
     felt.set(0);
     $("#first-try").checked = false;
+    $("#nice-video").checked = false;
     showPicked();
   }
 
@@ -280,7 +281,7 @@
   const msg = $("#add-msg"), send = $("#add-send");
   let saveId = "", saveFor = "";
   function pendingId() {
-    const what = [normalize(input.value), $("#date").value, $("#time").value, rating.value, felt.value, $("#first-try").checked].join("|");
+    const what = [normalize(input.value), $("#date").value, $("#time").value, rating.value, felt.value, $("#first-try").checked, $("#nice-video").checked].join("|");
     if (!saveId || saveFor !== what) {
       saveId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
       saveFor = what;
@@ -292,7 +293,7 @@
   $("#add").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     // the same id when we try again after an error, so the Sheet never gets the same pattern twice
-    const body = { id: pendingId(), pattern: normalize(input.value), date: $("#date").value, time: $("#time").value || null, rating: rating.value || null, felt: felt.value || null, firstTry: $("#first-try").checked };
+    const body = { id: pendingId(), pattern: normalize(input.value), date: $("#date").value, time: $("#time").value || null, rating: rating.value || null, felt: felt.value || null, firstTry: $("#first-try").checked, niceVideo: $("#nice-video").checked };
     if (!body.pattern) { say("Please fill in the siteswap."); return input.focus(); }
     if (!body.date) return say("Please choose a date.");
     say("");
