@@ -452,7 +452,7 @@
   }
 
   // On our own (logged-in) devices only: "Add" in the menu (to log a pattern we juggled),
-  // and the number of new feature requests in the footer
+  // and a link to the feature requests in the footer, with the number of new ones if there are any
   (function adminCount() {
     let token = "";
     try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
@@ -462,10 +462,14 @@
     }
     const links = document.querySelector("footer .foot-links");
     if (!token || !links || location.pathname.startsWith("/requests")) return;
+    links.insertAdjacentHTML("beforeend", ` · <a href="/requests/">Requests</a>`);
+    const link = links.lastElementChild;
     fetch("/api/requests/count", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        if (j && j.new) links.insertAdjacentHTML("beforeend", ` · <a class="admin-count" href="/requests/">${j.new} new request${j.new === 1 ? "" : "s"}</a>`);
+        if (!j || !j.new) return;
+        link.className = "admin-count";
+        link.textContent = `${j.new} new request${j.new === 1 ? "" : "s"}`;
       })
       .catch(() => {});
   })();
