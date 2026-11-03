@@ -11,14 +11,16 @@
   // Pattern keys (as in data.json "key"), still to be identified
   const SPECIAL = {
     brookFirst: "", brookLast: "", brookFavourite: "", jamesFavourite: "",
-    brookDone: [], // every pattern Brook has done
+    // from Brook's sheet: patterns on our list that are still open there; brookFixed: Brook's version was invalid, ours is corrected
+    brookTodo: ["6a8", "799aa", "55aaa", "5a5aa", "3p4p5 3p4p5", "3p3p5 55p3p", "15p5p 54p4p", "15p4 54p5"],
+    brookFixed: ["3p3p4 5p45p", "145p 554p", "155p 553p"],
   };
 
   // Existing GIFs that fit a milestone, when there is none named after it
   const ALIASES = {
     "clubs-first": ["juggler-agt"], favourite: ["dicaprio-cheers"],
     "rating-max": ["dicaprio-cheers"], hundred: ["obama-mic-drop"], final: ["obama-mic-drop"],
-    "family-complete": ["success-kid-mission"], "sync-last": ["sync-first"], "clubs-many": ["juggler-agt"],
+    "family-complete": ["success-kid-mission"], "clubs-complete": ["success-kid-mission"], "sync-last": ["sync-first"], "clubs-many": ["juggler-agt"],
     "round": ["hundred"], "difficult": ["hardest"], "after-hard": ["again"], "hard-low": ["lowest", "rating-low"],
     // surprises without GIFs of their own get a "wow" face
     "zaps-most": ["wow"], "triples-most": ["wow"], "b-first": ["wow"], "period-long": ["wow"], "orange-last": ["wow"],
@@ -78,7 +80,8 @@
       if (s.brookLast && c.key === s.brookLast) return { title: "Brook's last pattern!", text: "The last one Brook did. Now we have too." };
       if (s.brookFavourite && c.key === s.brookFavourite) return { title: "Brook's favourite pattern!", text: "Brook would be proud." };
       if (s.jamesFavourite && c.key === s.jamesFavourite) return { title: "James's favourite pattern!", text: "Straight from the man who made the list." };
-      if (s.brookDone.length && c.isNew && !s.brookDone.includes(c.key)) return { title: "Brook never did this one!", text: "New territory." };
+      if (c.isNew && s.brookTodo.includes(c.key)) return { title: "Brook still has to do this one!", text: "We beat Brook to it." };
+      if (c.isNew && s.brookFixed.includes(c.key)) return { title: "Brook couldn't do this one!", text: "Brook's version didn't work. Ours does." };
       return null;
     } },
     { id: "sync-last", prio: 80, test: (c) => c.isNew && c.item.kind === "Sync" && c.undone((p) => p.kind === "Sync") === 0 && { title: "Our last sync pattern!", text: "Every sync pattern on the list: done." } },
@@ -93,6 +96,10 @@
     { id: "zaps-most", prio: 72, test: (c) => c.isNew && c.f.zaps > 0 && c.f.zaps === c.maxOf("zaps") && { title: `The most zaps: ${c.f.zaps}!`, text: "No pattern on the list has more zaps than this one." } },
     { id: "triples-most", prio: 72, test: (c) => c.isNew && c.f.triples > 0 && c.f.triples === c.maxOf("triples") && { title: `The most triples: ${c.f.triples}!`, text: "No pattern on the list has more triples than this one." } },
     { id: "hundred", prio: 70, test: (c) => c.isNew && c.doneAfter % 100 === 0 && { title: `${c.doneAfter} patterns!`, text: "Another hundred down." } },
+    { id: "clubs-complete", prio: 69, test: (c) => {
+      const n = c.f && c.f.clubs;
+      return c.isNew && n && c.undone((p) => facts(p).clubs === n) === 0 && { title: `Every ${n}-club pattern: done!`, text: "Nothing left to throw with this many clubs." };
+    } },
     { id: "family-complete", prio: 68, test: (c) => {
       if (!c.isNew) return null;
       const fams = c.item.families.filter((fam) => [...c.list.values()].every((p) => !p.families.includes(fam) || c.after.done.has(p.key)));
