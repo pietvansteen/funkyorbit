@@ -225,9 +225,9 @@
   }
 
   // Only for a pattern logged today: later on, the phone is no longer where we threw it.
-  const GPS_REFRESH = 10 * 60e3, GPS_MAX_AGE = 3600e3;
-  let gps = null, gpsAt = 0, gpsError = "";
-  const gpsNow = () => (gps && Date.now() - gpsAt < GPS_MAX_AGE ? gps : null);
+  // One watch per page visit instead of a new request each time: an iPhone asks for permission again on every request.
+  const GPS_HIDDEN_MAX = 30 * 60e3; // away longer than this (phone in a pocket): the old position may be somewhere else
+  let gps = null, gpsError = "", gpsWatch = null, gpsWaiting = null, hiddenAt = 0;
   function showGps() {
     let text = gpsError;
     if ($("#date").value !== today()) text = "No GPS: that is only saved for a pattern from today.";
@@ -235,29 +235,33 @@
     $("#gps-status").textContent = text;
     $("#gps-retry").hidden = !(gpsError && !gps && $("#date").value === today());
   }
-  function locate(timeout) {
-    return new Promise((done) => {
-      if (!navigator.geolocation) { gpsError = "No GPS on this device."; showGps(); return done(); }
-      navigator.geolocation.getCurrentPosition((pos) => {
-        gps = `${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`;
-        gpsAt = Date.now();
-        gpsError = "";
-        showGps();
-        done();
-      }, (err) => {
-        gpsError = err.code === 1 ? "No GPS: the phone does not allow it for this app." : "No GPS: the position could not be found.";
-        showGps();
-        done();
-      }, { enableHighAccuracy: true, timeout, maximumAge: 60e3 });
-    });
+  function startGps() {
+    if (!navigator.geolocation) { gpsError = "No GPS on this device."; return showGps(); }
+    if (gpsWatch !== null) navigator.geolocation.clearWatch(gpsWatch);
+    gpsWatch = navigator.geolocation.watchPosition((pos) => {
+      gps = `${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`;
+      gpsError = "";
+      showGps();
+      if (gpsWaiting) gpsWaiting();
+    }, (err) => {
+      if (err.code === 1) { navigator.geolocation.clearWatch(gpsWatch); gpsWatch = null; gps = null; }
+      if (!gps) gpsError = err.code === 1 ? "No GPS: the phone does not allow it for this app." : "No GPS: the position could not be found.";
+      showGps();
+      if (gpsWaiting) gpsWaiting();
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60e3 });
   }
   async function gpsForSave(date) {
     if (date !== today()) return null;
-    if (!gps || Date.now() - gpsAt > GPS_REFRESH) await locate(5000);
-    return gpsNow();
+    if (!gps && gpsWatch !== null) await new Promise((done) => { gpsWaiting = done; setTimeout(done, 5000); });
+    gpsWaiting = null;
+    return gps;
   }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > GPS_HIDDEN_MAX) { gps = null; showGps(); }
+  });
   $("#date").addEventListener("change", showGps);
-  $("#gps-retry").addEventListener("click", () => { gpsError = "Looking for the position…"; showGps(); locate(15000); });
+  $("#gps-retry").addEventListener("click", () => { gpsError = "Looking for the position…"; showGps(); startGps(); });
 
   function resetForm(ss) {
     input.value = ss || "";
@@ -445,7 +449,7 @@
     loadGifs();
     try { await loadData(); } catch (e) { /* without data.json: no suggestions, saving still works */ }
     resetForm(new URLSearchParams(location.search).get("ss") || "");
-    locate(15000);
+    startGps();
   }
 
   $("#login").addEventListener("submit", (ev) => {

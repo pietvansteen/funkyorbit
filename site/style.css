@@ -79,6 +79,8 @@ a { color: inherit; }
 .hero p { margin: 0; color: var(--muted); font-size: 19px; line-height: 1.6; max-width: 68ch; text-wrap: pretty; }
 .hero p strong { color: var(--ink); }
 .hero .intro { display: grid; gap: 0; }
+.hero .intro > p { position: relative; }
+.hero .intro .tip-text { right: auto; left: 0; }
 .hero .more > div > p { padding-top: 10px; }
 .hero p a { color: var(--ink); text-decoration-color: var(--orbit); text-underline-offset: 3px; text-decoration-thickness: 2px; }
 .hero p a:hover { color: var(--orbit); }
