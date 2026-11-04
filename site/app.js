@@ -3,7 +3,7 @@
   "use strict";
 
   const $ = (sel, el = document) => el.querySelector(sel);
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, matchesLocal, localTag, stars, when, day, thumb, likes, initPopup, openPattern, track, trackSearch } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, matchesLocal, localTag, stars, when, day, thumb, likes, initPopup, openPattern, nameLinks, videoIcon, track, trackSearch } = window.FO;
 
   // ---------- formatting helpers ----------
   function splitGroup(name) {
@@ -166,8 +166,6 @@
     const item = (DATA.all || []).find((x) => x.key === p.key);
     return item && item.kind === "Sync" ? syncPattern(item.a, item.b, size, item.colors) : siteswap(p.siteswap, size, p.colors);
   };
-  const ICON_VIDEO = `<span class="row-icon has" title="Has a video" role="img" aria-label="Has a video"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>`;
-  const ICON_SOON = `<span class="row-icon" title="Video coming soon" role="img" aria-label="Video coming soon"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`;
 
   function renderRows(q) {
     const filtering = !!q || !!dateFrom || !!dateTo;
@@ -176,9 +174,9 @@
     $("#rows-count").textContent = filtering ? `${ROWS.length} of ${total} match` : `${shown.length} of ${total}`;
     const what = [q && `“${esc(query.trim())}”`, (dateFrom || dateTo) && "these dates"].filter(Boolean).join(" in ");
     $("#rows").innerHTML = shown.length ? shown.map((p, i) => `<li class="row${throwCount(p.siteswap) > 8 ? " long" : ""}" data-row="${i}" role="button" tabindex="0" aria-label="${esc(p.siteswap)}: show details">
-        <span class="row-pat">${thrown(p, "sm")}${p.firstTry ? `<span class="first-try small">First try!</span>` : ""}${localTag(p.siteswap, p.name, q)}${p.name ? `<span class="row-name">${esc(p.name)}</span>` : ""}</span>
+        <span class="row-pat">${thrown(p, "sm")}${p.firstTry ? `<span class="first-try small">First try!</span>` : ""}${localTag(p.siteswap, p.name, q)}${p.name ? `<span class="row-name">${nameLinks(p.name)}</span>` : ""}</span>
         <span class="row-sub">${stars(p.rating)}<span class="when">${esc(when(p))}</span></span>
-        ${p.youtubeId ? ICON_VIDEO : ICON_SOON}
+        ${videoIcon(p)}
       </li>`).join("") : `<li class="empty">${filtering ? `No pattern matches ${what}.` : "No patterns yet. Check back soon!"}</li>`;
     $("#rows-more").hidden = ROWS.length <= rowsShown;
   }
@@ -258,6 +256,7 @@
   });
 
   document.addEventListener("click", (ev) => {
+    if (ev.target.closest(".name-link")) return; // the link to the story, not the pop-up
     const row = ev.target.closest("[data-row]");
     if (row) { const p = ROWS[+row.dataset.row]; openPattern(p.key, { row: p }); return; }
     const still = ev.target.closest("[data-still]");

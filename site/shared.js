@@ -222,8 +222,9 @@
   // Page views, referrers, countries, devices and visit times come with the tracker; track() adds our own events.
   // Not on our own devices (admin password saved), not in the preview and not on localhost.
   const UMAMI_ID = "fd019cf8-5568-45b0-8e3e-d16b7b38c1fe"; // the website ID from the Umami dashboard; empty = no statistics
-  let ADMIN = false;
-  try { ADMIN = !!localStorage.getItem("fo_admin"); } catch (e) {}
+  const stored = (key) => { try { return localStorage.getItem(key) || ""; } catch (e) { return ""; } };
+  const ADMIN = !!stored("fo_admin");
+  const LOGGED_IN = ADMIN || !!stored("fo_swipe");
   const STANDALONE = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   if (UMAMI_ID && !ADMIN && !PREVIEW && /(^|\.)funkyorbit\.nl$/.test(location.hostname)) {
     // Searching changes ?q= in the address with every letter: count that as a page view only when the page itself changes.
@@ -332,6 +333,7 @@
   const doneRow = (key) => POP.done.get(key);
 
   function initPopup(data) {
+    setStories(data);
     for (const p of data.all || []) {
       if (!POP.items.has(p.key)) POP.items.set(p.key, []);
       POP.items.get(p.key).push(p);
@@ -409,37 +411,36 @@
     if (dlg.close) dlg.close(); else dlg.removeAttribute("open");
   }
 
+  // The stories on Behind the Name (#55): a name with a story links to it, every other name stays plain text.
+  // Stories are matched by the whole name; a pattern with more names has them separated by "; ".
+  const storySlug = (name) => String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const STORIES = new Set();
+  function setStories(data) {
+    for (const n of data.names || []) STORIES.add(n.name.trim().toLowerCase());
+  }
+  const nameLinks = (name) => String(name || "").split(/;\s*/).map((n) =>
+    (STORIES.has(n.trim().toLowerCase()) ? `<a class="name-link" href="/names/#${storySlug(n)}" title="The story behind this name">${esc(n)}</a>` : esc(n))).join("; ");
+
+  // A pattern by its key, in club colours: as we threw it, else as it is on the list. `fallback` when it is on neither.
+  function patternHtml(key, size, fallback = "") {
+    const row = POP.done.get(key), item = (POP.items.get(key) || [])[0];
+    if (item && item.kind === "Sync") return syncPattern(item.a, item.b, size, item.colors);
+    if (row) return siteswap(row.siteswap, size, row.colors);
+    return item ? siteswap(item.ss, size, item.colors) : siteswap(fallback, size);
+  }
+  const familiesOf = (key, row) => {
+    const items = POP.items.get(key) || [];
+    return items.length ? [...new Set(items.map((x) => x.family))] : [(row || POP.done.get(key) || {}).family].filter(Boolean);
+  };
+  const isKnown = (key) => POP.items.has(key) || POP.done.has(key);
+
   function showPopup(key, p, autoplay) {
     const items = POP.items.get(key) || [];
     if (!items.length && !p) return;
-    const item = items[0] || {}; // a pattern that is not on the list only has its Done row
-    const families = items.length ? [...new Set(items.map((x) => x.family))] : [p.family].filter(Boolean);
-    const name = (p && p.name) || item.name;
-    const pat = item.kind === "Sync"
-      ? syncPattern(item.a, item.b, "lg", item.colors)
-      : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
-    const diff = item.stars != null
-      ? `<div class="pop-row pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, POP.maxScore, false)}</div>` : "";
-    const video = !p ? "" : p.youtubeId
-      ? player(p)
-      : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;
+    const item = items[0] || {};
+    const families = familiesOf(key, p);
     const dlg = document.getElementById("modal");
-    dlg.querySelector("#modal-body").innerHTML = `
-      <article class="card modal-card${p ? "" : " not-thrown"}">
-        ${video}
-        <div class="meta">
-          <div class="meta-top">
-            <div class="title" id="modal-title"><div class="title-row">${pat}${POP.firstTry.has(key) ? `<span class="first-try">First try!</span>` : ""}</div>${name ? `<span class="pname">${esc(name)}</span>` : ""}</div>
-            ${p && p.youtubeId ? likes.button(p.youtubeId) : ""}
-          </div>
-          ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
-          <span class="fam">${families.map(esc).join("<br>")}</span>
-          ${items.length ? startHtml(item) : ""}
-          ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
-          ${diff}
-          ${p ? `<span class="when">${esc(when(p))}${p.location ? ` · ${esc(p.location)}` : ""}</span>` : ""}
-        </div>
-      </article>`;
+    dlg.querySelector("#modal-body").innerHTML = patternCard(key, p);
     const prev = dlg.querySelector("#modal-prev"), next = dlg.querySelector("#modal-next");
     prev.hidden = next.hidden = !POP.list || POP.list.length < 2;
     prev.disabled = POP.index === 0;
@@ -451,16 +452,82 @@
     if (play) playVideo(play);
   }
 
-  // On our own (logged-in) devices only: "Add" in the menu (to log a pattern we juggled),
-  // and a link to the feature requests in the footer, with the number of new ones if there are any
-  (function adminCount() {
-    let token = "";
-    try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
+  // The card of the pop-up. `stacked`: a card on the Catch or Drop page, without the id (there are several at once) and the start position
+  function patternCard(key, p, stacked = false) {
+    const items = POP.items.get(key) || [];
+    const item = items[0] || {}; // a pattern that is not on the list only has its Done row
+    const families = familiesOf(key, p);
+    const name = (p && p.name) || item.name;
+    const pat = item.kind === "Sync"
+      ? syncPattern(item.a, item.b, "lg", item.colors)
+      : siteswap(item.ss || p.siteswap, "lg", item.colors || (p && p.colors));
+    const diff = item.stars != null
+      ? `<div class="pop-row pop-diff"><span class="pop-label">Difficulty</span> ${difficulty(item, POP.maxScore, false)}</div>` : "";
+    const video = !p ? "" : p.youtubeId
+      ? player(p)
+      : `<div class="player no-video"><div class="poster">${esc(p.siteswap)}<small>Thrown, video coming soon</small></div></div>`;
+    return `
+      <article class="card modal-card${p ? "" : " not-thrown"}">
+        ${video}
+        <div class="meta">
+          <div class="meta-top">
+            <div class="title"${stacked ? "" : ' id="modal-title"'}><div class="title-row">${pat}${POP.firstTry.has(key) ? `<span class="first-try">First try!</span>` : ""}</div>${name ? `<span class="pname">${nameLinks(name)}</span>` : ""}</div>
+            ${p && p.youtubeId ? likes.button(p.youtubeId) : ""}
+          </div>
+          ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
+          <span class="fam">${families.map(esc).join("<br>")}</span>
+          ${items.length && !stacked ? startHtml(item) : ""}
+          ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
+          ${diff}
+          ${p ? `<span class="when">${esc(when(p))}${p.location ? ` · ${esc(p.location)}` : ""}</span>` : ""}
+        </div>
+      </article>`;
+  }
+
+  // ---------- menu: the links in the header on wide screens, a tab bar at the bottom on phones ----------
+  const tabIcon = (d) => `<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const TABS = [
+    { href: "/", label: "Progress", icon: "M4 19V11M10 19V5M16 19v-6M21 19H3" },
+    { href: "/patterns/", label: "Patterns", icon: "M4 5h4v4H4zM10 5h4v4h-4zM16 5h4v4h-4zM4 15h4v4H4zM10 15h4v4h-4zM16 15h4v4h-4z" },
+    { href: "/gen/", label: "Generator", icon: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" },
+    { href: "/stats/", label: "Stats", icon: "M11 4a8.5 8.5 0 1 0 9 9h-9zM15 3.5A6.5 6.5 0 0 1 20.5 9H15z" },
+  ];
+  const STORIES_TAB = { href: "/names/", label: "Stories", icon: "M12 6C10 4.5 7 4 4 4v15c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2zM12 6v15" };
+  const isHere = (href) => (href === "/" ? /^\/(index\.html)?$/.test(location.pathname) : location.pathname.startsWith(href));
+  const here = (href) => (isHere(href) ? ' aria-current="page"' : "");
+
+  // Visitors: the tabs and Stories. Logged-in devices (the admin or the Swipe password) also get the extra pages,
+  // and on phones More takes the place of Stories: Add with the admin password, Catch or Drop with either.
+  (function menu() {
+    const extra = [];
+    if (ADMIN) extra.push({ href: "/add/", label: "Add" });
+    if (LOGGED_IN) extra.push({ href: "/catch/", label: "Catch or Drop" });
     const nav = document.querySelector(".nav");
-    if (token && nav && !nav.querySelector('a[href="/add/"]')) {
-      nav.insertAdjacentHTML("beforeend", `<a href="/add/"${location.pathname.startsWith("/add") ? ' aria-current="page"' : ""}>Add</a>`);
-    }
+    if (!nav) return;
+    nav.insertAdjacentHTML("beforeend", extra.map((l) => `<a href="${l.href}"${here(l.href)}>${l.label}</a>`).join(""));
+    const tab = (t) => `<a href="${t.href}"${here(t.href)}>${tabIcon(t.icon)}<span>${t.label}</span></a>`;
+    const bar = document.createElement("nav");
+    bar.className = "tabbar";
+    bar.setAttribute("aria-label", "Pages");
+    document.body.appendChild(bar);
+    if (!LOGGED_IN) { bar.innerHTML = [...TABS, STORIES_TAB].map(tab).join(""); return; }
+    const more = [STORIES_TAB, ...extra];
+    bar.innerHTML = TABS.map(tab).join("") +
+      `<button type="button" id="tab-more" aria-expanded="false" aria-controls="more-sheet"${more.some((l) => isHere(l.href)) ? ' class="here"' : ""}>${tabIcon("M5 12h.01M12 12h.01M19 12h.01")}<span>More</span></button>
+      <div class="more-sheet" id="more-sheet" hidden>${more.map((l) => `<a href="${l.href}"${here(l.href)}>${l.label}</a>`).join("")}</div>`;
+    const btn = bar.querySelector("#tab-more"), sheet = bar.querySelector("#more-sheet");
+    const show = (on) => { sheet.hidden = !on; btn.setAttribute("aria-expanded", String(on)); };
+    btn.addEventListener("click", () => show(sheet.hidden));
+    document.addEventListener("click", (ev) => { if (!ev.target.closest("#tab-more, #more-sheet")) show(false); });
+    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && !sheet.hidden) { show(false); btn.focus(); } });
+  })();
+
+  // On our own (logged-in) devices only: a link to the feature requests in the footer, with the number of new ones if there are any
+  (function adminCount() {
+    const token = stored("fo_admin");
     const links = document.querySelector("footer .foot-links");
+    // Not logged in: the way in, also in the installed app, which has no address bar
+    if (links && !LOGGED_IN && !location.pathname.startsWith("/login")) links.insertAdjacentHTML("beforeend", ` · <a href="/login/">Log in</a>`);
     if (!token || !links || location.pathname.startsWith("/requests")) return;
     links.insertAdjacentHTML("beforeend", ` · <a href="/requests/">Requests</a>`);
     const link = links.lastElementChild;
@@ -483,5 +550,9 @@
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
   }
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, track, trackSearch };
+  const ICON_VIDEO = `<span class="row-icon has" title="Has a video" role="img" aria-label="Has a video"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>`;
+  const ICON_SOON = `<span class="row-icon" title="Video coming soon" role="img" aria-label="Video coming soon"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`;
+  const videoIcon = (p) => (p.youtubeId ? ICON_VIDEO : ICON_SOON);
+
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternCard, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch };
 })();

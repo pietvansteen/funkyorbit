@@ -28,6 +28,12 @@ Logging a pattern we juggled (hidden Add page, admin only):
                                     then the sync is asked to run right away (the file sync-now next to data.json).
   POST  /api/sync                   admin: ask the sync to run right away (after a row in Done was changed or deleted)
 
+Rating patterns for a show (hidden Swipe page; ADMIN_TOKEN or SWIPE_TOKEN, which opens nothing else):
+
+  GET    /api/swipes                {"people": [...], "swipes": [{"person", "key", "choice", "at"}, ...], "admin": bool}
+  POST   /api/swipe                 body {"person", "key", "choice": "right" | "left"}
+  DELETE /api/swipe                 body {"person", "key"}: undo
+
 Admin calls need the header  Authorization: Bearer <ADMIN_TOKEN>  (ADMIN_TOKEN from the environment).
 """
 
@@ -49,7 +55,10 @@ DB_FILE = os.environ.get("DB_FILE", "/data/likes.db")
 DATA_FILE = os.environ.get("DATA_FILE", "/data/data.json")
 PORT = int(os.environ.get("PORT", "8000"))
 REQUESTS_DB = os.environ.get("REQUESTS_DB", "/data/requests.db")
+SWIPES_DB = os.environ.get("SWIPES_DB", "/data/swipes.db")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
+SWIPE_TOKEN = os.environ.get("SWIPE_TOKEN", "")
+PEOPLE = ["Piet", "Mees", "Hanna"]  # who can choose their name on the Swipe page
 SHEET_WRITE_URL = os.environ.get("SHEET_WRITE_URL", "")  # the Apps Script web app (apps-script/FunkyOrbit.gs)
 SHEET_WRITE_SECRET = os.environ.get("SHEET_WRITE_SECRET", "")
 SYNC_FLAG = os.path.join(os.path.dirname(os.path.abspath(DATA_FILE)), "sync-now")
@@ -70,7 +79,7 @@ VIDEO_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 VISITOR_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 
 lock = threading.Lock()
-_known = {"mtime": 0, "ids": set()}
+_known = {"mtime": 0, "ids": set(), "keys": set()}
 
 
 def db():
@@ -94,6 +103,16 @@ def requests_db():
     return con
 
 
+def swipes_db():
+    con = sqlite3.connect(SWIPES_DB)
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS swipes ("
+        " person TEXT NOT NULL, key TEXT NOT NULL, choice TEXT NOT NULL, at INTEGER NOT NULL,"
+        " PRIMARY KEY (person, key))"
+    )
+    return con
+
+
 def too_many(visitor):
     """At most PER_HOUR requests per visitor per hour."""
     now = time.time()
@@ -105,18 +124,27 @@ def too_many(visitor):
     return False
 
 
-def known_videos():
-    """Video IDs from data.json, reloaded when the file changes."""
+def load_known():
+    """Video IDs and pattern keys from data.json, reloaded when the file changes."""
     try:
         mtime = os.path.getmtime(DATA_FILE)
         if mtime != _known["mtime"]:
             with open(DATA_FILE, encoding="utf-8") as f:
                 data = json.load(f)
             _known["ids"] = {p["youtubeId"] for p in data.get("patterns", []) if p.get("youtubeId")}
+            _known["keys"] = {p["key"] for p in data.get("patterns", [])}
             _known["mtime"] = mtime
     except (OSError, ValueError):
         pass
-    return _known["ids"]
+    return _known
+
+
+def known_videos():
+    return load_known()["ids"]
+
+
+def known_keys():
+    return load_known()["keys"]
 
 
 def ask_sync(flag):
@@ -159,6 +187,52 @@ class Handler(BaseHTTPRequestHandler):
             self._send(401, {"error": "wrong password"})
             return False
         return True
+
+    def _swiper(self):
+        """The Swipe page: "admin" or "swipe" for a correct password; sends the error itself otherwise."""
+        if not (ADMIN_TOKEN or SWIPE_TOKEN):
+            self._send(503, {"error": "no password set (SWIPE_TOKEN)"})
+            return None
+        got = (self.headers.get("Authorization") or "").removeprefix("Bearer ").strip().encode()
+        # both always compared; an empty password in the environment never matches
+        admin = bool(ADMIN_TOKEN) & hmac.compare_digest(got, ADMIN_TOKEN.encode())
+        swipe = bool(SWIPE_TOKEN) & hmac.compare_digest(got, SWIPE_TOKEN.encode())
+        if admin or swipe:
+            return "admin" if admin else "swipe"
+        time.sleep(1)  # slows down guessing
+        self._send(401, {"error": "wrong password"})
+        return None
+
+    def _swipes_get(self):
+        role = self._swiper()
+        if not role:
+            return
+        with lock, swipes_db() as con:
+            rows = con.execute("SELECT person, key, choice, at FROM swipes ORDER BY at").fetchall()
+        self._send(200, {"people": PEOPLE, "admin": role == "admin", "swipes": [
+            {"person": r[0], "key": r[1], "choice": r[2], "at": r[3]} for r in rows]})
+
+    def _swipe_write(self, delete):
+        if not self._swiper():
+            return
+        body = self._body(512)
+        if body is None:
+            return self._send(400, {"error": "invalid JSON"})
+        person, key, choice = body.get("person"), body.get("key"), body.get("choice")
+        if person not in PEOPLE:
+            return self._send(400, {"error": "unknown person"})
+        keys = known_keys()
+        if not isinstance(key, str) or not key or len(key) > 80 or (keys and key not in keys):
+            return self._send(400, {"error": "unknown pattern"})
+        if delete:
+            with lock, swipes_db() as con:
+                con.execute("DELETE FROM swipes WHERE person = ? AND key = ?", (person, key))
+            return self._send(200, {"ok": True})
+        if choice not in ("right", "left"):
+            return self._send(400, {"error": "invalid choice"})
+        with lock, swipes_db() as con:
+            con.execute("INSERT OR REPLACE INTO swipes VALUES (?, ?, ?, ?)", (person, key, choice, int(time.time())))
+        self._send(200, {"ok": True})
 
     def _body(self, limit):
         try:
@@ -290,6 +364,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._admin() and self._send(200, {"ok": True})
         if path in ("/api/requests", "/api/requests/count", "/api/requests.csv"):
             return self._requests_get(path)
+        if path == "/api/swipes":
+            return self._swipes_get()
         if path != "/api/likes":
             return self._send(404, {"error": "not found"})
         visitor = (parse_qs(url.query).get("visitor") or [""])[0]
@@ -315,6 +391,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._requests_post(path)
         if path == "/api/done":
             return self._done_post()
+        if path == "/api/swipe":
+            return self._swipe_write(False)
         if path != "/api/like":
             return self._send(404, {"error": "not found"})
         try:
@@ -338,6 +416,11 @@ class Handler(BaseHTTPRequestHandler):
             count = con.execute("SELECT COUNT(*) FROM likes WHERE video = ?", (video,)).fetchone()[0]
         self._send(200, {"video": video, "count": count, "liked": liked})
 
+    def do_DELETE(self):
+        if urlparse(self.path).path.rstrip("/") == "/api/swipe":
+            return self._swipe_write(True)
+        self._send(404, {"error": "not found"})
+
     def log_message(self, fmt, *args):
         pass  # no IP addresses in the logs
 
@@ -346,5 +429,6 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(os.path.abspath(DB_FILE)), exist_ok=True)
     db().close()
     requests_db().close()
+    swipes_db().close()
     print(f"likes API listening on port {PORT}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0d1322">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Funky Orbit">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>html { background: #0d1322; color-scheme: dark; }</style>
+<title>Catch or Drop · Project Funky Orbit</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Rating our patterns for a show.">
+<link rel="icon" href="/favicon.svg?v=3.0.0-aedf0f" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
+<link rel="stylesheet" href="/style.css?v=3.0.0-aedf0f">
+</head>
+<body>
+<header class="wrap top">
+  <a class="brand" href="/" aria-label="Funky Orbit, home">
+    <img src="/favicon.svg?v=3.0.0-aedf0f" width="46" height="46" alt="">
+    <b>Funky Orbit</b>
+  </a>
+  <nav class="nav" aria-label="Pages">
+    <a href="/">Progress</a>
+    <a href="/patterns/">All patterns</a>
+    <a href="/gen/">Generator</a>
+    <a href="/stats/">Stats</a>
+    <a href="/names/">Behind the Name</a>
+  </nav>
+</header>
+
+<main class="wrap swipe-page">
+  <section class="hero compact">
+    <span class="label">Only for Piet, Mees &amp; Hanna</span>
+    <h1 class="num">Catch or Drop</h1>
+    <p>Would this pattern work in a show: nice to watch, and doable on stage? Swipe right to catch it, left to drop it.</p>
+  </section>
+
+  <form class="req-form login" id="login" hidden>
+    <label>Password <input type="password" id="pw" autocomplete="current-password" required></label>
+    <p class="req-msg" id="login-msg" role="status" hidden></p>
+    <button type="submit" class="draw">Open</button>
+  </form>
+
+  <section class="swipe-who" id="who" hidden>
+    <h2>Who are you?</h2>
+    <div class="colors" id="people"></div>
+  </section>
+
+  <div id="deck" hidden>
+    <div class="admin-bar">
+      <span class="label" id="left" aria-live="polite"></span>
+      <span class="swipe-as" id="as"></span>
+      <button type="button" class="reset" id="switch">Switch person</button>
+    </div>
+    <div class="swipe-stack" id="stack"></div>
+    <p class="req-msg" id="swipe-msg" role="status" hidden></p>
+    <p class="empty swipe-done" id="all-done" hidden>All done! New cards appear when new videos are online.</p>
+    <div class="swipe-buttons">
+      <button type="button" class="reset" id="undo" disabled>Undo</button>
+      <button type="button" class="swipe-btn no" id="no" aria-label="Drop: not for a show (left arrow key)">✗</button>
+      <button type="button" class="swipe-btn yes" id="yes" aria-label="Catch: good for a show (right arrow key)">✓</button>
+      <button type="button" class="reset" id="skip" aria-label="Skip: in doubt, show it again later (down arrow key)">Skip</button>
+    </div>
+
+    <section class="swipe-over" id="overview" hidden>
+      <div class="section-head">
+        <h2>Our catches</h2>
+        <div class="seg small" id="over-mode" role="group" aria-label="Group by">
+          <button type="button" data-v="match">By match</button>
+          <button type="button" data-v="family">By family</button>
+        </div>
+      </div>
+      <p class="swipe-over-note" id="over-note" hidden>The patterns all of you have judged. Finish your remaining cards to also see what the others have caught so far.</p>
+      <div id="over-list"></div>
+    </section>
+    <p class="swipe-logout"><button type="button" class="reset" id="logout">Log out on this device</button></p>
+  </div>
+</main>
+
+<footer class="wrap"><span>funkyorbit.nl</span> <span class="foot-links"><a class="version" href="/changes/">v3.0.0 · What's new</a> · <a class="request-link" href="/request/">Request a feature</a></span></footer>
+<script src="/shared.js?v=3.0.0-aedf0f"></script>
+<script src="/catch/catch.js?v=3.0.0-aedf0f"></script>
+</body>
+</html>

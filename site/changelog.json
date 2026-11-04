@@ -1,5 +1,17 @@
 [
   {
+    "version": "3.0.0",
+    "date": "2026-11-04",
+    "changes": [
+      "New page Behind the Name: the stories behind pattern names; a name with a story links to it",
+      "Footer: a small Log in link, for the people working on the site",
+      "Stats: a map of where we filmed our patterns, with a club as pin that grows with the number of patterns there",
+      "On a phone the menu is now a bar at the bottom",
+      "All patterns: Filter & sort has a choice to search in the global or the local siteswap",
+      "All patterns: a main pattern that is only shown because one of its variations matches is now dimmed and not counted"
+    ]
+  },
+  {
     "version": "2.6.0",
     "date": "2026-11-04",
     "changes": [
@@ -106,7 +118,7 @@
     "version": "2.0.0",
     "date": "2026-10-24",
     "changes": [
-      "Add: a [page](/add/) only for us to log a pattern we juggled, with suggestions while typing the siteswap, half-star ratings and a warning when a siteswap is not on the list",
+      "Add: a page only for us to log a pattern we juggled, with suggestions while typing the siteswap, half-star ratings and a warning when a siteswap is not on the list",
       "Add: a logged pattern goes straight into our practice list, and the site has it within seconds",
       "Add: a random celebration GIF after saving a pattern, never the same one twice in a row; it stays until you tap it away",
       "Add: milestones after saving, each with its own GIF and message: the last patterns, every new percent with the expected completion date, complete families, first sync, first 8-club pattern, dragons, new favourite, daily records, late-night sessions and many more",

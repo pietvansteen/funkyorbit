@@ -161,6 +161,33 @@
     }
     $("#updated").textContent = updated(data.updated);
     renderStats(data);
+    $("#stats .juggle-card")?.after($("#map-card")); // the map right after the eye-catcher
+    $("#map-card").hidden = false; // only now, so it never stands empty below a failed or loading page
+    mapWhenSeen(data);
+  }
+
+  // The map and its library load when the card comes on screen; the links are in the page, so release.py keeps their ?v= up to date
+  function mapWhenSeen(data) {
+    const card = $("#map-card");
+    const load = (url) => new Promise((done, fail) => {
+      const css = url.includes(".css");
+      const el = document.createElement(css ? "link" : "script");
+      if (css) { el.rel = "stylesheet"; el.href = url; } else el.src = url;
+      el.onload = done;
+      el.onerror = fail;
+      document.head.appendChild(el);
+    });
+    new IntersectionObserver(async (entries, watcher) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      watcher.disconnect();
+      try {
+        for (const url of card.dataset.assets.split(" ")) await load(url); // in this order: map.js needs Leaflet
+        window.FO.startMap(data);
+      } catch (e) {
+        $("#map-note").textContent = "The map could not be loaded. Please try again in a few minutes.";
+        $("#map-note").hidden = false;
+      }
+    }).observe(card);
   }
   start();
 })();

@@ -76,7 +76,7 @@
     const cat = p.kind === "Sync" ? "Sync" : `${p.kind} · period ${p.period}`;
     box.innerHTML = `
       <div class="pick-pat${hidden ? " hidden-colors" : ""}">${pat}</div>
-      ${p.name ? `<p class="pick-name">${esc(p.name)}</p>` : ""}
+      ${p.name ? `<p class="pick-name">${FO.nameLinks(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
       ${opts.hidehands ? "" : startHtml(p, shown)}
       <dl class="pick-meta">
@@ -212,6 +212,7 @@
     let data;
     try {
       data = await (await fetch("/data.json", { cache: "no-cache" })).json();
+      FO.setStories(data);
     } catch (e) {
       $("#pick").innerHTML = `<p class="empty">The pattern list could not be loaded. Open this page once with internet, after that it also works offline.</p>`;
       return;

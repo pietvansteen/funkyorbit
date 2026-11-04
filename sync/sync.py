@@ -14,9 +14,10 @@ Settings via environment variables (see docker-compose.yml):
   FAMILIES_GID    gid of the "Families" tab (every pattern with its family, in Sheet order)
   SYNC_COLORS_GID gid of the "Kleuren sync" tab (colour code per sync pattern)
   DIFFICULTY_GID  gid of the "Moeilijkheid" tab (difficulty score and stars per pattern)
+  NAMES_GID       gid of the "Namen" tab (the stories behind pattern names)
   OUT_FILE        output path (default /data/data.json)
   INTERVAL        seconds between two syncs (default 86400); 0 = run once
-  DONE_CSV / PROGRESS_CSV / COLORS_CSV / FAMILIES_CSV / SYNC_COLORS_CSV / DIFFICULTY_CSV   optional: local CSV files instead of Google (for testing)
+  DONE_CSV / PROGRESS_CSV / COLORS_CSV / FAMILIES_CSV / SYNC_COLORS_CSV / DIFFICULTY_CSV / NAMES_CSV   optional: local CSV files instead of Google (for testing)
 """
 
 import csv
@@ -36,6 +37,7 @@ COLORS_GID = os.environ.get("COLORS_GID", "7701")
 FAMILIES_GID = os.environ.get("FAMILIES_GID", "777000111")
 SYNC_COLORS_GID = os.environ.get("SYNC_COLORS_GID", "7703")
 DIFFICULTY_GID = os.environ.get("DIFFICULTY_GID", "7710")
+NAMES_GID = os.environ.get("NAMES_GID", "7720")
 OUT_FILE = os.environ.get("OUT_FILE", "/data/data.json")
 INTERVAL = int(os.environ.get("INTERVAL", "86400"))
 SYNC_FLAG = os.path.join(os.path.dirname(os.path.abspath(OUT_FILE)), "sync-now")
@@ -171,6 +173,66 @@ def parse_done(rows):
     # newest first
     patterns.sort(key=lambda p: ((p["date"] or ""), (p["time"] or ""), int(p["nr"]) if p["nr"].isdigit() else 0), reverse=True)
     return patterns
+
+
+GPS_CELL = re.compile(r"\s*(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*")
+
+
+def parse_locations(rows):
+    """One point per location name (#56): the average of all GPS points with that name, rounded to 3 decimals
+    (about 100 m), and the nrs of the patterns there. The exact points stay in the Sheet.
+    A location without any GPS point is left off the map until it has one."""
+    if not rows:
+        return []
+    c_nr, c_location, c_gps = (header_index(rows[0], n) for n in ("nr", "location", "gps"))
+    c_pat = header_index(rows[0], "pattern", "siteswap")
+    if c_location is None or c_gps is None:
+        return []
+    places = {}
+    for row in rows[1:]:
+        name = cell(row, c_location)
+        if not name or not cell(row, c_pat):
+            continue
+        place = places.setdefault(name, {"nrs": [], "points": []})
+        place["nrs"].append(cell(row, c_nr))
+        m = GPS_CELL.fullmatch(cell(row, c_gps))
+        if m and abs(float(m[1])) <= 90 and abs(float(m[2])) <= 180:
+            place["points"].append((float(m[1]), float(m[2])))
+    out = []
+    for name, place in places.items():
+        points = place["points"]
+        if not points:
+            log(f"WARNING: location without a GPS point, not on the map: {name}")
+            continue
+        out.append({"name": name, "lat": round(sum(p[0] for p in points) / len(points), 3),
+                    "lng": round(sum(p[1] for p in points) / len(points), 3), "nrs": place["nrs"]})
+    return out
+
+
+def parse_names(rows):
+    """The stories behind pattern names (#55), from the "Namen" tab. Rows without a story are ignored."""
+    if not rows:
+        return []
+    c_name, c_ss, c_story, c_told, c_photo, c_source, c_added = (header_index(rows[0], n) for n in (
+        "name", "siteswap", "story", "told by", "photo", "source", "date added"))
+    if c_name is None or c_story is None:
+        return []
+    out = []
+    for row in rows[1:]:
+        name, story = cell(row, c_name), cell(row, c_story)
+        if not name or not story:
+            continue
+        # separated by ; , or a new line, but the comma in popcorn notation like (6x,a)(6,6)* stays
+        patterns = [s.strip() for s in re.split(r"[;\n]|,(?![^()]*\))", cell(row, c_ss)) if s.strip()]
+        photo = cell(row, c_photo)
+        if photo and not re.match(r"https?://", photo):  # a file name: in site/names/photos/
+            photo = "/names/photos/" + photo.replace("\\", "/").rsplit("/", 1)[-1]
+        out.append({
+            "name": name, "patterns": [{"siteswap": s, "key": pattern_key(s)} for s in patterns], "story": story,
+            "toldBy": cell(row, c_told), "photo": photo, "source": cell(row, c_source),
+            "added": parse_datetime(cell(row, c_added), "")[0],
+        })
+    return out
 
 
 def parse_progress(rows):
@@ -461,7 +523,7 @@ def parse_sheet_stats(rows):
     return stats
 
 
-def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_rows=None, difficulty_rows=None):
+def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_rows=None, difficulty_rows=None, name_rows=None):
     patterns = parse_done(done_rows)
     colors = parse_colors(color_rows)
     for p in patterns:
@@ -484,6 +546,8 @@ def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_r
         "all": overview,
         "groups": groups,
         "patterns": patterns,
+        "locations": parse_locations(done_rows),
+        "names": parse_names(name_rows),
         "stats": {
             "patternsThrown": len(patterns),
             "uniquePatterns": len({p["siteswap"] for p in patterns}),
@@ -510,14 +574,14 @@ def sync_once():
     optional = {}
     # the other tabs are optional: without them the site falls back to plain boxes / no overview
     for name, gid in (("COLORS", COLORS_GID), ("FAMILIES", FAMILIES_GID),
-                      ("SYNC_COLORS", SYNC_COLORS_GID), ("DIFFICULTY", DIFFICULTY_GID)):
+                      ("SYNC_COLORS", SYNC_COLORS_GID), ("DIFFICULTY", DIFFICULTY_GID), ("NAMES", NAMES_GID)):
         try:
             optional[name] = fetch_csv(gid, os.environ.get(f"{name}_CSV"))
         except Exception as e:
             log(f"WARNING: could not read {name.lower()} tab: {e}")
             optional[name] = None
     data = build(done_rows, progress_rows, optional["COLORS"], optional["FAMILIES"],
-                 optional["SYNC_COLORS"], optional["DIFFICULTY"])
+                 optional["SYNC_COLORS"], optional["DIFFICULTY"], optional["NAMES"])
     if not data["groups"]:
         raise RuntimeError("No categories found in the Progress tab; keeping the old data.")
     write_atomic(data, OUT_FILE)

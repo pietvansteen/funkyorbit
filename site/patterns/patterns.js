@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, matchesLocal, localTag, updated, likes, initPopup, openPattern, doneRow, track, trackSearch } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, nameLinks, updated, likes, initPopup, openPattern, doneRow, track, trackSearch } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
@@ -11,7 +11,7 @@
   const groupClosed = new Set(); // groups the visitor closed while a search had opened them (until the search changes)
   // sort and the filters of the Filter & sort panel; all in the URL (#50)
   const filters = {
-    sort: "family", period: "all", thrown: "all", video: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5, clubs: new Set(),
+    sort: "family", mode: "global", period: "all", thrown: "all", video: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5, clubs: new Set(),
     colorsIn: new Set(), colorsOut: new Set(), throwsIn: new Set(), throwsOut: new Set(),
   };
   const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" }; // a value is in one of a pair, never both
@@ -25,8 +25,9 @@
     dull: { title: "Least fun first", dir: 1, value: (p) => BEST_RATING.get(p.key) },
   };
   const extraFilters = () => filters.clubs.size + filters.colorsIn.size + filters.colorsOut.size + filters.throwsIn.size + filters.throwsOut.size
-    + (filters.period !== "all") + (filters.thrown !== "all") + filters.video + filters.named + !anyStars() + !anyRating();
-  const filtering = () => !!query.trim() || extraFilters() > 0;
+    + (filters.period !== "all") + (filters.thrown !== "all") + filters.video + filters.named + !anyStars() + !anyRating() + (filters.mode === "local");
+  // choosing Local is a filter, but only narrows the list once something is typed
+  const filtering = () => !!query.trim() || extraFilters() - (filters.mode === "local") > 0;
   const BEST_RATING = new Map(); // key -> our highest rating, when we threw it more than once
   let query = "";
 
@@ -40,7 +41,7 @@
     const open = ` role="button" tabindex="0" data-open="${esc(p.key)}" aria-label="${esc(label(p))}: show ${p.done ? "video and " : ""}details"`;
     return `<li class="pat${p.done ? " done" : ""}" data-i="${i}" title="${esc(title)}"${open}>
       ${pat}${extra}<svg class="tick" width="14" height="14" viewBox="0 0 24 24" ${p.done ? 'aria-label="done"' : 'aria-hidden="true"'}><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <small>${esc(p.name || "")}</small>${below}
+      <small>${nameLinks(p.name)}</small>${below}
     </li>`;
   }
 
@@ -135,8 +136,9 @@
     const q = query.trim().toLowerCase();
     if (!q) return true;
     const qs = q.replace(/\s+/g, "");
+    if (filters.mode === "local") return !!p.ss && cyclicIncludes(localSiteswap(p.ss), qs); // sync and popcorn have no local siteswap
     if (p.ss) {
-      if (cyclicIncludes(p.ss, qs) || matchesLocal(p.ss, qs)) return true;
+      if (cyclicIncludes(p.ss, qs)) return true;
     } else if ([p.a, p.b, p.a + p.b, p.alt].some((s) => s && s.toLowerCase().replace(/\s+/g, "").includes(qs))) {
       return true;
     }
@@ -158,13 +160,12 @@
           if (block) (matched.get(block) || matched.set(block, new Set()).get(block)).add(p.key);
         }
       }
-      // found only through its local siteswap: say so
-      el.querySelector(".local-tag")?.remove();
-      if (ok && p.ss && query.trim()) el.insertAdjacentHTML("beforeend", localTag(p.ss, p.name, query.trim().toLowerCase()));
+      el.classList.remove("context");
     });
-    // a main pattern stays in view when one of its variations matches, for context
+    // a main pattern stays in view when one of its variations matches, dimmed and not counted: only for context
     document.querySelectorAll(".grp").forEach((el) => {
-      if (el.querySelector(".var:not([hidden])")) el.querySelector(".pat").hidden = false;
+      const main = el.querySelector(".pat");
+      if (main.hidden && el.querySelector(".var:not([hidden])")) { main.hidden = false; main.classList.add("context"); }
     });
     updateGroups();
     document.querySelectorAll("[data-count]").forEach((el) => {
@@ -181,7 +182,7 @@
     updateToggleAll();
     const total = new Set(ITEMS.map((p) => p.key)).size;
     $("#count").textContent = active ? `${fmt.format(shownKeys.size)} of ${fmt.format(total)} patterns` : `${fmt.format(total)} patterns`;
-    $("#reset").hidden = !active && filters.sort === "family";
+    $("#reset").hidden = !active && filters.sort === "family" && filters.mode === "global";
     syncFilterUi();
     const none = $("#none");
     none.hidden = shownKeys.size > 0;
@@ -199,6 +200,7 @@
       set("tx", [...filters.throwsOut].join(""));
       set("stars", !anyStars() && `${filters.lo}-${filters.hi}`);
       set("sort", filters.sort !== "family" && filters.sort);
+      set("m", filters.mode === "local" && "local");
       set("clubs", [...filters.clubs].sort((a, b) => a - b).join(","));
       set("period", filters.period !== "all" && filters.period);
       set("thrown", filters.thrown !== "all" && filters.thrown);
@@ -217,6 +219,9 @@
     document.querySelectorAll("[data-club]").forEach((b) => b.setAttribute("aria-pressed", String(filters.clubs.has(+b.dataset.club))));
     document.querySelectorAll("[data-flag]").forEach((b) => b.setAttribute("aria-pressed", String(filters[b.dataset.flag])));
     document.querySelectorAll("[data-list] button").forEach((b) => b.setAttribute("aria-pressed", String(filters[b.parentElement.closest("[data-list]").dataset.list].has(b.dataset.v))));
+    const local = filters.mode === "local";
+    $("#q").placeholder = local ? "Search local siteswap, e.g. 9667687" : "Search by siteswap or name, e.g. 975 or dragon";
+    $("#q").setAttribute("aria-label", local ? "Search patterns by local siteswap" : "Search patterns by siteswap or name");
     const pos = (v) => ((v - 0.5) / 4.5) * 100;
     for (const [lo, hi, name, any] of [["lo", "hi", "range", "Any difficulty"], ["rlo", "rhi", "rating", "Any rating"]]) {
       const a = filters[lo], b = filters[hi];
@@ -277,7 +282,7 @@
 
 
   document.addEventListener("keydown", (ev) => {
-    if (ev.target.closest && ev.target.closest("button")) return; // a pill or button inside a chip handles its own keys
+    if (ev.target.closest && ev.target.closest("button, a")) return; // a pill, button or link inside a chip handles its own keys
     const el = ev.target.closest && ev.target.closest("[data-open]");
     if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openPattern(el.dataset.open); }
   });
@@ -313,7 +318,7 @@
     query = "";
     $("#q").value = "";
     const sorted = filters.sort !== "family";
-    Object.assign(filters, { sort: "family", period: "all", thrown: "all", video: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5 });
+    Object.assign(filters, { sort: "family", mode: "global", period: "all", thrown: "all", video: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5 });
     for (const k of ["clubs", ...Object.keys(LISTS)]) filters[k].clear();
     if (sorted) render();
     applyFilter();
@@ -383,6 +388,7 @@
       updateGroups();
       return;
     }
+    if (ev.target.closest(".name-link")) return; // the link to the story, not the pop-up
     const pat = ev.target.closest("[data-open]");
     if (pat) openPattern(pat.dataset.open);
   });
@@ -425,6 +431,7 @@
       for (const v of text) if (ok.includes(v) && !filters[LISTS[list]].has(v)) filters[list].add(v);
     }
     if (SORTS[params.get("sort")]) filters.sort = params.get("sort");
+    if (params.get("m") === "local") filters.mode = "local";
     if (["3", "5", "7", "async", "sync"].includes(params.get("period"))) filters.period = params.get("period");
     if (["yes", "no"].includes(params.get("thrown"))) filters.thrown = params.get("thrown");
     filters.video = params.get("video") === "1";

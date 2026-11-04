@@ -4,9 +4,9 @@ Funky Orbit local server: the whole site as on the server, on http://localhost:8
 
   python3 tools/dev.py
 
-Starts the likes API (port 8000) and the sync (live Sheet, waits for sync-now like on the server),
+Starts the likes API (port 8000, or PORT - 90) and the sync (live Sheet, waits for sync-now like on the server),
 and serves site/ with /data.json and /api/ as web/nginx.conf does. Data goes to data/ (gitignored).
-Settings come from .env next to docker-compose.yml (gitignored): ADMIN_TOKEN (default "test"),
+Settings come from .env next to docker-compose.yml (gitignored): ADMIN_TOKEN (default "test"), SWIPE_TOKEN (default "swipe"),
 SHEET_WRITE_URL and SHEET_WRITE_SECRET (without them the Add page cannot save).
 Add CSV=1 to sync from testdata/ instead of the live Sheet. Ctrl+C stops everything.
 """
@@ -20,7 +20,8 @@ import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = int(os.environ.get("PORT", "8090"))
-API = "http://127.0.0.1:8000"
+API_PORT = PORT - 90  # 8000 next to 8090; follows PORT so a second copy can run next to the first
+API = f"http://127.0.0.1:{API_PORT}"
 
 
 def read_env():
@@ -80,6 +81,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         self.proxy() if self.path.startswith("/api/") else self.send_error(404)
 
+    do_DELETE = do_POST
+
     def log_message(self, fmt, *args):
         if self.path.startswith("/api/"):
             super().log_message(fmt, *args)
@@ -88,12 +91,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 def main():
     conf = read_env()
     data = os.path.join(ROOT, "data")
-    env = dict(os.environ, DB_FILE=f"{data}/likes.db", REQUESTS_DB=f"{data}/requests.db", DATA_FILE=f"{data}/data.json",
-               OUT_FILE=f"{data}/data.json", INTERVAL="86400", PORT="8000", TZ="Europe/Amsterdam",
-               ADMIN_TOKEN=conf.get("ADMIN_TOKEN") or "test",
+    env = dict(os.environ, DB_FILE=f"{data}/likes.db", REQUESTS_DB=f"{data}/requests.db", SWIPES_DB=f"{data}/swipes.db", DATA_FILE=f"{data}/data.json",
+               OUT_FILE=f"{data}/data.json", INTERVAL="86400", PORT=str(API_PORT), TZ="Europe/Amsterdam",
+               ADMIN_TOKEN=conf.get("ADMIN_TOKEN") or "test", SWIPE_TOKEN=conf.get("SWIPE_TOKEN") or "swipe",
                SHEET_WRITE_URL=conf.get("SHEET_WRITE_URL", ""), SHEET_WRITE_SECRET=conf.get("SHEET_WRITE_SECRET", ""))
     if os.environ.get("CSV"):
-        for name in ("DONE", "PROGRESS", "COLORS", "FAMILIES", "SYNC_COLORS", "DIFFICULTY"):
+        for name in ("DONE", "PROGRESS", "COLORS", "FAMILIES", "SYNC_COLORS", "DIFFICULTY", "NAMES"):
             env[f"{name}_CSV"] = os.path.join(ROOT, "testdata", f"{name.lower()}.csv")
     print(f"admin password: {'from .env' if conf.get('ADMIN_TOKEN') else 'test'}; "
           f"saving to the Sheet: {'on' if env['SHEET_WRITE_URL'] and env['SHEET_WRITE_SECRET'] else 'off (no SHEET_WRITE_URL/SECRET in .env)'}")

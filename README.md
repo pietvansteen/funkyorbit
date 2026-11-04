@@ -12,7 +12,7 @@ Google Sheet ──(daily, or at once)──> sync ──> data/data.json ──
 
 | Folder | What |
 |---|---|
-| `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats), `gen/` (pattern generator, installable as an app and usable offline), `changes/` (release notes), `shared.js`, `style.css`, icons |
+| `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats and the map of filming locations), `gen/` (pattern generator), `map/` (the map on the Stats page, with Leaflet), `names/` (Behind the Name), `catch/` and `login/` (both hidden), `changes/` (release notes), `shared.js`, `style.css`, icons |
 | `sync/sync.py` | Fetches the Sheet tabs as CSV and writes `data/data.json` |
 | `likes/likes.py` | Small API: likes (one per visitor per video, via a cookie) and feature requests, both in SQLite, and logging a pattern we juggled (via the Apps Script) |
 | `apps-script/FunkyOrbit.gs` | Apps Script bound to the Sheet: writes a logged pattern as a new row in *Done* |
@@ -24,11 +24,13 @@ No pip packages needed: everything runs on standard Python.
 
 ## What is read from the Sheet
 
-- **Done**: one row per pattern thrown. Columns are matched by name: `date`, `pattern` (siteswap), `known name`, `family`, `rating`, `youtube`, `file name`, `difficulty felt` (our own ½ to 5 stars when we threw it), `first try` (`TRUE` when it worked the first time after we started filming), `nice video / location` (`TRUE` for a video or a place we like), `location` (the name of the place) and `gps` (`lat,lng` of the phone, only for a pattern logged on the day itself). Like the rest of the Sheet these are public; `gps` does not go into `data.json`. The time comes from the camera file name. Rows with a YouTube link appear in the video feed.
+- **Done**: one row per pattern thrown. Columns are matched by name: `date`, `pattern` (siteswap), `known name`, `family`, `rating`, `youtube`, `file name`, `difficulty felt` (our own ½ to 5 stars when we threw it), `first try` (`TRUE` when it worked the first time after we started filming), `nice video / location` (`TRUE` for a video or a place we like), `location` (the name of the place) and `gps` (`lat,lng` of the phone, only for a pattern logged on the day itself). Like the rest of the Sheet these are public; the exact `gps` does not go into `data.json`, only one point per location name (the average, rounded to 3 decimals, about 100 m), for the map on the Stats page. A location without any GPS point is left off the map and logged as a WARNING until it has one. The time comes from the camera file name. Rows with a YouTube link appear in the video feed.
 - **Progress**: the categories and their totals. The *Statistics* block provides the overall total and the Period 3 / 5 / 7 and Sync tiles, and the figures on the Funny stats page.
 - **Kleuren** / **Kleuren sync**: the club colour per throw (`W`/`B`/`O`/`R` = white, blue, orange, pink), used to colour the digits. Written in another rotation is fine.
 - **Families**: every pattern with its family, in Sheet order (columns *Pattern / Family / Unique key (auto)*), plus the known names. This feeds the *All patterns* page; a pattern counts as done when its unique key is among the *Match keys* in *Done*.
 - **Moeilijkheid**: difficulty score and stars per pattern, used by the generator's difficulty filter and the pattern pop-up.
+
+- **Namen** (optional): the stories on *Behind the Name*. Columns `Name`, `Siteswap(s)` (separated by `;`, `,` or a new line), `Story`, `Told by`, `Photo` (a direct `https://` image link, or a file name in `site/names/photos/`), `Source` and `Date added` (dd/mm/yyyy). Rows without a story are ignored. A name elsewhere on the site links to its story when `Name` matches it exactly (upper or lower case does not matter). Write people as name + city ("Uwe from Oldenburg") or first name + last initial ("Uwe S."), and ask permission before publishing someone's story or photo.
 
 The Sheet must be shared as *Anyone with the link can view*.
 
@@ -40,6 +42,7 @@ cd funkyorbit
 echo "TUNNEL_TOKEN=<cloudflare-tunnel-token>" > .env
 sudo docker network create tunnel   # once; the tunnel shares it with puzzullu.funkyorbit.nl
 echo "ADMIN_TOKEN=<password for /requests/ and /add/>" >> .env
+echo "SWIPE_TOKEN=<password for /catch/ only>" >> .env
 echo "SHEET_WRITE_URL=<Apps Script web app /exec URL>" >> .env
 echo "SHEET_WRITE_SECRET=<the SECRET script property>" >> .env
 echo "UMAMI_DB_PASSWORD=$(openssl rand -hex 16)" >> .env
@@ -68,6 +71,7 @@ Umami shows page views, visitors, bounce rate and visit duration per day, week o
 | `Play video` | `siteswap`, `video` | a video is started on the site |
 | `Like` / `Unlike` | `video` | a heart is clicked |
 | `Open pattern` | `siteswap`, `family`, `done` | a pattern pop-up opens (Progress and All patterns) |
+| `Open location` | `location` | a club on the map is opened (Stats) |
 | `Search` | `query`, `page` | someone stops typing in a search box for 2 seconds |
 | `Colour filter` | `colour`, `list` | a colour filter is switched on (All patterns) |
 | `Pattern filter` | `filter`, `value` | another filter is chosen in Filter & sort (All patterns) |
@@ -91,7 +95,7 @@ Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallow
 
 ## Logging a pattern (Add page)
 
-The hidden page `/add/` (not in the menu for visitors, `noindex`, disallowed in `robots.txt`) asks for the same password as `/requests/`, once per device. After that the menu shows **Add**. Type the siteswap (suggestions appear while typing, in any rotation, sync too), pick the date and time (now by default) and a rating in half stars (how much fun it is), and save.
+The hidden page `/add/` (not in the menu for visitors, `noindex`, disallowed in `robots.txt`) asks for the same password as `/requests/`, once per device (or use **Log in** in the footer, the way in for the installed app). After that the menu shows **Add**, on phones under **More**. Type the siteswap (suggestions appear while typing, in any rotation, sync too), pick the date and time (now by default) and a rating in half stars (how much fun it is), and save.
 
 The likes API checks the password and passes the pattern to the Apps Script, which writes date and time (in one cell, `dd/mm/yyyy hh:mm`), pattern, rating, difficulty felt, first try, nice video / location, location and GPS position in the first empty row of *Done* (`nr` is filled in already; `known name` and `family` are formulas). Then the sync runs at once, so the site has the new pattern within seconds. Otherwise the sync runs once a day. After changing or deleting a row in *Done* by hand, press **Update the site from the Sheet** at the bottom of the Add page (`POST /api/sync`), so the site follows within a minute instead of the next day.
 
@@ -111,6 +115,12 @@ The pop-up also celebrates milestones (`site/add/milestones.js`): the last patte
 A GIF named after a milestone id (such as `birthday-cake.mp4` for `birthday`, `countdown-…` or `three-am-…`) is used only for that milestone; the ids are in `RULES` in `milestones.js`. `difficult-…` GIFs are for patterns with 5 difficulty stars and `hard-…` for 4 to 4½ stars; they are used when the most special milestone has no GIF of its own. `rating-high-…` is for a rating of 4 to 4½, `rating-low-…` for 2 or less, `again-…` (keep going, let's go) for another pattern right after a hard one, and `wow-…` faces go with surprises that have no GIF of their own (`GROUPS` and `ALIASES`). Every other name is a random "well done" GIF. Birthdays are in `BIRTHDAYS`; still to fill in is `SPECIAL` (Brook's first, last and favourite pattern, James's favourite and the patterns Brook has done). "A pattern that took a long time to get right" needs data we don't have yet.
 
 After a change to `FunkyOrbit.gs`: *Deploy > Manage deployments*, edit, *New version*; the URL stays the same.
+
+## Rating patterns for a show (Catch or Drop)
+
+The hidden page `/catch/` (`noindex`, disallowed in `robots.txt`) is where Piet, Mees and Hanna rate the filmed patterns for a show: swipe right to catch it (nice and doable on stage), left to drop it. Log in once per device with **Log in** in the footer (`/login/`, also the way in for the installed app, which has no address bar), using `SWIPE_TOKEN` from `.env` or `ADMIN_TOKEN`. The menu then shows **Catch or Drop**, on phones under **More**. `SWIPE_TOKEN` opens nothing else. Give Hanna that password.
+
+Everyone judges each pattern with a video once. **Skip** puts a card at the back of the stack for later; that is remembered on the device, not on the server. The overview shows the catches by match (all three, two, one) or by family. A pattern everyone has judged is always in it, also when new videos have added new cards; someone with no cards left also sees what the others have caught so far. Swipes are stored in `data/swipes.db` (`GET /api/swipes`, `POST /api/swipe` and `DELETE /api/swipe`). To add a person, extend `PEOPLE` in `likes/likes.py`.
 
 ## Versions and release notes
 
@@ -135,7 +145,7 @@ For every change to the site:
 
 ```sh
 DONE_CSV=testdata/done.csv PROGRESS_CSV=testdata/progress.csv COLORS_CSV=testdata/colors.csv \
-  FAMILIES_CSV=testdata/families.csv SYNC_COLORS_CSV=testdata/sync_colors.csv DIFFICULTY_CSV=testdata/difficulty.csv \
+  FAMILIES_CSV=testdata/families.csv SYNC_COLORS_CSV=testdata/sync_colors.csv DIFFICULTY_CSV=testdata/difficulty.csv NAMES_CSV=testdata/names.csv \
   OUT_FILE=data/data.json INTERVAL=0 python3 sync/sync.py
 DB_FILE=data/likes.db DATA_FILE=data/data.json PORT=8000 python3 likes/likes.py
 ```
