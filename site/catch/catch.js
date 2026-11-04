@@ -2,12 +2,13 @@
 (function () {
   "use strict";
 
-  const { esc, initPopup, openPattern, doneRow, patternCard, patternHtml, familiesOf, likes } = window.FO;
+  const { esc, stars, player, track, initPopup, openPattern, doneRow, patternHtml, familiesOf, likes } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   const PERSON = "fo_person";
   const WORDS = ["", "One person", "Two people", "Three people", "Four people", "Five people"];
   const STACK = 3; // cards in the DOM: the top one and the two behind it
+  const ITEMS = new Map(); // key -> the pattern on the list, for its difficulty
   let token = "", person = "", people = [], swipes = [], cards = [], queue = [], last = null, overMode = "match";
 
   const stored = (k) => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } };
@@ -84,13 +85,21 @@
     render();
   }
 
+  const rate = (label, value, empty) => `<span class="swipe-rate"><small>${label}</small>${value == null ? `<span class="unrated">${empty}</span>` : stars(value)}</span>`;
+
+  // Fits the screen: the video, and below it only what we need to decide; the rest is behind More info (the pop-up)
   function cardEl(key) {
-    const box = document.createElement("div");
-    box.innerHTML = patternCard(key, doneRow(key), true);
-    const el = box.firstElementChild;
-    el.classList.add("swipe-card");
+    const row = doneRow(key), item = ITEMS.get(key) || {};
+    const el = document.createElement("article");
+    el.className = "card swipe-card";
     el.dataset.key = key;
-    el.insertAdjacentHTML("beforeend", `<span class="swipe-hint yes" aria-hidden="true">✓</span><span class="swipe-hint no" aria-hidden="true">✗</span>`);
+    el.innerHTML = `${player(row)}
+      <div class="swipe-info">
+        <div class="swipe-info-top">${patternHtml(key, "sm")}</div>
+        <div class="swipe-info-rates">${rate("Fun", row.rating, "not rated")}${rate("Difficulty", item.stars, "–")}</div>
+        <div class="swipe-info-sub"><span>${[row.name, ...familiesOf(key)].filter(Boolean).map(esc).join(" · ")}</span><button type="button" class="reset" data-more>More info</button></div>
+      </div>
+      <span class="swipe-hint yes" aria-hidden="true">✓</span><span class="swipe-hint no" aria-hidden="true">✗</span>`;
     return el;
   }
 
@@ -108,6 +117,7 @@
     });
     $("#left").textContent = `${queue.length} left`;
     $("#all-done").hidden = queue.length > 0 || !cards.length;
+    $("#play").classList.toggle("empty-stack", !queue.length);
     $("#no").disabled = $("#yes").disabled = !queue.length;
     $("#skip").disabled = queue.length < 2; // the last card has nothing to go behind
     $("#undo").disabled = !last;
@@ -236,9 +246,56 @@
   window.addEventListener("pointerup", endDrag);
   window.addEventListener("pointercancel", endDrag);
   $("#stack").addEventListener("click", (ev) => {
-    if (dragged) { ev.stopPropagation(); ev.preventDefault(); dragged = false; }
+    if (dragged) { ev.stopPropagation(); ev.preventDefault(); dragged = false; return; }
+    const play = ev.target.closest("[data-play]");
+    if (play) { ev.stopPropagation(); startVideo(play); } // not the normal player of shared.js
   }, true);
+  $("#stack").addEventListener("click", (ev) => {
+    const card = ev.target.closest(".swipe-card");
+    if (ev.target.closest(".swipe-tap")) togglePlay(card.querySelector("iframe"));
+    else if (ev.target.closest("[data-more]")) {
+      const frame = card.querySelector("iframe");
+      if (frame && frame.dataset.paused !== "true") togglePlay(frame); // only one video at a time
+      openPattern(card.dataset.key);
+    }
+  });
   $("#stack").addEventListener("dragstart", (ev) => ev.preventDefault());
+
+  // ---------- the video: a clear layer over it takes every touch, or YouTube's frame would ----------
+  // A drag on the layer is a swipe, a tap pauses or plays. No YouTube controls, they could not be reached anyway.
+  const tellPlayer = (frame, message) => frame.contentWindow.postMessage(JSON.stringify(message), "*");
+  function tapLabel(frame) {
+    frame.nextElementSibling.setAttribute("aria-label", frame.dataset.paused === "true" ? "Play video" : "Pause video");
+  }
+
+  function startVideo(play) {
+    track("Play video", { siteswap: play.dataset.ss || play.dataset.play, video: play.dataset.play });
+    const params = `autoplay=1&playsinline=1&rel=0&controls=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
+    play.parentElement.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${play.dataset.play}?${params}" title="YouTube video" allow="autoplay; encrypted-media"></iframe>
+      <button type="button" class="swipe-tap" aria-label="Pause video"></button>`;
+  }
+
+  function togglePlay(frame) {
+    const paused = frame.dataset.paused === "true";
+    tellPlayer(frame, { event: "command", func: paused ? "playVideo" : "pauseVideo", args: [] });
+    frame.dataset.paused = String(!paused);
+    tapLabel(frame);
+  }
+
+  // Ask the player to report its state, so a tap does the right thing after the video ended or autoplay was blocked
+  $("#stack").addEventListener("load", (ev) => {
+    if (ev.target.matches("iframe")) tellPlayer(ev.target, { event: "listening", id: 1, channel: "widget" });
+  }, true);
+  window.addEventListener("message", (ev) => {
+    if (!/youtube/.test(ev.origin)) return;
+    const frame = [...document.querySelectorAll("#stack iframe")].find((f) => f.contentWindow === ev.source);
+    if (!frame) return;
+    let state;
+    try { state = JSON.parse(ev.data).info?.playerState; } catch (e) { return; }
+    if (typeof state !== "number") return;
+    frame.dataset.paused = String(state !== 1 && state !== 3); // 1 playing, 3 buffering
+    tapLabel(frame);
+  });
 
   // ---------- overview ----------
   // A pattern everyone has swiped is always in it, so new videos never take the overview away.
@@ -312,6 +369,7 @@
     }
     initPopup(data);
     likes.load();
+    for (const p of data.all || []) if (!ITEMS.has(p.key)) ITEMS.set(p.key, p);
     cards = [...new Set((data.patterns || []).filter((p) => p.youtubeId).map((p) => p.key))];
     const saved = stored(PERSON);
     if (people.includes(saved)) { person = saved; deal(); } else choose();

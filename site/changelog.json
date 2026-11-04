@@ -1,5 +1,13 @@
 [
   {
+    "version": "3.0.1",
+    "date": "2026-11-04",
+    "changes": [
+      "Pop-up: on a narrow screen the heart no longer covers the last digit of a long siteswap",
+      "A page only for us now fits phones with little height, and you can swipe over a playing video"
+    ]
+  },
+  {
     "version": "3.0.0",
     "date": "2026-11-04",
     "changes": [

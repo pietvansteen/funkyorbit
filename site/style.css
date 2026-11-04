@@ -162,7 +162,9 @@ a { color: inherit; }
 /* a long siteswap (period 7) next to the like button: smaller digits instead of pushing past the padding.
    --n is the number of digits; 100cqi is the card's inner width, about 70px of it go to the like button and gaps. */
 .meta-top .title { min-width: 0; }
-.meta-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.meta-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 12px; container-type: inline-size; }
+.meta-top .ss.lg { font-size: min(22px, 6.7cqi); } /* the longest siteswap (7 throws) still fits next to the heart */
+.meta-top .like { margin-left: auto; } /* a pattern too long for that, such as sync, gets the heart below it */
 .title { display: grid; gap: 2px; min-width: 0; }
 .title .pname { font-weight: 700; font-size: 15px; }
 .fam { font-size: 14px; color: var(--muted); }
@@ -870,14 +872,37 @@ details.req header b { display: none; } /* already in the summary */
 .swipe-who h2 { font: 500 22px/1.2 var(--f-display); margin-bottom: 12px; }
 .swipe-who .chip { padding: 14px 20px; font-size: 16px; }
 .swipe-as { color: var(--muted); font-size: 14px; margin-left: auto; }
-.swipe-stack { position: relative; max-width: 420px; height: clamp(400px, calc(100dvh - 190px), 760px); margin: 0 auto 14px; }
+/* the top row, the card and the buttons together are exactly as high as the screen; the card takes what is left */
+.swipe-page:has(#deck:not([hidden])) .hero { display: none; }
+.swipe-play { display: flex; flex-direction: column; height: max(360px, min(100dvh - 100px, 860px)); margin-bottom: 8px; }
+.swipe-play.empty-stack { height: auto; }
+.swipe-play .admin-bar { flex: none; flex-wrap: nowrap; margin-bottom: 8px; }
+.swipe-stack { position: relative; flex: 1 1 0; min-height: 0; width: 100%; max-width: 420px; margin: 0 auto 14px; }
 .swipe-stack:empty { display: none; }
 .swipe-card {
   position: absolute; inset: 0; max-height: none; touch-action: pan-y; user-select: none; -webkit-user-select: none;
   transition: transform .25s ease; box-shadow: 0 8px 24px rgb(0 0 0 / .35); will-change: transform;
 }
-.swipe-card { scrollbar-width: none; }
-.swipe-card::-webkit-scrollbar { display: none; }
+/* No bars: the video fills the card, cut like in the pop-up. The bottom 16.5% falls away (the siteswap; our feet are just above it),
+   the top only as far as needed. On a low screen the whole card gets narrower, so the top never loses more than in the pop-up (.77);
+   on a tall screen it shows almost all of the top (.68). --strip is the info strip. */
+.swipe-stack { container-type: size; --strip: 88px; }
+.swipe-card { --w: min(100cqw, calc((100cqh - var(--strip)) * .77)); width: var(--w); height: min(100cqh, calc(var(--w) / .68 + var(--strip))); margin: auto; }
+.swipe-card:has(.player.wide) { --w: min(100cqw, calc((100cqh - var(--strip)) * 16 / 9)); height: calc(var(--w) * 9 / 16 + var(--strip)); }
+.swipe-card .player { flex: 1 1 0; min-height: 0; aspect-ratio: auto; background: var(--paper); }
+.swipe-card .player:not(.wide) :is(img, iframe) { inset: auto; bottom: 0; left: 0; width: 100%; height: auto; aspect-ratio: 9 / 16; object-fit: cover; transform: translateY(16.5%); }
+/* More info on this page: the start position does not matter for a show */
+body:has(.swipe-page) #modal .start { display: none; }
+.swipe-tap { position: absolute; inset: 0; z-index: 2; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
+.swipe-info { flex: none; height: calc(var(--strip) - 2px); display: grid; align-content: center; gap: 4px; padding: 0 12px; container-type: inline-size; }
+.swipe-info-top, .swipe-info-sub { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.swipe-info-rates { display: flex; justify-content: space-between; gap: 8px; }
+.swipe-rate { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.swipe-rate small { font-size: 12px; color: var(--muted); }
+.swipe-rate .stars, .swipe-rate .unrated { flex: none; font-size: 12px; }
+.swipe-info-sub span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--muted); }
+.swipe-info-sub .reset { flex: none; padding: 0; font-size: 13px; }
+@container (max-width: 270px) { .swipe-info .ss { font-size: 11px; gap: 2px; } .swipe-rate small, .swipe-rate .unrated, .swipe-rate .stars { font-size: 10px; } .swipe-rate { gap: 3px; } }
 .swipe-card img { -webkit-user-drag: none; pointer-events: none; }
 .swipe-card[data-pos="0"] { z-index: 3; }
 .swipe-card[data-pos="1"] { z-index: 2; transform: translate(7px, 9px) rotate(2deg) scale(.97); }
@@ -890,13 +915,13 @@ details.req header b { display: none; } /* already in the summary */
 }
 .swipe-hint.yes { left: 18px; background: var(--done); }
 .swipe-hint.no { right: 18px; background: var(--no); }
-.swipe-buttons { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0 auto 28px; max-width: 420px; }
+.swipe-buttons { flex: none; display: flex; align-items: center; justify-content: center; gap: 18px; width: 100%; margin: 0 auto; max-width: 420px; }
 .swipe-btn { width: 62px; height: 62px; border-radius: 50%; cursor: pointer; background: var(--surface); font: 700 26px/1 var(--f-body); }
 .swipe-btn.yes { color: var(--done); border: 2px solid var(--done); }
 .swipe-btn.no { color: var(--no); border: 2px solid var(--no); }
 .swipe-btn:disabled { opacity: .35; cursor: default; }
 #undo:disabled, #skip:disabled { opacity: .4; cursor: default; }
-.swipe-done, #swipe-msg { max-width: 420px; margin: 0 auto 14px; }
+.swipe-done, #swipe-msg { flex: none; width: 100%; max-width: 420px; margin: 0 auto 14px; }
 .swipe-over { margin-top: 12px; }
 .swipe-over-note { margin: -4px 0 0; color: var(--muted); font-size: 14px; }
 .swipe-over h3 { font: 600 15px/1.3 var(--f-body); margin: 18px 0 8px; }
@@ -905,9 +930,9 @@ details.req header b { display: none; } /* already in the summary */
 .swipe-who-chips span { padding: 2px 8px; border-radius: 99px; background: var(--orbit-soft); color: var(--orbit); font-size: 12px; font-weight: 600; }
 .swipe-logout { text-align: center; margin: 24px 0 40px; }
 @media (max-width: 760px) {
-  /* while swiping, the stack and its buttons fit between the header and the tab bar */
-  .swipe-page:has(#deck:not([hidden])) .hero { display: none; }
-  .swipe-page .admin-bar { margin-bottom: 8px; }
-  .swipe-page .swipe-stack { height: clamp(380px, calc(100dvh - 278px - env(safe-area-inset-bottom, 0px)), 760px); margin-bottom: 26px; }
-  .swipe-page .swipe-buttons { margin-bottom: 20px; }
+  /* while swiping on a phone, only the tab bar stays around the cards */
+  body:has(.swipe-page #deck:not([hidden])) .top { display: none; }
+  .swipe-play { height: max(360px, 100dvh - 60px - env(safe-area-inset-bottom, 0px)); padding-top: max(8px, env(safe-area-inset-top, 0px)); padding-bottom: 8px; margin-bottom: 0; }
+  .swipe-stack { margin-bottom: 10px; }
+  .swipe-btn { width: 52px; height: 52px; font-size: 22px; }
 }

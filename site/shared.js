@@ -452,8 +452,7 @@
     if (play) playVideo(play);
   }
 
-  // The card of the pop-up. `stacked`: a card on the Catch or Drop page, without the id (there are several at once) and the start position
-  function patternCard(key, p, stacked = false) {
+  function patternCard(key, p) {
     const items = POP.items.get(key) || [];
     const item = items[0] || {}; // a pattern that is not on the list only has its Done row
     const families = familiesOf(key, p);
@@ -471,12 +470,12 @@
         ${video}
         <div class="meta">
           <div class="meta-top">
-            <div class="title"${stacked ? "" : ' id="modal-title"'}><div class="title-row">${pat}${POP.firstTry.has(key) ? `<span class="first-try">First try!</span>` : ""}</div>${name ? `<span class="pname">${nameLinks(name)}</span>` : ""}</div>
+            <div class="title" id="modal-title"><div class="title-row">${pat}${POP.firstTry.has(key) ? `<span class="first-try">First try!</span>` : ""}</div>${name ? `<span class="pname">${nameLinks(name)}</span>` : ""}</div>
             ${p && p.youtubeId ? likes.button(p.youtubeId) : ""}
           </div>
           ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
           <span class="fam">${families.map(esc).join("<br>")}</span>
-          ${items.length && !stacked ? startHtml(item) : ""}
+          ${items.length ? startHtml(item) : ""}
           ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
           ${diff}
           ${p ? `<span class="when">${esc(when(p))}${p.location ? ` · ${esc(p.location)}` : ""}</span>` : ""}
@@ -554,5 +553,5 @@
   const ICON_SOON = `<span class="row-icon" title="Video coming soon" role="img" aria-label="Video coming soon"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`;
   const videoIcon = (p) => (p.youtubeId ? ICON_VIDEO : ICON_SOON);
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternCard, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch };
 })();
