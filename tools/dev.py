@@ -92,7 +92,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 def main():
     conf = read_env()
     data = os.path.join(ROOT, "data")
-    env = dict(os.environ, DB_FILE=f"{data}/likes.db", REQUESTS_DB=f"{data}/requests.db", SWIPES_DB=f"{data}/swipes.db", WISHES_DB=f"{data}/wishes.db", DATA_FILE=f"{data}/data.json",
+    env = dict(os.environ, DB_FILE=f"{data}/likes.db", REQUESTS_DB=f"{data}/requests.db", SWIPES_DB=f"{data}/swipes.db", WISHES_DB=f"{data}/wishes.db", SAVED_DB=f"{data}/saved.db", DATA_FILE=f"{data}/data.json",
                OUT_FILE=f"{data}/data.json", INTERVAL="86400", PORT=str(API_PORT), TZ="Europe/Amsterdam",
                ADMIN_TOKEN=conf.get("ADMIN_TOKEN") or "test", SWIPE_TOKENS=conf.get("SWIPE_TOKENS") or "Hanna=swipe,Uwe=uwe",
                SHEET_WRITE_URL=conf.get("SHEET_WRITE_URL", ""), SHEET_WRITE_SECRET=conf.get("SHEET_WRITE_SECRET", ""),

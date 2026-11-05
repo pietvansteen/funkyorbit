@@ -83,7 +83,9 @@
   // ---------- difficulty ----------
   const WEIGHT = { 2: 0, 4: 0.5, 6: 0.25, 7: 0.5, 8: 1, 9: 1.25, 5: 1.25, a: 3, b: 3.5 };
   const SPIN = { 5: 0.5, 7: 1, 9: 2, b: 3, 6: 1, 8: 2, a: 3 };
-  const STAR_FROM = [[17, 5], [15, 4.5], [13.5, 4], [12, 3.5], [10.5, 3], [9, 2.5], [7.5, 2], [6, 1.5], [4.5, 1], [0, 0.5]];
+  const HEIGHT = 3; // a 5 next to a triple: 5 until 3.2.0, when we found a_5 in period 7 easier than that
+  // From score to stars (Moeilijkheidsregels B50:C59): smaller steps in the middle, bigger ones at the top (since 3.2.0)
+  const STAR_FROM = [[18.5, 5], [15.5, 4.5], [12.5, 4], [10, 3.5], [8.5, 3], [7.5, 2.5], [6.5, 2], [5.5, 1.5], [4, 1], [0, 0.5]];
   const TRIPLE = (t) => t === "a" || t === "b";
   const PASS = (t) => val(t) % 2 === 1;
   const LANDS_HARD = (t) => "89ab".includes(t);
@@ -174,7 +176,7 @@
       else if (x === "b" && y === "5") add("b_5", 4, "d-dragon");
       if ((x === "5" && TRIPLE(y)) || (TRIPLE(x) && y === "5")) {
         const rest = restAfter(seq, i), off = Math.min(0.6, rest * 0.15);
-        add("A 5 next to a triple", 5 * (1 - off), "d-height", rest ? `rest ${rest}` : "");
+        add("A 5 next to a triple", HEIGHT * (1 - off), "d-height", rest ? `rest ${rest}` : "");
       }
       if (TRIPLE(x) && TRIPLE(y)) add("Two triples in a row", 2.5, "d-triples");
       if (TRIPLE(x) && TRIPLE(y) && TRIPLE(seq[(i + 2) % n])) add("Three triples in a row", 0.5, "d-triples");

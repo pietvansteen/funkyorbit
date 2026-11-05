@@ -215,7 +215,7 @@
         It adds up how hard the throws are (more spins and more passes are harder; selfs and zips give a moment of rest)
         plus extra points for tricky combinations, such as a dragon (9_5), a 5 next to a triple, or two triples in a row.
         Our patterns go from about 1 (easiest) to ${Math.ceil(maxScore)} (hardest).
-        ½ ★ is a score below 4.5, 5 ★ is 17 or more, and in between every 1.5 points adds half a star.
+        ½ ★ is a score below 4 and 5 ★ is 18.5 or more; in the middle the steps are smallest, so half a star there is 1 to 1.5 points.
         <a class="tip-link" href="/rules/#difficulty">How the score works →</a></span></span>`;
   }
 
@@ -477,10 +477,10 @@
           </div>
           ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
           <span class="fam">${families.map(esc).join("<br>")}</span>
-          ${items.length && !p ? wishButton(key) : ""}
           ${items.length ? startHtml(item) : ""}
           ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
           ${diff}
+          ${items.length && !p ? wishButton(key) : ""}
           ${p ? `<span class="when">${esc(when(p))}${p.location ? ` · ${esc(p.location)}` : ""}</span>` : ""}
         </div>
       </article>`;
@@ -489,7 +489,7 @@
   // ---------- Wish Tricks (#61): wish for a pattern without a video, and hear from us when it is online ----------
   // Own wishes are kept on this device (fo_wishes: [{key, token, at, seen}]); the counts come from the API.
   const WISH_KEY = "fo_wishes";
-  const WISH = { counts: {}, push: null, email: false, loading: null, online: false };
+  const WISH = { counts: {}, names: {}, push: null, email: false, loading: null, online: false };
   const myWishes = () => { try { const l = JSON.parse(localStorage.getItem(WISH_KEY) || "[]"); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
   const saveWishes = (l) => { try { localStorage.setItem(WISH_KEY, JSON.stringify(l)); } catch (e) {} };
   const hasWish = (key) => myWishes().some((w) => w.key === key);
@@ -500,22 +500,29 @@
     if (!WISH.loading) {
       WISH.loading = PREVIEW ? Promise.resolve() : fetch("/api/wishes/counts", { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
-        .then((j) => { if (j) { Object.assign(WISH, { counts: j.counts || {}, push: j.push, email: j.email, online: true }); paintWishes(); } })
+        .then((j) => { if (j) { Object.assign(WISH, { counts: j.counts || {}, names: j.names || {}, push: j.push, email: j.email, online: true }); paintWishes(); } })
         .catch(() => {});
     }
     return WISH.loading;
   }
   // every wish button and count on the page, and whatever else listens (the top 10, the wish page)
   function paintWishes() {
-    document.querySelectorAll("[data-wish]").forEach((b) => {
-      if (b.classList.contains("wish-btn")) b.outerHTML = wishButton(b.dataset.wish);
-    });
+    document.querySelectorAll("[data-wish-line]").forEach((b) => { b.outerHTML = wishButton(b.dataset.wishLine); });
     document.dispatchEvent(new Event("fo-wishes"));
   }
+  // "wished by Anna, Tom and 3 others"
+  function wishedBy(key) {
+    const names = WISH.names[key] || [], n = wishCount(key);
+    if (!n) return "";
+    if (!names.length) return wishWord(n);
+    const shown = names.slice(0, 3), rest = n - shown.length;
+    return `wished by ${esc(shown.join(", "))}${rest > 0 ? ` and ${rest} other${rest === 1 ? "" : "s"}` : ""}`;
+  }
+  // In the pop-up: a small line under the details, so it does not take over
   function wishButton(key) {
-    const n = wishCount(key), mine = hasWish(key);
-    return `<button type="button" class="wish-btn${mine ? " mine" : ""}" data-wish="${esc(key)}"${mine ? " disabled" : ""}>
-      <span>${mine ? "You wished for this ✨" : "Not filmed yet – <b>Wish this trick ✨</b>"}</span>${n ? `<small>${wishWord(n)}</small>` : ""}</button>`;
+    const mine = hasWish(key), by = wishedBy(key);
+    return `<div class="wish-line" data-wish-line="${esc(key)}"><button type="button" class="wish-btn${mine ? " mine" : ""}" data-wish="${esc(key)}"${mine ? " disabled" : ""}>
+      ${mine ? "✨ You wished for this" : "✨ Wish this trick"}</button>${by ? `<small>${by}</small>` : ""}</div>`;
   }
   // The patterns most wished for that we have not thrown yet
   function wishTop(n = 10) {
@@ -523,8 +530,12 @@
       .filter(([key, c]) => c > 0 && POP.items.has(key) && !POP.done.has(key))
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, n);
   }
-  const wishTopHtml = (n) => wishTop(n).map(([key, c], i) =>
-    `<li><button type="button" data-open="${esc(key)}" aria-label="${esc(key)}: show details"><span class="wish-rank">${i + 1}</span>${patternHtml(key, "sm", key)}<small>${wishWord(c)}</small></button></li>`).join("");
+  const wishTopHtml = (n) => wishTop(n).map(([key, c], i) => {
+    const name = ((POP.items.get(key) || [])[0] || {}).name;
+    return `<li><button type="button" data-open="${esc(key)}" aria-label="${esc(key)}: show details"><span class="wish-rank">${i + 1}</span>
+      <span class="wish-top-pat">${patternHtml(key, "sm", key)}${name ? `<span class="wish-top-name">${esc(name)}</span>` : ""}</span>
+      <span class="wish-top-n">${wishWord(c)}<small>${wishedBy(key).replace(/^wished by /, "by ")}</small></span></button></li>`;
+  }).join("");
 
   const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const canPush = () => !!WISH.push && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -535,6 +546,7 @@
       <button type="button" class="modal-close" data-wish-close aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
       <h2 id="wish-title">Wish this trick</h2>
       <div class="wish-pat">${patternHtml(key, "lg", key)}</div>
+      <label class="wish-email">Your name <small>shown with your wish</small><input type="text" id="wish-name" maxlength="40" autocomplete="given-name" value="${esc(storedName())}" required></label>
       <p>${push || WISH.email ? "When the video is online, we'll let you know. How?" : "When the video is online, you'll see it here on your next visit, on this device."}</p>
       ${push ? `<label class="opt check"><input type="checkbox" id="wish-push"><span class="opt-name">Send me a push notification</span></label>` : ""}
       ${iosNote && WISH.push && !push ? `<p class="wish-note">On iPhone and iPad, push notifications only work once this site is on your home screen (Share → <b>Add to Home Screen</b>). Email always works.</p>` : ""}
@@ -574,12 +586,14 @@
     return sub.endpoint;
   }
 
+  const storedName = () => stored("fo_wish_name");
   async function sendWish(key) {
     const dlg = document.getElementById("wish-dialog");
     const val = (id) => { const el = dlg.querySelector(id); return el ? el.value.trim() : ""; };
     const say = (text) => { const m = dlg.querySelector("#wish-msg"); m.textContent = text; m.hidden = !text; };
     const send = dlg.querySelector("#wish-send");
-    const email = val("#wish-email");
+    const email = val("#wish-email"), name = val("#wish-name");
+    if (!name) return say("Please fill in your name.");
     if (email && !/^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/.test(email)) return say("Please enter a valid email address.");
     say("");
     send.disabled = true;
@@ -592,12 +606,14 @@
       }
       const r = await fetch("/api/wishes", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, visitor: VISITOR, email: email || undefined, push: push || undefined, website: val("#wish-website") }),
+        body: JSON.stringify({ key, visitor: VISITOR, name, email: email || undefined, push: push || undefined, website: val("#wish-website") }),
       });
       const j = await r.json().catch(() => ({}));
       if (!j.token) throw new Error(j.error || "Your wish could not be saved. Please try again in a moment.");
       saveWishes([...myWishes().filter((w) => w.key !== key), { key, token: j.token, at: Date.now(), via: [push && "push notification", email && "email"].filter(Boolean) }]);
       if (j.count) WISH.counts[key] = j.count;
+      try { localStorage.setItem("fo_wish_name", name); } catch (e) {}
+      if (!(WISH.names[key] || []).includes(name)) (WISH.names[key] = WISH.names[key] || []).push(name);
       track("Wish", { key, push: !!push, email: !!email });
       paintWishes();
       const how = j.email === "sent" ? "We sent you a mail: please click the link in it to confirm your address. Not there? Check your spam folder."
@@ -717,5 +733,5 @@
   const videoIcon = (p) => (p.youtubeId ? ICON_VIDEO : ICON_SOON);
 
   window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch,
-    wishes: { load: loadWishes, button: wishButton, list: myWishes, has: hasWish, count: wishCount, word: wishWord, remove: removeWish, open: openWish, topHtml: wishTopHtml } };
+    wishes: { load: loadWishes, button: wishButton, by: wishedBy, list: myWishes, has: hasWish, count: wishCount, word: wishWord, remove: removeWish, open: openWish, topHtml: wishTopHtml } };
 })();

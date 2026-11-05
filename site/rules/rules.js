@@ -67,7 +67,7 @@
     ]],
     ["2. Tricky combinations", [
       ["d-dragon", "Known sequences: dragon 9_5 or b_7, add 3½. b_5: add 4."],
-      ["d-height", "A 5 next to a triple: add 5. Looking up for the triple, quickly down for the zap. Each rest point in the 4 throws after it takes off 15%, at most 60%."],
+      ["d-height", "A 5 next to a triple: add 3. Looking up for the triple, quickly down for the zap. Each rest point in the 4 throws after it takes off 15%, at most 60%."],
       ["d-triples", "Two triples in a row: add 2½. Three: ½ more. a to b: ½ more, b to a: ¼ more."],
       ["d-stack", "Passes going up: 5-7, 7-9, 9-b, and others such as 5-9, 7-b: add ¾ per spin of difference. Selfs 6-8 and 8-a: half of that."],
       ["d-doubles", "Two doubles in a row (88, 89, 98, 99): add ¼."],
@@ -76,7 +76,7 @@
     ]],
     ["3. The result", [
       ["d-score", "Add up everything: that's the score."],
-      ["d-stars", "The score gives the stars: ½ ★ below 4.5, 5 ★ at 17 or more, in between every 1½ points is half a star."],
+      ["d-stars", "The score gives the stars: ½ ★ below 4, 5 ★ at 18.5 or more, with the smallest steps in the middle (see the table)."],
     ]],
   ];
 
@@ -203,19 +203,19 @@
   $("#colour-charts").innerHTML = COLOUR_CHARTS.map(chart).join("");
   $("#score-charts").innerHTML = SCORE_CHARTS.map(chart).join("");
   $("#examples").innerHTML = exampleHtml("756", "Period 3") + exampleHtml("97586", "Period 5") + exampleHtml("9757266", "Period 7");
-  $("#stars-table").innerHTML = [["0", 0.5, "786"], ["4.5", 1, "8556666"], ["6", 1.5, ""], ["7.5", 2, "9695677"], ["9", 2.5, "a8aa722"], ["10.5", 3, "a5695, b88, 99552"],
-    ["12", 3.5, "a7a6295"], ["13.5", 4, ""], ["15", 4.5, "975"], ["17", 5, "a5555, aa555, b97"]]
+  $("#stars-table").innerHTML = [["0", 0.5, "456, 8882225"], ["4", 1, "786, 79662"], ["5.5", 1.5, "8556666, 89742"], ["6.5", 2, "96677, 9667777"], ["7.5", 2.5, "8897926, 97522"],
+    ["8.5", 3, "9695677, 945"], ["10", 3.5, "a8aa722, 99552"], ["12.5", 4, "a7a6295, b67"], ["15.5", 4.5, "975, aa555"], ["18.5", 5, "b97"]]
     .map(([from, st, ex]) => `<tr><td class="num">${from}</td><td>${stars(st)}</td><td>${esc(ex)}</td></tr>`).join("");
   $("#throws-table").innerHTML = [["2", "1", "Zip: goes blind, to the other hand"], ["4", "", "Hold: an active single spin in the same hand"], ["5", "", "Zap: half a spin, a quick low pass"],
     ["6", "3", "Self: single spin to the other hand"], ["7", "3p", "Single pass, the easiest pass"], ["8", "4", "Heff: double self"], ["9", "4p", "Double pass"], ["a", "5", "Triple self"], ["b", "5p", "Triple pass"]]
     .map(([t, s, what]) => `<tr><td class="t">${t}</td><td class="t">${s}</td><td style="white-space:normal">${what}</td></tr>`).join("");
   $("#try-examples").insertAdjacentHTML("beforeend", ["756", "97586", "9955966", "33p3 4p44", "b97"].map((s) => `<button type="button" data-try="${s}">${s}</button>`).join(""));
 
-  $("#try-form").addEventListener("submit", (ev) => { ev.preventDefault(); showTry($("#try").value); });
-  $("#try").addEventListener("input", (ev) => { showTry(ev.target.value, true); });
+  $("#try-form").addEventListener("submit", (ev) => { ev.preventDefault(); showTry($("#try-input").value); });
+  $("#try-input").addEventListener("input", (ev) => { showTry(ev.target.value, true); });
   document.addEventListener("click", (ev) => {
     const ex = ev.target.closest("[data-try]");
-    if (ex) { $("#try").value = ex.dataset.try; showTry(ex.dataset.try); return; }
+    if (ex) { $("#try-input").value = ex.dataset.try; showTry(ex.dataset.try); return; }
     const open = ev.target.closest(".try-open");
     if (open) { openPattern(open.dataset.open); return; }
     const st = ev.target.closest("button.step");
@@ -224,7 +224,7 @@
 
   (async function init() {
     const given = new URLSearchParams(location.search).get("try");
-    if (given) $("#try").value = given;
+    if (given) $("#try-input").value = given;
     try {
       const d = await (await fetch("/data.json", { cache: "no-cache" })).json();
       for (const p of d.all || []) {

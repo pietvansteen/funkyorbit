@@ -326,7 +326,21 @@
     applyFilter();
   }
 
-  $("#q").addEventListener("input", (ev) => { query = ev.target.value; trackSearch(query); applyFilter(); });
+  // Under the search box, quietly: whether what was typed is a valid siteswap at all, and whether it is on our list
+  function checkSiteswap() {
+    const box = $("#ss-check"), q = query.trim().toLowerCase(), R = window.FORules;
+    const looks = R && /\d/.test(q) && /^[0-9a-z()|,*\s]+$/.test(q) && !/[a-z]{3}/.test(q.replace(/p/g, ""));
+    if (!looks || q.replace(/\s+/g, "").length < 2) { box.hidden = true; return; }
+    const p = R.parse(q);
+    // half typed (96 of 966) is not valid either, but then the matches say enough
+    if (!p) { box.textContent = "Not a valid siteswap."; box.hidden = ITEMS.some(matches); return; }
+    const key = p.popcorn ? R.syncCanon(p.a, p.b) : R.keyOf(p);
+    const listed = ITEMS.some((x) => x.key === key || (x.a && R.syncCanon(x.a, x.b) === key));
+    box.innerHTML = listed ? "Valid siteswap, on our list." : `Valid siteswap, but not on our list. <a href="/rules/?try=${encodeURIComponent(q)}">How would it score?</a>`;
+    box.hidden = false;
+  }
+
+  $("#q").addEventListener("input", (ev) => { query = ev.target.value; trackSearch(query); applyFilter(); checkSiteswap(); });
   document.addEventListener("click", (ev) => {
     const m = ev.target.closest("[data-list] button");
     if (m) {
@@ -446,6 +460,7 @@
     query = params.get("q") || "";
     $("#q").value = query;
     applyFilter();
+    checkSiteswap();
   }
   start();
 })();

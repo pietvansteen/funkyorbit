@@ -103,7 +103,7 @@ Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallow
 
 ## Wish Tricks
 
-On `/wish/` visitors pick a pattern we haven't thrown yet and wish for it (a thrown pattern always gets its video soon, so the API refuses it). The Wish button is also in the pattern pop-up and under a drawn pattern in the generator. Wishes are in `data/wishes.db`, one per visitor per pattern. Visitors see the number of wishes per pattern and a top 10 (top 5 on Progress); `/requests/` shows us the *Most wished* list. Spam is kept out with a honeypot field, 20 wishes per visitor per hour, and 3 confirmation mails per address per day.
+On `/wish/` visitors pick a pattern we haven't thrown yet and wish for it with their name, which is shown with the pattern (a thrown pattern always gets its video soon, so the API refuses it). The Wish button is also in the pattern pop-up (not in the generator). Wishes are in `data/wishes.db`, one per visitor per pattern. Visitors see the number of wishes per pattern and a top 10 (top 5 on Progress); `/requests/` shows us the *Most wished* list. Spam is kept out with a honeypot field, 20 wishes per visitor per hour, and 3 confirmation mails per address per day.
 
 When a pattern gets a video in `data.json`, `likes.py` tells the wishers (it looks every minute, so also right after a restart, and tries what failed again for about an hour). There are three ways, and only the first needs nothing on the server:
 
@@ -112,6 +112,10 @@ When a pattern gets a video in `data.json`, `likes.py` tells the wishers (it loo
 3. **Email**, offered when `RESEND_API_KEY` is set. Mail goes out through [Resend](https://resend.com) with one HTTPS call, there is no mail server. Setting it up: make an account, add the domain `mail.funkyorbit.nl`, put the DNS records it asks for (SPF, DKIM) in Cloudflare, make an API key with sending access and put it in `.env`. The default sender is `Funky Orbit <wishes@mail.funkyorbit.nl>` (`MAIL_FROM`): it has to be on the domain that is verified in Resend, because the DKIM signature has to match it for DMARC. An address gets a confirmation mail first and nothing else until it is confirmed. Every mail has an unsubscribe link, and an address is deleted once the wish mail has gone out. The domain has one DMARC record, `_dmarc` in Cloudflare, with `p=reject`; a second record would invalidate it. Use relaxed alignment there (`adkim=r; aspf=r`), so both the DKIM signature and the SPF return path (`send.mail.funkyorbit.nl`) count.
 
 After setting either key: `docker compose up -d`.
+
+## Practised, not filmed yet
+
+On our own devices (admin password) the generator has **Practised, save for later** under a drawn pattern, for a pattern we threw but still have to film. The list is on the generator page and as shortcuts above the siteswap field on the Add page. A pattern leaves the list by itself once it is in Done, or with ×. Stored in `data/saved.db` (`/api/saved`).
 
 ## How it works page (the rules)
 
@@ -123,7 +127,7 @@ The page does not read the Sheet tabs *Kleurregels* and *Moeilijkheidsregels*: *
 python3 tools/check_rules.py
 ```
 
-It needs a Mac (JavaScriptCore). It should say 0 differences. The colours and stars match for all 913 patterns; 29 scores are 0.1 off, none across a star boundary. Those are listed as rounding, because the Sheet's layer 2 column does not always equal the sum of its own breakdown (`a5a8522`: 8.0 and 8.1). Three rules were not in the rules tab and were read from the Sheet's numbers: pass/self switches count `changes − 2`, a repeated 5/a penalty halves the largest first, and with two dragons back to back (9595) the step 5-9 does not count as alternating passes.
+It needs a Mac (JavaScriptCore). It should say 0 differences. The colours match for all 913 patterns; 28 scores are 0.1 off by rounding, and 3 of those sit on the edge of a star (a858272, a859262, a5a8592), where the site uses the Sheet's value. Those are listed as rounding, because the Sheet's layer 2 column does not always equal the sum of its own breakdown (`a5a8522`: 8.0 and 8.1). Since November 2026 a 5 next to a triple counts 3 instead of 5, and the stars follow a new scale (Moeilijkheidsregels B50:C59: ½ ★ below 4, 5 ★ from 18.5). The scores in *Moeilijkheid* are values, not formulas: a rule change means writing new scores there too (the stars and minutes follow by formula). Three rules were not in the rules tab and were read from the Sheet's numbers: pass/self switches count `changes − 2`, a repeated 5/a penalty halves the largest first, and with two dragons back to back (9595) the step 5-9 does not count as alternating passes.
 
 ## Logging a pattern (Add page)
 

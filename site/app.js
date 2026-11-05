@@ -259,6 +259,8 @@
     if (ev.target.closest(".name-link")) return; // the link to the story, not the pop-up
     const row = ev.target.closest("[data-row]");
     if (row) { const p = ROWS[+row.dataset.row]; openPattern(p.key, { row: p }); return; }
+    const wished = ev.target.closest("#wish-top [data-open]");
+    if (wished) { openPattern(wished.dataset.open); return; }
     const still = ev.target.closest("[data-still]");
     if (still) { const i = +still.dataset.still; openPattern(VIDS[i].key, { list: VIDS, index: i }); return; }
     // the orbit explanation in the intro folds open and closed

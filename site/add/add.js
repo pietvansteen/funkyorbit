@@ -263,6 +263,25 @@
   $("#date").addEventListener("change", showGps);
   $("#gps-retry").addEventListener("click", () => { gpsError = "Looking for the position…"; showGps(); startGps(); });
 
+  // the patterns saved in the Generator as practised but not filmed yet: one tap fills in the siteswap
+  async function loadSaved() {
+    let token = "";
+    try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
+    const r = await fetch("/api/saved", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }).catch(() => null);
+    const list = r && r.ok ? (await r.json()).saved : [];
+    const chips = list.map((x) => {
+      const item = BY_KEY.get(x.key) || {};
+      const ss = item.ss || item.alt || (item.a ? `${item.a} ${item.b}` : x.key);
+      return `<button type="button" class="chip" data-fill="${window.FO.esc(ss)}">${window.FO.esc(ss)}</button>`;
+    }).join(" ");
+    $("#saved-chips").innerHTML = chips;
+    $("#saved-short").hidden = !chips;
+  }
+  document.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-fill]");
+    if (b) { input.value = b.dataset.fill; input.dispatchEvent(new Event("input")); showPicked(); input.focus(); }
+  });
+
   function resetForm(ss) {
     input.value = ss || "";
     $("#date").value = $("#date").max = today();
@@ -448,6 +467,7 @@
     if (!document.querySelector('.nav a[href="/add/"]')) document.querySelector(".nav").insertAdjacentHTML("beforeend", '<a href="/add/" aria-current="page">Add</a>');
     loadGifs();
     try { await loadData(); } catch (e) { /* without data.json: no suggestions, saving still works */ }
+    loadSaved();
     resetForm(new URLSearchParams(location.search).get("ss") || "");
     startGps();
   }

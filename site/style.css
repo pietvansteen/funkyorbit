@@ -944,14 +944,15 @@ body:has(.swipe-page) #modal .start { display: none; }
 }
 
 /* ---------- Wish Tricks ---------- */
+.wish-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 4px; }
 .wish-btn {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; margin-block: 10px; padding: 11px 14px;
-  border: 1px solid var(--club); border-radius: var(--radius); background: var(--club-soft); color: var(--ink);
-  font: 500 15px/1.3 var(--f-body); text-align: left; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px;
+  background: transparent; color: var(--ink); font: 600 13px/1.2 var(--f-body); cursor: pointer;
 }
-.wish-btn b { color: var(--club); font-weight: 700; white-space: nowrap; }
-.wish-btn small { color: var(--muted); font-size: 13px; white-space: nowrap; }
-.wish-btn.mine { border-color: var(--line); background: transparent; color: var(--muted); cursor: default; }
+.wish-btn:hover { border-color: var(--club); color: var(--club); }
+.wish-btn.mine { color: var(--muted); cursor: default; }
+.wish-btn.mine:hover { border-color: var(--line); color: var(--muted); }
+.wish-line small { color: var(--muted); font-size: 13px; }
 .wish-dialog { max-width: min(440px, calc(100vw - 32px)); }
 .wish-form { position: relative; display: grid; gap: 12px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .wish-form h2 { margin: 0; padding-right: 40px; font-family: var(--f-display); font-weight: 500; font-size: 20px; }
@@ -968,13 +969,21 @@ body:has(.swipe-page) #modal .start { display: none; }
 .wish-more { font-weight: 600; font-size: 14px; color: var(--orbit); }
 .wish-card { margin-bottom: 32px; }
 .wish-empty { margin: 0; color: var(--muted); }
-.wish-top { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.wish-top { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.wish-top li + li { border-top: 1px solid var(--line); }
 .wish-top button {
-  display: flex; align-items: center; gap: 10px; width: 100%; height: 100%; padding: 8px 12px; background: var(--surface);
-  border: 1px solid var(--line); border-radius: 10px; color: var(--ink); cursor: pointer; font: inherit;
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 6px 14px; width: 100%; padding: 10px 14px;
+  background: none; border: 0; color: var(--ink); cursor: pointer; font: inherit; text-align: left;
 }
-.wish-top button:hover { border-color: var(--club); }
-.wish-top small { margin-left: auto; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.wish-top button:hover { background: var(--track); }
+.wish-top-pat { display: grid; gap: 3px; justify-items: start; min-width: 0; }
+.wish-top-name { color: var(--muted); font-size: 13px; }
+.wish-top-n { display: grid; justify-items: end; text-align: right; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.wish-top-n small { color: var(--muted); font-weight: 400; font-size: 13px; white-space: normal; max-width: 220px; }
+@media (max-width: 560px) {
+  .wish-top button { grid-template-columns: 22px minmax(0, 1fr); }
+  .wish-top-n { grid-column: 2; justify-items: start; text-align: left; }
+}
 .wish-rank { font-family: var(--f-mono); color: var(--muted); font-size: 13px; }
 .wish-banners { position: fixed; z-index: 50; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: grid; gap: 8px; width: min(520px, calc(100vw - 32px)); }
 .wish-banner { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--club-soft); border: 1px solid var(--club); border-radius: var(--radius); box-shadow: 0 8px 28px #0008; }
@@ -1048,3 +1057,17 @@ body:has(.swipe-page) #modal .start { display: none; }
 .try-total { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-weight: 600; }
 .tip-link { display: block; margin-top: 6px; color: var(--orbit); font-weight: 600; }
 .legend a { color: var(--orbit); }
+
+/* ---------- Practised, not filmed yet (Generator and Add page, logged in) ---------- */
+.pick-save { display: inline-flex; align-items: center; min-height: 44px; margin: 14px 0 0 8px; padding: 0 18px; border: 1px solid var(--line); border-radius: 12px; background: none; color: var(--ink); font: 600 15px var(--f-body); cursor: pointer; }
+.pick-save[aria-pressed="true"] { border-color: var(--orbit); color: var(--orbit); }
+.saved { margin-bottom: 32px; }
+.saved-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.saved-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.saved-list .saved-open { all: unset; cursor: pointer; min-width: 0; }
+.saved-list a { margin-left: auto; color: var(--orbit); font-weight: 600; font-size: 14px; }
+.saved-list .saved-x { background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.saved-short { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.saved-short .chip { font-family: var(--f-mono); }
+.ss-check { margin: -4px 0 12px; color: var(--muted); font-size: 13px; }
+.ss-check a { color: var(--muted); }

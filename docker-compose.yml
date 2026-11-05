@@ -41,6 +41,7 @@ services:
       REQUESTS_DB: /data/requests.db
       SWIPES_DB: /data/swipes.db
       WISHES_DB: /data/wishes.db
+      SAVED_DB: /data/saved.db
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}   # password for the requests and Add pages, from .env
       SWIPE_TOKENS: ${SWIPE_TOKENS:-}  # personal passwords for the Catch or Drop page only, from .env: Hanna=...,Uwe=...
       SWIPE_TOKEN: ${SWIPE_TOKEN:-}    # the old single password, counts as Hanna's until it is moved into SWIPE_TOKENS

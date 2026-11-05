@@ -58,7 +58,7 @@
     const list = r && r.ok ? (await r.json()).wishes : [];
     $("#wished").hidden = !list.length;
     $("#wished-count").textContent = `${list.reduce((n, w) => n + w.count, 0)} open wishes`;
-    $("#wished-list").innerHTML = list.map((w) => `<li><b>${esc(w.title)}</b> <span>${w.count} wish${w.count === 1 ? "" : "es"} · ${w.push} push notification${w.push === 1 ? "" : "s"} · ${w.email} email</span></li>`).join("");
+    $("#wished-list").innerHTML = list.map((w) => `<li><b>${esc(w.title)}</b> <span>${w.count} wish${w.count === 1 ? "" : "es"} · ${w.push} push notification${w.push === 1 ? "" : "s"} · ${w.email} email${w.names ? ` · ${esc(w.names)}` : ""}</span></li>`).join("");
   }
 
   $("#login").addEventListener("submit", (ev) => {

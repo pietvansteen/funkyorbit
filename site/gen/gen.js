@@ -78,7 +78,6 @@
       <div class="pick-pat${hidden ? " hidden-colors" : ""}">${pat}</div>
       ${p.name ? `<p class="pick-name">${FO.nameLinks(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
-      ${hidden || FO.doneRow(p.key) ? "" : FO.wishes.button(p.key)}
       ${opts.hidehands ? "" : startHtml(p, shown)}
       <dl class="pick-meta">
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>
@@ -106,7 +105,45 @@
     try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
     if (!token) return "";
     const ss = p.ss || p.alt || `${p.a} ${p.b}`;
-    return `<a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Passed it → Add</a>`;
+    const saved = SAVED.has(p.key);
+    return `<a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Passed it → Add</a>` + (FO.doneRow(p.key) ? ""
+      : `<button type="button" class="pick-save" data-save="${esc(p.key)}" aria-pressed="${saved}">${saved ? "Saved ✓" : "Practised, save for later"}</button>`);
+  }
+
+  // ---------- Practised, not filmed yet (logged in): patterns we threw but still have to film, until they are in Done ----------
+  const SAVED = new Set();
+  const adminToken = () => { try { return localStorage.getItem("fo_admin") || ""; } catch (e) { return ""; } };
+  async function savedApi(method, key) {
+    const r = await fetch("/api/saved", { method, cache: "no-store", headers: { Authorization: `Bearer ${adminToken()}`, "Content-Type": "application/json" },
+      body: method === "GET" ? undefined : JSON.stringify({ key }) });
+    return r.ok ? r.json() : null;
+  }
+  function renderSaved() {
+    const box = $("#saved");
+    if (!box) return;
+    const keys = [...SAVED];
+    box.hidden = !keys.length;
+    $("#saved-list").innerHTML = keys.map((key) => {
+      const item = PATTERNS.find((x) => x.key === key) || {};
+      const ss = item.ss || item.alt || `${item.a} ${item.b}`;
+      return `<li><button type="button" class="saved-open" data-open-saved="${esc(key)}" aria-label="${esc(ss)}: show details">${FO.patternHtml(key, "sm", key)}</button>
+        <a href="/add/?ss=${encodeURIComponent(ss)}">Add →</a><button type="button" class="saved-x" data-unsave="${esc(key)}" aria-label="Remove ${esc(ss)} from the list">×</button></li>`;
+    }).join("");
+  }
+  async function loadSaved() {
+    if (!adminToken()) return;
+    const j = await savedApi("GET").catch(() => null);
+    if (!j) return;
+    SAVED.clear();
+    j.saved.forEach((x) => SAVED.add(x.key));
+    renderSaved();
+    if (current) show(current);
+  }
+  async function toggleSaved(key, on) {
+    on ? SAVED.add(key) : SAVED.delete(key);
+    renderSaved();
+    if (current) show(current);
+    await savedApi(on ? "POST" : "DELETE", key).catch(() => null);
   }
 
   // Tap one digit open: the other digits of this pattern stay grey until you tap them too.
@@ -186,6 +223,12 @@
     const digit = ev.target.closest("[data-digit]");
     if (digit) { reveal(+digit.dataset.digit); return; }
     if (ev.target.closest("#reveal-diff")) { diffRevealed = true; show(current); return; }
+    const save = ev.target.closest("[data-save]");
+    if (save) { toggleSaved(save.dataset.save, save.getAttribute("aria-pressed") !== "true"); return; }
+    const unsave = ev.target.closest("[data-unsave]");
+    if (unsave) { toggleSaved(unsave.dataset.unsave, false); return; }
+    const openSaved = ev.target.closest("[data-open-saved]");
+    if (openSaved) { FO.openPattern(openSaved.dataset.openSaved); return; }
     if (ev.target.closest("#stars-reset")) { opts.lo = 0.5; opts.hi = 5; changed(); }
   });
   document.addEventListener("keydown", (ev) => {
@@ -213,7 +256,8 @@
     let data;
     try {
       data = await (await fetch("/data.json", { cache: "no-cache" })).json();
-      FO.initPopup(data); // for the wish dialog and the stories
+      FO.initPopup(data); // for the pop-up of a saved pattern, and the stories
+      loadSaved();
     } catch (e) {
       $("#pick").innerHTML = `<p class="empty">The pattern list could not be loaded. Open this page once with internet, after that it also works offline.</p>`;
       return;

@@ -46,6 +46,13 @@ Wish Tricks (#61): visitors wish for a pattern without a video, and hear from us
   GET    /api/wishes/confirm?t=...  the link in the confirmation mail (a small HTML page)
   GET    /api/wishes/stop?t=...     the unsubscribe link in every mail: removes the address and its wishes (a small HTML page)
   GET    /api/wishes                admin: open wishes per pattern, most wished first
+  A wish needs a name; the names of open wishes are public ("names" in /api/wishes/counts).
+
+Practised, not filmed yet (admin only, the Generator and the Add page; stored in SAVED_DB):
+
+  GET    /api/saved                 {"saved": [{"key", "at"}, ...]}, without the patterns that are in Done by now
+  POST   /api/saved                 body {"key"}
+  DELETE /api/saved                 body {"key"}
 
 A thread looks every minute for open wishes whose pattern now has a video in data.json, also right after a restart.
 
@@ -77,6 +84,7 @@ PORT = int(os.environ.get("PORT", "8000"))
 REQUESTS_DB = os.environ.get("REQUESTS_DB", "/data/requests.db")
 SWIPES_DB = os.environ.get("SWIPES_DB", "/data/swipes.db")
 WISHES_DB = os.environ.get("WISHES_DB", "/data/wishes.db")
+SAVED_DB = os.environ.get("SAVED_DB", "/data/saved.db")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")  # tools/make_vapid.py; without it no push
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")  # the mail service (resend.com); without it no email
@@ -173,6 +181,14 @@ def wishes_db():
         " pushed INTEGER NOT NULL DEFAULT 0, news_read INTEGER NOT NULL DEFAULT 0, tries INTEGER NOT NULL DEFAULT 0,"
         " notified INTEGER NOT NULL DEFAULT 0, UNIQUE (key, visitor))"
     )
+    if "name" not in [r[1] for r in con.execute("PRAGMA table_info(wishes)")]:  # added in 3.2.0
+        con.execute("ALTER TABLE wishes ADD COLUMN name TEXT")
+    return con
+
+
+def saved_db():
+    con = sqlite3.connect(SAVED_DB)
+    con.execute("CREATE TABLE IF NOT EXISTS saved (key TEXT PRIMARY KEY, at INTEGER NOT NULL)")
     return con
 
 
@@ -336,7 +352,11 @@ class Handler(BaseHTTPRequestHandler):
     def _wish_counts(self):
         with lock, wishes_db() as con:
             counts = dict(con.execute("SELECT key, COUNT(*) FROM wishes WHERE notified = 0 GROUP BY key"))
-        self._send(200, {"counts": counts, "push": webpush.public_key(VAPID_PRIVATE_KEY) if VAPID_PRIVATE_KEY else None,
+            names = {}
+            for key, name in con.execute("SELECT key, name FROM wishes WHERE notified = 0 AND name IS NOT NULL ORDER BY created"):
+                if name not in names.setdefault(key, []):
+                    names[key].append(name)
+        self._send(200, {"counts": counts, "names": names, "push": webpush.public_key(VAPID_PRIVATE_KEY) if VAPID_PRIVATE_KEY else None,
                          "email": bool(RESEND_API_KEY)})
 
     def _wish_post(self):
@@ -347,9 +367,14 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(201, {"ok": True, "token": secrets.token_urlsafe(24), "count": 0, "email": None})  # honeypot: a bot; pretend it worked
         key, visitor = body.get("key"), body.get("visitor")
         email = str(body.get("email") or "").strip().lower()
+        name = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f<>]", "", str(body.get("name") or ""))).strip()
         endpoint = body.get("push") or None
         if not (isinstance(visitor, str) and VISITOR_RE.match(visitor)):
             return self._send(400, {"error": "Something went wrong. Please reload the page and try again."})
+        if not name:
+            return self._send(400, {"error": "Please fill in your name."})
+        if len(name) > 40:
+            return self._send(400, {"error": "Your name can be 40 characters at most."})
         known = load_known()
         if not isinstance(key, str) or key not in known["list"]:
             return self._send(400, {"error": "That pattern is not on our list."})
@@ -372,11 +397,11 @@ class Handler(BaseHTTPRequestHandler):
             confirmed = 1 if email and con.execute("SELECT 1 FROM wishes WHERE email = ? AND email_confirmed = 1", (email,)).fetchone() else 0
             if old:
                 same = old[2] == email
-                con.execute("UPDATE wishes SET endpoint = COALESCE(?, endpoint), email = COALESCE(?, email), email_confirmed = ? WHERE token = ?",
-                            (endpoint, email or None, (old[3] if same else confirmed) if email else old[3], token))
+                con.execute("UPDATE wishes SET endpoint = COALESCE(?, endpoint), email = COALESCE(?, email), email_confirmed = ?, name = ? WHERE token = ?",
+                            (endpoint, email or None, (old[3] if same else confirmed) if email else old[3], name, token))
             else:
-                con.execute("INSERT INTO wishes (key, created, visitor, token, endpoint, email, email_confirmed) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (key, int(time.time()), visitor, token, endpoint, email or None, confirmed))
+                con.execute("INSERT INTO wishes (key, created, visitor, token, endpoint, email, email_confirmed, name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                            (key, int(time.time()), visitor, token, endpoint, email or None, confirmed, name))
             count = con.execute("SELECT COUNT(*) FROM wishes WHERE key = ? AND notified = 0", (key,)).fetchone()[0]
             confirmed_now = con.execute("SELECT email_confirmed FROM wishes WHERE token = ?", (token,)).fetchone()[0]
         mail = None
@@ -424,9 +449,32 @@ class Handler(BaseHTTPRequestHandler):
             return
         with lock, wishes_db() as con:
             rows = con.execute(
-                "SELECT key, COUNT(*), SUM(endpoint IS NOT NULL), SUM(email IS NOT NULL AND email_confirmed = 1) FROM wishes"
+                "SELECT key, COUNT(*), SUM(endpoint IS NOT NULL), SUM(email IS NOT NULL AND email_confirmed = 1),"
+                " GROUP_CONCAT(name, ', ') FROM wishes"
                 " WHERE notified = 0 GROUP BY key ORDER BY COUNT(*) DESC, MIN(created)").fetchall()
-        self._send(200, {"wishes": [{"key": r[0], "title": wish_title(r[0]), "count": r[1], "push": r[2], "email": r[3]} for r in rows]})
+        self._send(200, {"wishes": [{"key": r[0], "title": wish_title(r[0]), "count": r[1], "push": r[2], "email": r[3],
+                                     "names": r[4] or ""} for r in rows]})
+
+    def _saved(self, method):
+        """Practised, not filmed yet: a pattern stays on the list until it is in Done."""
+        if not self._admin():
+            return
+        if method == "GET":
+            done = load_known()["keys"]
+            with lock, saved_db() as con:
+                if done:
+                    con.executemany("DELETE FROM saved WHERE key = ?", [(k,) for k in done])
+                rows = con.execute("SELECT key, at FROM saved ORDER BY at DESC").fetchall()
+            return self._send(200, {"saved": [{"key": r[0], "at": r[1]} for r in rows]})
+        key = (self._body(512) or {}).get("key")
+        if not isinstance(key, str) or key not in load_known()["list"]:
+            return self._send(400, {"error": "That pattern is not on our list."})
+        with lock, saved_db() as con:
+            if method == "POST":
+                con.execute("INSERT OR REPLACE INTO saved VALUES (?, ?)", (key, int(time.time())))
+            else:
+                con.execute("DELETE FROM saved WHERE key = ?", (key,))
+        self._send(200, {"ok": True})
 
     def _visitor(self):
         # behind Cloudflare and nginx: the visitor's address, only kept in memory for the hourly limit
@@ -631,6 +679,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._swipes_get()
         if path == "/api/wishes":
             return self._wishes_admin()
+        if path == "/api/saved":
+            return self._saved("GET")
         if path == "/api/wishes/counts":
             return self._wish_counts()
         if path in ("/api/wishes/confirm", "/api/wishes/stop"):
@@ -662,6 +712,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._done_post()
         if path == "/api/swipe":
             return self._swipe_write(False)
+        if path == "/api/saved":
+            return self._saved("POST")
         if path == "/api/wishes":
             return self._wish_post()
         if path == "/api/wishes/remove":
@@ -694,6 +746,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         if urlparse(self.path).path.rstrip("/") == "/api/swipe":
             return self._swipe_write(True)
+        if urlparse(self.path).path.rstrip("/") == "/api/saved":
+            return self._saved("DELETE")
         self._send(404, {"error": "not found"})
 
     def log_message(self, fmt, *args):
@@ -706,6 +760,7 @@ if __name__ == "__main__":
     requests_db().close()
     swipes_db().close()
     wishes_db().close()
+    saved_db().close()
     threading.Thread(target=wish_loop, daemon=True).start()
     print(f"likes API listening on port {PORT}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

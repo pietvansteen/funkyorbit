@@ -1,5 +1,21 @@
 [
   {
+    "version": "3.2.0",
+    "date": "2026-11-05",
+    "changes": [
+      "Wish Tricks: you fill in your name when you wish, and a pattern shows who wished for it",
+      "Pop-up: the Wish button is smaller and sits below the details",
+      "Progress: tap a pattern under Most wished to open it; the list now has one pattern per row, with its name and who wished for it",
+      "Generator: no Wish button any more",
+      "How it works: Try a siteswap now works when you type a pattern and press Show or Enter",
+      "How it works: example patterns for 1½ and 4 stars",
+      "All patterns: when you type a siteswap, a small line says whether it is valid and on our list",
+      "Difficulty: a 5 next to a triple counts 3 points instead of 5, so 112 patterns got easier",
+      "Difficulty: a new scale from score to stars, with smaller steps in the middle and bigger ones at the top",
+      "Generator: on our own devices, save a pattern you practised to film later"
+    ]
+  },
+  {
     "version": "3.1.2",
     "date": "2026-11-05",
     "changes": [
