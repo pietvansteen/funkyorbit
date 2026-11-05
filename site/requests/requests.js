@@ -64,7 +64,7 @@
     const list = r && r.ok ? (await r.json()).wishes : [];
     $("#wished").hidden = !list.length;
     $("#wished-count").textContent = `${list.reduce((n, w) => n + w.count, 0)} open wishes`;
-    $("#wished-list").innerHTML = list.map((w) => `<li><b>${esc(w.title)}</b> <span>${w.count} wish${w.count === 1 ? "" : "es"} · ${w.push} push notification${w.push === 1 ? "" : "s"} · ${w.email} email${w.names ? ` · ${esc(w.names)}` : ""}</span>${(w.remarks || []).length
+    $("#wished-list").innerHTML = list.map((w) => `<li><b>${esc(w.title)}</b> <span>${w.count} wish${w.count === 1 ? "" : "es"} · ${w.push} push · ${w.email} email${w.names ? ` · ${esc(w.names)}` : ""}</span>${(w.remarks || []).length
       ? `<ul class="wish-remarks">${w.remarks.map((r) => `<li><b>${esc(r.name || "Someone")}:</b> ${esc(r.remark)}</li>`).join("")}</ul>` : ""}</li>`).join("");
   }
 

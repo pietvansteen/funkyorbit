@@ -1,5 +1,12 @@
 [
   {
+    "version": "3.2.3",
+    "date": "2026-11-05",
+    "changes": [
+      "Requests (only for us): Most wished says push instead of push notification, to keep the lines short"
+    ]
+  },
+  {
     "version": "3.2.2",
     "date": "2026-11-05",
     "changes": [
