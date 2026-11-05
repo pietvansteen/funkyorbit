@@ -36,29 +36,53 @@ Rating patterns for a show (hidden Catch or Drop page; ADMIN_TOKEN, or a person'
   DELETE /api/swipe                 body {"person", "key"}: undo
                                     A personal password can only swipe as that person.
 
+Wish Tricks (#61): visitors wish for a pattern without a video, and hear from us when its video is online (stored in WISHES_DB):
+
+  GET    /api/wishes/counts         {"counts": {key: open wishes}, "push": VAPID public key or null, "email": bool}
+  POST   /api/wishes                body {"key", "visitor", "email"?, "push"?: endpoint, "website"}  (website = honeypot, must be empty)
+                                    -> {"ok": true, "token", "count", "email": "sent" | "confirmed" | null}
+  POST   /api/wishes/remove         body {"token"}: take a wish back
+  POST   /api/wishes/news           body {"endpoint"} (a POST, so the address stays out of access logs): what the service worker shows after a push (a push has no content, see webpush.py)
+  GET    /api/wishes/confirm?t=...  the link in the confirmation mail (a small HTML page)
+  GET    /api/wishes/stop?t=...     the unsubscribe link in every mail: removes the address and its wishes (a small HTML page)
+  GET    /api/wishes                admin: open wishes per pattern, most wished first
+
+A thread looks every minute for open wishes whose pattern now has a video in data.json, also right after a restart.
+
 Admin calls need the header  Authorization: Bearer <ADMIN_TOKEN>  (ADMIN_TOKEN from the environment).
 """
 
 import csv
+import html
 import hmac
 import io
 import json
 import os
 import re
+import secrets
 import sqlite3
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
+
+import webpush
 
 DB_FILE = os.environ.get("DB_FILE", "/data/likes.db")
 DATA_FILE = os.environ.get("DATA_FILE", "/data/data.json")
 PORT = int(os.environ.get("PORT", "8000"))
 REQUESTS_DB = os.environ.get("REQUESTS_DB", "/data/requests.db")
 SWIPES_DB = os.environ.get("SWIPES_DB", "/data/swipes.db")
+WISHES_DB = os.environ.get("WISHES_DB", "/data/wishes.db")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")  # tools/make_vapid.py; without it no push
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")  # the mail service (resend.com); without it no email
+MAIL_FROM = os.environ.get("MAIL_FROM", "Funky Orbit <wishes@funkyorbit.nl>")
+SITE_URL = os.environ.get("SITE_URL", "https://funkyorbit.nl").rstrip("/")
+WISH_LOOP = int(os.environ.get("WISH_LOOP", "60"))  # seconds between looks at data.json
 PEOPLE = ["Piet", "Mees", "Hanna", "Uwe"]  # who can swipe on the Catch or Drop page
 
 
@@ -89,6 +113,10 @@ STATUSES = ("new", "planned", "done", "no")
 LIMITS = {"name": 80, "email": 120, "request": 2000}
 PER_HOUR = 3  # requests per visitor per hour
 _recent = {}  # visitor -> timestamps of their last requests (in memory only)
+WISHES_PER_HOUR = 20  # wishes per visitor per hour: choosing several patterns is normal
+MAILS_PER_DAY = 3  # confirmation mails per address per day, so we can't be used to bother someone
+_wish_recent = {}
+_mail_recent = {}
 
 # vanilla "8556666", sync "33p3 4p44" (as the Done tab writes it) or popcorn "(6x,a)(6,6)*"
 PATTERN_RE = re.compile(r"^(?:[0-9a-z]{1,15}|[0-9a-oq-z]p?(?:[0-9a-oq-z]p?){0,14} [0-9a-oq-z]p?(?:[0-9a-oq-z]p?){0,14}|[0-9a-z(),x*]{3,40})$")
@@ -100,7 +128,7 @@ VIDEO_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 VISITOR_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 
 lock = threading.Lock()
-_known = {"mtime": 0, "ids": set(), "keys": set()}
+_known = {"mtime": 0, "ids": set(), "keys": set(), "videos": {}, "list": {}}
 
 
 def db():
@@ -134,12 +162,27 @@ def swipes_db():
     return con
 
 
-def too_many(visitor):
-    """At most PER_HOUR requests per visitor per hour."""
+def wishes_db():
+    con = sqlite3.connect(WISHES_DB)
+    # One row per wish. email is emptied once the wish mail has gone out; endpoint is the browser's push subscription.
+    # notified: the video is online and everyone was told, so the wish no longer counts.
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS wishes ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT NOT NULL, created INTEGER NOT NULL, visitor TEXT NOT NULL,"
+        " token TEXT NOT NULL UNIQUE, endpoint TEXT, email TEXT, email_confirmed INTEGER NOT NULL DEFAULT 0,"
+        " pushed INTEGER NOT NULL DEFAULT 0, news_read INTEGER NOT NULL DEFAULT 0, tries INTEGER NOT NULL DEFAULT 0,"
+        " notified INTEGER NOT NULL DEFAULT 0, UNIQUE (key, visitor))"
+    )
+    return con
+
+
+def too_many(visitor, recent=None, limit=PER_HOUR, window=3600):
+    """At most `limit` requests per visitor per `window` seconds."""
+    recent = _recent if recent is None else recent
     now = time.time()
-    stamps = [t for t in _recent.get(visitor, []) if now - t < 3600]
-    _recent[visitor] = stamps
-    if len(stamps) >= PER_HOUR:
+    stamps = [t for t in recent.get(visitor, []) if now - t < window]
+    recent[visitor] = stamps
+    if len(stamps) >= limit:
         return True
     stamps.append(now)
     return False
@@ -154,6 +197,8 @@ def load_known():
                 data = json.load(f)
             _known["ids"] = {p["youtubeId"] for p in data.get("patterns", []) if p.get("youtubeId")}
             _known["keys"] = {p["key"] for p in data.get("patterns", [])}
+            _known["videos"] = {p["key"]: p for p in data.get("patterns", []) if p.get("youtubeId")}
+            _known["list"] = {p["key"]: p.get("ss") or f'{p.get("a")} | {p.get("b")}' for p in data.get("all", [])}
             _known["mtime"] = mtime
     except (OSError, ValueError):
         pass
@@ -180,6 +225,93 @@ def ask_sync(flag):
         return False
 
 
+# ---------- Wish Tricks: telling people the video is online ----------
+def send_mail(to, subject, lines, stop_token):
+    """One HTTPS call to the mail service. Every mail ends with the unsubscribe link. True when it was accepted."""
+    stop = f"{SITE_URL}/api/wishes/stop?t={stop_token}"
+    text = "\n\n".join(lines) + f"\n\n--\nFunky Orbit, by Piet & Mees. Don't want this? Unsubscribe: {stop}\n"
+    linked = [re.sub(r"(https://\S+)", r'<a href="\1">\1</a>', html.escape(line, quote=False)) for line in lines]
+    body = "".join(f"<p>{line}</p>" for line in linked) + f'<p style="color:#777;font-size:13px">Funky Orbit, by Piet &amp; Mees. <a href="{stop}">Unsubscribe</a></p>'
+    payload = {"from": MAIL_FROM, "to": [to], "subject": subject, "text": text, "html": body,
+               "headers": {"List-Unsubscribe": f"<{stop}>"}}
+    req = urllib.request.Request("https://api.resend.com/emails", data=json.dumps(payload).encode(), method="POST", headers={
+        "Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json", "User-Agent": "funkyorbit-wishes"})
+    try:
+        with urllib.request.urlopen(req, timeout=20):
+            return True
+    except (urllib.error.URLError, OSError) as e:
+        print(f"mail: not sent: {e}", flush=True)  # no address in the logs
+        return False
+
+
+def wish_title(key):
+    known = load_known()
+    video = known["videos"].get(key)
+    return (video or {}).get("siteswap") or known["list"].get(key) or key
+
+
+def send_confirmation(email, key, token):
+    return send_mail(email, f"Confirm your wish: {wish_title(key)}", [
+        f"You wished for {wish_title(key)} on funkyorbit.nl. We'll mail you when its video is online.",
+        f"Please confirm your address: {SITE_URL}/api/wishes/confirm?t={token}",
+        "Not you? Then just ignore this mail: without a confirmation we won't mail you again.",
+    ], token)
+
+
+def tell_wishers():
+    """Tell everyone whose pattern now has a video, then forget the address. Keeps trying what did not work, for a while."""
+    videos = load_known()["videos"]
+    if not videos:
+        return
+    with lock, wishes_db() as con:
+        rows = con.execute("SELECT id, key, token, endpoint, email, email_confirmed, pushed, tries FROM wishes WHERE notified = 0").fetchall()
+    for wid, key, token, endpoint, email, confirmed, pushed, tries in rows:
+        if key not in videos:
+            continue
+        retry = False
+        if endpoint and not pushed and VAPID_PRIVATE_KEY:
+            result = webpush.send(endpoint, VAPID_PRIVATE_KEY, SITE_URL)
+            if result == "gone":
+                with lock, wishes_db() as con:  # the browser dropped it: this also goes for the visitor's other wishes
+                    con.execute("UPDATE wishes SET endpoint = NULL WHERE endpoint = ?", (endpoint,))
+            elif result == "ok":
+                pushed = 1
+            else:
+                retry = True
+        mail_done = False
+        if email and confirmed and RESEND_API_KEY:
+            mail_done = send_mail(email, f"Your wish trick {wish_title(key)} is online!", [
+                f"Your wish came true: the video of {wish_title(key)} is online.",
+                f"Watch it here: {SITE_URL}/wish/?open={urllib.parse.quote(key, safe='')}",
+                "Thanks for wishing! We have now removed your address for this wish.",
+            ], token)
+            retry = retry or not mail_done
+        tries += 1
+        give_up = tries >= 60  # one attempt a minute: about an hour
+        with lock, wishes_db() as con:
+            con.execute("UPDATE wishes SET pushed = ?, tries = ?, notified = ?, email = CASE WHEN ? THEN NULL ELSE email END WHERE id = ?",
+                        (pushed, tries, 0 if retry and not give_up else 1, 1 if (mail_done or give_up or not retry or not confirmed) else 0, wid))
+        if give_up and retry:
+            print(f"wishes: gave up telling a wisher about {key}", flush=True)
+
+
+def wish_loop():
+    while True:
+        try:
+            tell_wishers()
+        except Exception as e:  # a bad moment must never stop the loop
+            print(f"wishes: {e}", flush=True)
+        time.sleep(WISH_LOOP)
+
+
+def answer_page(title, text):
+    return ("<!doctype html><html lang=en><meta charset=utf-8><meta name=viewport content='width=device-width, initial-scale=1'>"
+            "<meta name=robots content=noindex>"
+            f"<title>{html.escape(title)} · Funky Orbit</title><body style='background:#0d1322;color:#e8ecf5;font:17px/1.5 system-ui,sans-serif;"
+            f"max-width:520px;margin:15vh auto;padding:0 20px'><h1 style='font-size:26px'>{html.escape(title)}</h1><p>{html.escape(text)}</p>"
+            "<p><a href='/wish/' style='color:#3dd6c4'>To Wish Tricks</a></p></body></html>")
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "funkyorbit-likes"
 
@@ -191,6 +323,108 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_html(self, status, title, text):
+        body = answer_page(title, text).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _wish_counts(self):
+        with lock, wishes_db() as con:
+            counts = dict(con.execute("SELECT key, COUNT(*) FROM wishes WHERE notified = 0 GROUP BY key"))
+        self._send(200, {"counts": counts, "push": webpush.public_key(VAPID_PRIVATE_KEY) if VAPID_PRIVATE_KEY else None,
+                         "email": bool(RESEND_API_KEY)})
+
+    def _wish_post(self):
+        body = self._body(4096)
+        if body is None:
+            return self._send(400, {"error": "invalid JSON"})
+        if str(body.get("website") or "").strip():
+            return self._send(201, {"ok": True, "token": secrets.token_urlsafe(24), "count": 0, "email": None})  # honeypot: a bot; pretend it worked
+        key, visitor = body.get("key"), body.get("visitor")
+        email = str(body.get("email") or "").strip().lower()
+        endpoint = body.get("push") or None
+        if not (isinstance(visitor, str) and VISITOR_RE.match(visitor)):
+            return self._send(400, {"error": "Something went wrong. Please reload the page and try again."})
+        known = load_known()
+        if not isinstance(key, str) or key not in known["list"]:
+            return self._send(400, {"error": "That pattern is not on our list."})
+        if key in known["videos"]:
+            return self._send(409, {"error": "This pattern already has a video!"})
+        if email and (len(email) > 120 or not EMAIL_RE.match(email)):
+            return self._send(400, {"error": "Please enter a valid email address."})
+        if email and not RESEND_API_KEY:
+            return self._send(503, {"error": "Email is not available yet. Your wish can be saved without it."})
+        if endpoint and not (VAPID_PRIVATE_KEY and webpush.allowed_endpoint(endpoint)):
+            return self._send(400, {"error": "Push notifications do not work in this browser. Please try email."})
+        if too_many(self._visitor(), _wish_recent, WISHES_PER_HOUR):
+            return self._send(429, {"error": "That's a lot of wishes! Please try again later."})
+        with lock, wishes_db() as con:
+            old = con.execute("SELECT token, endpoint, email, email_confirmed FROM wishes WHERE key = ? AND visitor = ?", (key, visitor)).fetchone()
+            token = old[0] if old else secrets.token_urlsafe(24)
+            # an address that is already confirmed needs no new mail
+            confirmed = 1 if email and con.execute("SELECT 1 FROM wishes WHERE email = ? AND email_confirmed = 1", (email,)).fetchone() else 0
+            if old:
+                same = old[2] == email
+                con.execute("UPDATE wishes SET endpoint = COALESCE(?, endpoint), email = COALESCE(?, email), email_confirmed = ? WHERE token = ?",
+                            (endpoint, email or None, (old[3] if same else confirmed) if email else old[3], token))
+            else:
+                con.execute("INSERT INTO wishes (key, created, visitor, token, endpoint, email, email_confirmed) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (key, int(time.time()), visitor, token, endpoint, email or None, confirmed))
+            count = con.execute("SELECT COUNT(*) FROM wishes WHERE key = ? AND notified = 0", (key,)).fetchone()[0]
+            confirmed_now = con.execute("SELECT email_confirmed FROM wishes WHERE token = ?", (token,)).fetchone()[0]
+        mail = None
+        if email:
+            mail = "confirmed"
+            if not confirmed_now:
+                mail = "sent"
+                if not too_many(email, _mail_recent, MAILS_PER_DAY, 86400) and not send_confirmation(email, key, token):
+                    return self._send(502, {"ok": True, "token": token, "count": count, "email": "failed",
+                                            "error": "Your wish is saved, but the confirmation mail could not be sent."})
+        self._send(201, {"ok": True, "token": token, "count": count, "email": mail})
+
+    def _wish_remove(self):
+        token = str((self._body(512) or {}).get("token") or "")
+        with lock, wishes_db() as con:
+            con.execute("DELETE FROM wishes WHERE token = ?", (token,))
+            self._send(200, {"ok": True})
+
+    def _wish_news(self):
+        endpoint = str((self._body(2048) or {}).get("endpoint") or "")
+        with lock, wishes_db() as con:
+            # by video, not by "pushed": the service worker can ask before tell_wishers has noted that the push went out
+            videos = load_known()["videos"]
+            rows = con.execute("SELECT key, id FROM wishes WHERE endpoint = ? AND news_read = 0", (endpoint,)).fetchall() if endpoint else []
+            rows = [r for r in rows if r[0] in videos]
+            con.executemany("UPDATE wishes SET news_read = 1 WHERE id = ?", [(r[1],) for r in rows])
+        self._send(200, {"news": [{"key": r[0], "title": wish_title(r[0])} for r in rows]})
+
+    def _wish_link(self, path, query):
+        token = (parse_qs(query).get("t") or [""])[0]
+        with lock, wishes_db() as con:
+            row = con.execute("SELECT id, email FROM wishes WHERE token = ?", (token,)).fetchone()
+            if path.endswith("/confirm"):
+                if not row or not row[1]:
+                    return self._send_html(404, "This link no longer works", "This wish was removed or has already come true.")
+                con.execute("UPDATE wishes SET email_confirmed = 1 WHERE email = ?", (row[1],))
+                return self._send_html(200, "Your wish is confirmed!", "We'll mail you when the video is online. After that we delete your address.")
+            if row and row[1]:  # the address goes, with its wishes; a wish that also has a push subscription stays for that
+                con.execute("DELETE FROM wishes WHERE email = ? AND endpoint IS NULL", (row[1],))
+                con.execute("UPDATE wishes SET email = NULL, email_confirmed = 0 WHERE email = ?", (row[1],))
+            return self._send_html(200, "You are unsubscribed", "We removed your address and its wishes. You won't get mail from us again.")
+
+    def _wishes_admin(self):
+        if not self._admin():
+            return
+        with lock, wishes_db() as con:
+            rows = con.execute(
+                "SELECT key, COUNT(*), SUM(endpoint IS NOT NULL), SUM(email IS NOT NULL AND email_confirmed = 1) FROM wishes"
+                " WHERE notified = 0 GROUP BY key ORDER BY COUNT(*) DESC, MIN(created)").fetchall()
+        self._send(200, {"wishes": [{"key": r[0], "title": wish_title(r[0]), "count": r[1], "push": r[2], "email": r[3]} for r in rows]})
 
     def _visitor(self):
         # behind Cloudflare and nginx: the visitor's address, only kept in memory for the hourly limit
@@ -393,6 +627,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._requests_get(path)
         if path == "/api/swipes":
             return self._swipes_get()
+        if path == "/api/wishes":
+            return self._wishes_admin()
+        if path == "/api/wishes/counts":
+            return self._wish_counts()
+        if path in ("/api/wishes/confirm", "/api/wishes/stop"):
+            return self._wish_link(path, url.query)
         if path != "/api/likes":
             return self._send(404, {"error": "not found"})
         visitor = (parse_qs(url.query).get("visitor") or [""])[0]
@@ -420,6 +660,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._done_post()
         if path == "/api/swipe":
             return self._swipe_write(False)
+        if path == "/api/wishes":
+            return self._wish_post()
+        if path == "/api/wishes/remove":
+            return self._wish_remove()
+        if path == "/api/wishes/news":
+            return self._wish_news()
         if path != "/api/like":
             return self._send(404, {"error": "not found"})
         try:
@@ -457,5 +703,7 @@ if __name__ == "__main__":
     db().close()
     requests_db().close()
     swipes_db().close()
+    wishes_db().close()
+    threading.Thread(target=wish_loop, daemon=True).start()
     print(f"likes API listening on port {PORT}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

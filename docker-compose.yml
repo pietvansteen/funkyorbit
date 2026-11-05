@@ -40,11 +40,15 @@ services:
       DATA_FILE: /data/data.json
       REQUESTS_DB: /data/requests.db
       SWIPES_DB: /data/swipes.db
+      WISHES_DB: /data/wishes.db
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}   # password for the requests and Add pages, from .env
       SWIPE_TOKENS: ${SWIPE_TOKENS:-}  # personal passwords for the Catch or Drop page only, from .env: Hanna=...,Uwe=...
       SWIPE_TOKEN: ${SWIPE_TOKEN:-}    # the old single password, counts as Hanna's until it is moved into SWIPE_TOKENS
       SHEET_WRITE_URL: ${SHEET_WRITE_URL:-}        # Apps Script web app that writes to Done (apps-script/FunkyOrbit.gs), from .env
       SHEET_WRITE_SECRET: ${SHEET_WRITE_SECRET:-}  # its SECRET script property, from .env
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}    # push notifications for Wish Tricks (tools/make_vapid.py), from .env
+      RESEND_API_KEY: ${RESEND_API_KEY:-}          # the mail service for Wish Tricks (resend.com), from .env
+      MAIL_FROM: ${MAIL_FROM:-Funky Orbit <wishes@funkyorbit.nl>}
     volumes:
       - ./likes:/app:ro
       - ./data:/data

@@ -11,7 +11,7 @@
   const groupClosed = new Set(); // groups the visitor closed while a search had opened them (until the search changes)
   // sort and the filters of the Filter & sort panel; all in the URL (#50)
   const filters = {
-    sort: "family", mode: "global", period: "all", thrown: "all", video: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5, clubs: new Set(),
+    sort: "family", mode: "global", period: "all", thrown: "all", video: false, film: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5, clubs: new Set(),
     colorsIn: new Set(), colorsOut: new Set(), throwsIn: new Set(), throwsOut: new Set(),
   };
   const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" }; // a value is in one of a pair, never both
@@ -25,7 +25,7 @@
     dull: { title: "Least fun first", dir: 1, value: (p) => BEST_RATING.get(p.key) },
   };
   const extraFilters = () => filters.clubs.size + filters.colorsIn.size + filters.colorsOut.size + filters.throwsIn.size + filters.throwsOut.size
-    + (filters.period !== "all") + (filters.thrown !== "all") + filters.video + filters.named + !anyStars() + !anyRating() + (filters.mode === "local");
+    + (filters.period !== "all") + (filters.thrown !== "all") + filters.video + filters.film + filters.named + !anyStars() + !anyRating() + (filters.mode === "local");
   // choosing Local is a filter, but only narrows the list once something is typed
   const filtering = () => !!query.trim() || extraFilters() - (filters.mode === "local") > 0;
   const BEST_RATING = new Map(); // key -> our highest rating, when we threw it more than once
@@ -121,6 +121,7 @@
     }
     const row = doneRow(p.key);
     if (filters.video && !(row && row.youtubeId)) return false;
+    if (filters.film && row && row.youtubeId) return false;
     if (filters.named && !(p.name || (row && row.name))) return false;
     if (!anyStars() && (p.stars == null || p.stars < filters.lo || p.stars > filters.hi)) return false;
     const cs = colorsOf(p), ts = throwsOf(p);
@@ -206,6 +207,7 @@
       set("thrown", filters.thrown !== "all" && filters.thrown);
       set("rating", !anyRating() && `${filters.rlo}-${filters.rhi}`);
       set("video", filters.video && "1");
+      set("film", filters.film && "1");
       set("named", filters.named && "1");
       history.replaceState(null, "", url);
     } catch (e) {}
@@ -318,7 +320,7 @@
     query = "";
     $("#q").value = "";
     const sorted = filters.sort !== "family";
-    Object.assign(filters, { sort: "family", mode: "global", period: "all", thrown: "all", video: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5 });
+    Object.assign(filters, { sort: "family", mode: "global", period: "all", thrown: "all", video: false, film: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5 });
     for (const k of ["clubs", ...Object.keys(LISTS)]) filters[k].clear();
     if (sorted) render();
     applyFilter();
@@ -435,6 +437,7 @@
     if (["3", "5", "7", "async", "sync"].includes(params.get("period"))) filters.period = params.get("period");
     if (["yes", "no"].includes(params.get("thrown"))) filters.thrown = params.get("thrown");
     filters.video = params.get("video") === "1";
+    filters.film = params.get("film") === "1";
     filters.named = params.get("named") === "1";
     for (const n of (params.get("clubs") || "").split(",")) if (clubs.includes(+n)) filters.clubs.add(+n);
     // a link with filters shows them

@@ -1,5 +1,15 @@
 [
   {
+    "version": "3.1.0",
+    "date": "2026-11-05",
+    "changes": [
+      "New page Wish Tricks: wish for a pattern we haven't filmed yet and get told when its video is online, by push, by email or on your next visit",
+      "Every pattern without a video has a Wish button in its pop-up, Progress shows the most wished patterns, and All patterns has a Not filmed yet filter",
+      "New page How it works: how we pick the colours and make the difficulty score, with flowcharts",
+      "How it works: Try a siteswap shows the rules step by step on any pattern you type in"
+    ]
+  },
+  {
     "version": "3.0.2",
     "date": "2026-11-05",
     "changes": [

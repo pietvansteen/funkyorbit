@@ -22,7 +22,7 @@
       <div class="intro">
         <p>We are passing all ${fmt.format(d.total)} club patterns from James Francis' <a href="https://docs.google.com/spreadsheets/d/1NpMVAcPrU1GTDfDsnxD0ERQxB7KFjGT_iaI7GU5Sw_Q/edit?usp=sharing" target="_blank" rel="noopener" data-umami-event="Outbound link" data-umami-event-to="James Francis list">latest list</a>. Many passers have already done some of these patterns (Brook did <span class="tip" tabindex="0">516 patterns<span class="tip-text" role="tooltip">Brook counted every sync pattern twice, once for each side, so 190 of the 516 are sync sides. We count each sync pattern once: 101 on our list, of which Brook did 94.</span></span>). Our goal: every pattern for at least 2 rounds (3 for period 3), recorded on video. Follow along and cheer us on!</p>
         <div class="more" id="intro-more" aria-hidden="true" inert><div>
-          <p>Most patterns are made up of different orbits: groups of clubs that follow their own path through the pattern. We use clubs in different colours so you can see each orbit, which makes it a lot easier to follow what's going on.</p>
+          <p>Most patterns are made up of different orbits: groups of clubs that follow their own path through the pattern. We use clubs in different colours so you can see each orbit, which makes it a lot easier to follow what's going on. <a href="/rules/#colours">How we pick the colours →</a></p>
         </div></div>
         <button type="button" class="read-more" aria-expanded="false" aria-controls="intro-more">
           <span>Read more</span>
@@ -308,6 +308,14 @@
     renderHero(DATA);
     renderGroups(DATA);
     initPopup(DATA);
+    const paintTop = () => {
+      const html = window.FO.wishes.topHtml(10);
+      $("#wish-top").innerHTML = html;
+      $("#wish-top").hidden = !html;
+      $("#wish-empty").hidden = !!html;
+    };
+    document.addEventListener("fo-wishes", paintTop);
+    paintTop();
     await likes.load();
     renderFeed();
   }

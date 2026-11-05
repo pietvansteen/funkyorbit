@@ -49,6 +49,16 @@
     $("#login").hidden = true;
     $("#admin").hidden = false;
     render(j.requests, j.new);
+    loadWished();
+  }
+
+  // the patterns visitors wish for (Wish Tricks), most wished first
+  async function loadWished() {
+    const r = await fetch("/api/wishes", { headers: auth(), cache: "no-store" }).catch(() => null);
+    const list = r && r.ok ? (await r.json()).wishes : [];
+    $("#wished").hidden = !list.length;
+    $("#wished-count").textContent = `${list.reduce((n, w) => n + w.count, 0)} open wishes`;
+    $("#wished-list").innerHTML = list.map((w) => `<li><b>${esc(w.title)}</b> <span>${w.count} wish${w.count === 1 ? "" : "es"} · ${w.push} push · ${w.email} email</span></li>`).join("");
   }
 
   $("#login").addEventListener("submit", (ev) => {

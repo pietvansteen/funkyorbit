@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0d1322">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Funky Orbit">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>html { background: #0d1322; color-scheme: dark; }</style>
+<title>How it works · Project Funky Orbit</title>
+<meta name="description" content="How we pick the club colours and how the difficulty score is made, with flowcharts. Try it on your own siteswap.">
+<link rel="icon" href="/favicon.svg?v=3.1.0-053d20" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
+<link rel="stylesheet" href="/style.css?v=3.1.0-053d20">
+</head>
+<body>
+<header class="wrap top">
+  <a class="brand" href="/" aria-label="Funky Orbit, home">
+    <img src="/favicon.svg?v=3.1.0-053d20" width="46" height="46" alt="">
+    <b>Funky Orbit</b>
+  </a>
+  <nav class="nav" aria-label="Pages">
+    <a href="/">Progress</a>
+    <a href="/patterns/">All patterns</a>
+    <a href="/gen/">Generator</a>
+    <a href="/stats/">Stats</a>
+    <a href="/names/">Behind the Name</a>
+    <a href="/wish/">Wish Tricks</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero compact">
+    <span class="label">Project Funky Orbit by Piet &amp; Mees</span>
+    <h1 class="num">How it works</h1>
+    <p>How we pick the colours of the clubs and how the difficulty score is made. Type your own siteswap at the bottom to see the rules at work.</p>
+  </section>
+
+  <div class="rules">
+    <h2 id="colours">Orbits &amp; colours</h2>
+    <p>A pattern is made up of <b>orbits</b>: groups of throws that keep passing the same clubs around. A club thrown as a 9 lands where the next throw of its orbit starts, and so on, until it is back where it began. Each orbit gets its own club colour, so you can see what's going on.</p>
+    <p>An odd throw is a pass and an even throw is a self. The number of clubs in an orbit is the sum of its throws divided by the period: in 97586 (period 5), the orbit 9 + 6 holds (9 + 6) / 5 = 3 clubs.</p>
+    <p>All throws that are a multiple of the period form one orbit and share a fixed colour, however many of them there are: 9 and 6 in period 3, a and 5 in period 5, 7 in period 7. They always come back to the same juggler, so you recognise them at once in every pattern.</p>
+  </div>
+  <div class="charts" id="colour-charts"></div>
+  <div class="rules">
+    <h3>One example per period</h3>
+    <ul class="rule-examples" id="examples"></ul>
+
+    <h2 id="difficulty">Difficulty</h2>
+    <p>The score adds up how hard the throws are, plus extra points for tricky combinations. &ldquo;In a row&rdquo; means in the order one juggler throws them, so every second throw of the siteswap. A sync pattern is worked out for both jugglers and gets the score of the harder side.</p>
+  </div>
+  <div class="charts" id="score-charts"></div>
+  <div class="rules">
+    <h3>From score to stars</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Score from</th><th>Stars</th><th>For example</th></tr></thead>
+      <tbody id="stars-table"></tbody>
+    </table></div>
+    <p>The stars are generated with these rules, for every pattern. Our own <em>felt</em> difficulty is something else: that's what we write down after throwing a pattern, and it does not change the score.</p>
+
+    <h2 id="throws">How we throw</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Throw</th><th>Sync</th><th>What it is</th></tr></thead>
+      <tbody id="throws-table"></tbody>
+    </table></div>
+
+    <h2 id="try">Try a siteswap</h2>
+    <p>Type a siteswap or a sync pattern, in any rotation. You'll see the steps here, and the boxes they come from light up in the flowcharts above: tap a step to jump to its box.</p>
+    <div class="try-box">
+      <form class="try-input" id="try-form" role="search">
+        <input type="text" id="try" placeholder="7a6, 97586 or 33p3 4p44" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Type a siteswap">
+        <button type="submit" class="chip">Show</button>
+      </form>
+      <div class="try-examples" id="try-examples">Try: </div>
+      <div class="try-result" id="try-result" aria-live="polite"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="wrap"><span>funkyorbit.nl</span> <span class="foot-links"><a class="version" href="/changes/">v3.1.0 · What's new</a> · <a href="/rules/">How it works</a> · <a class="request-link" href="/request/">Request a feature</a></span></footer>
+<script src="/shared.js?v=3.1.0-053d20"></script>
+<script src="/rules/engine.js?v=3.1.0-053d20"></script>
+<script src="/rules/rules.js?v=3.1.0-053d20"></script>
+</body>
+</html>

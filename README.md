@@ -12,11 +12,14 @@ Google Sheet ──(daily, or at once)──> sync ──> data/data.json ──
 
 | Folder | What |
 |---|---|
-| `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats and the map of filming locations), `gen/` (pattern generator), `map/` (the map on the Stats page, with Leaflet), `names/` (Behind the Name), `catch/` and `login/` (both hidden), `changes/` (release notes), `shared.js`, `style.css`, icons |
+| `site/` | The website: `index.html` + `app.js` (progress and videos), `patterns/` (all patterns), `stats/` (funny stats and the map of filming locations), `gen/` (pattern generator), `map/` (the map on the Stats page, with Leaflet), `names/` (Behind the Name), `wish/` (Wish Tricks), `rules/` (How it works; `rules/engine.js` holds the colour and difficulty rules in JS), `catch/` and `login/` (both hidden), `changes/` (release notes), `shared.js`, `style.css`, icons |
 | `sync/sync.py` | Fetches the Sheet tabs as CSV and writes `data/data.json` |
 | `likes/likes.py` | Small API: likes (one per visitor per video, via a cookie) and feature requests, both in SQLite, and logging a pattern we juggled (via the Apps Script) |
 | `apps-script/FunkyOrbit.gs` | Apps Script bound to the Sheet: writes a logged pattern as a new row in *Done* |
 | `web/nginx.conf` | Serves the site and `data.json`, forwards `/api/` to the likes API and `/u/` (tracker only) to Umami |
+| `likes/webpush.py` | Web Push with the standard library only: signs the VAPID token and sends a push without a payload |
+| `tools/check_rules.py` | Compares `site/rules/engine.js` with the Sheet for every pattern |
+| `tools/make_vapid.py` | Makes the key for push notifications |
 | `tools/release.py` | Puts the newest version from `site/changelog.json` in the footer, the asset links and the service worker |
 | `docker-compose.yml` | Runs everything with Docker Compose, plus Umami (visitor statistics) and a Cloudflare Tunnel |
 
@@ -45,6 +48,8 @@ echo "ADMIN_TOKEN=<password for /requests/ and /add/>" >> .env
 echo "SWIPE_TOKENS=Hanna=<password>,Uwe=<password>" >> .env   # personal passwords for /catch/ only
 echo "SHEET_WRITE_URL=<Apps Script web app /exec URL>" >> .env
 echo "SHEET_WRITE_SECRET=<the SECRET script property>" >> .env
+echo "VAPID_PRIVATE_KEY=<from python3 tools/make_vapid.py>" >> .env   # push notifications for Wish Tricks
+echo "RESEND_API_KEY=<API key of the mail service>" >> .env            # email for Wish Tricks
 echo "UMAMI_DB_PASSWORD=$(openssl rand -hex 16)" >> .env
 echo "UMAMI_APP_SECRET=$(openssl rand -hex 32)" >> .env
 docker compose up -d
@@ -80,6 +85,9 @@ Umami shows page views, visitors, bounce rate and visit duration per day, week o
 | `Open group` | `group` | a progress tile opens (home) |
 | `Draw pattern` | `period`, `stars`, `hide`, `found` | the generator draws a pattern |
 | `Send request` | | a feature request is sent |
+| `Wish` | `key`, `push`, `email` | someone wishes for a pattern |
+| `Wish online seen` | `key` | the banner says that a wish came true |
+| `Try a siteswap` | `siteswap`, `listed` | someone submits or picks a pattern on How it works |
 | `Outbound link` | `to` | the YouTube channel or James Francis' list is opened |
 | `Install app` | | the site is installed as an app (not every browser reports this) |
 
@@ -92,6 +100,30 @@ To see visitors from Instagram even when the app hides the referrer, link to `ht
 Visitors send ideas via **Request a feature** in the footer (`/request/`): name, email and request (a checkbox for Mees replaces the email). They are stored on the server in `data/requests.db`, never on the public site. Spam is kept out with a hidden honeypot field, a limit of 3 requests per visitor per hour and maximum field lengths.
 
 Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallowed in `robots.txt`) asks for the password set as `ADMIN_TOKEN` in `.env`. There you can give each request a status (new, planned, done, no) and download all of them as CSV. A device that is logged in also shows the number of new requests in the footer.
+
+## Wish Tricks
+
+On `/wish/` visitors pick a pattern we haven't filmed and wish for it. The Wish button is also in the pattern pop-up and under a drawn pattern in the generator. Wishes are in `data/wishes.db`, one per visitor per pattern. Visitors see the number of wishes per pattern and a top 10; `/requests/` shows us the *Most wished* list. Spam is kept out with a honeypot field, 20 wishes per visitor per hour, and 3 confirmation mails per address per day.
+
+When a pattern gets a video in `data.json`, `likes.py` tells the wishers (it looks every minute, so also right after a restart, and tries what failed again for about an hour). There are three ways, and only the first needs nothing on the server:
+
+1. **Next visit**: the wish is kept on the device (`localStorage fo_wishes`), and any page shows a banner, once per wish.
+2. **Push**, offered when `VAPID_PRIVATE_KEY` is set. Make the key once with `python3 tools/make_vapid.py`, and keep it: a new key ends all existing subscriptions. The push has no content, so nothing has to be encrypted; the service worker then asks `POST /api/wishes/news` what to show. On iPhone and iPad push only works once the site is on the home screen, and the page says so. Subscriptions that no longer exist (404/410) are removed.
+3. **Email**, offered when `RESEND_API_KEY` is set. Mail goes out through [Resend](https://resend.com) with one HTTPS call, there is no mail server. Setting it up: make an account, add the domain `funkyorbit.nl`, put the DNS records it asks for (SPF, DKIM) in Cloudflare, make an API key with sending access and put it in `.env`. The default sender is `Funky Orbit <wishes@funkyorbit.nl>` (`MAIL_FROM`). An address gets a confirmation mail first and nothing else until it is confirmed. Every mail has an unsubscribe link, and an address is deleted once the wish mail has gone out.
+
+After setting either key: `docker compose up -d`.
+
+## How it works page (the rules)
+
+`/rules/` explains the colour and difficulty rules with flowcharts, and *Try a siteswap* (`/rules/?try=7a6`) shows them step by step. A pattern on our list uses the colours and score from `data.json`; any other valid pattern is worked out by `site/rules/engine.js`.
+
+The page does not read the Sheet tabs *Kleurregels* and *Moeilijkheidsregels*: **when a rule changes there, also change `engine.js` and the box in the flowchart (`site/rules/rules.js`)**. Then compare with the Sheet, using fresh CSV files of *Kleuren*, *Kleuren sync* and *Moeilijkheid* in `testdata/`:
+
+```sh
+python3 tools/check_rules.py
+```
+
+It needs a Mac (JavaScriptCore). It should say 0 differences. The colours and stars match for all 913 patterns; 29 scores are 0.1 off, none across a star boundary. Those are listed as rounding, because the Sheet's layer 2 column does not always equal the sum of its own breakdown (`a5a8522`: 8.0 and 8.1). Three rules were not in the rules tab and were read from the Sheet's numbers: pass/self switches count `changes − 2`, a repeated 5/a penalty halves the largest first, and with two dragons back to back (9595) the step 5-9 does not count as alternating passes.
 
 ## Logging a pattern (Add page)
 

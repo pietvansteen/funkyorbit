@@ -215,7 +215,8 @@
         It adds up how hard the throws are (more spins and more passes are harder; selfs and zips give a moment of rest)
         plus extra points for tricky combinations, such as a dragon (9_5), a 5 next to a triple, or two triples in a row.
         Our patterns go from about 1 (easiest) to ${Math.ceil(maxScore)} (hardest).
-        ½ ★ is a score below 4.5, 5 ★ is 17 or more, and in between every 1.5 points adds half a star.</span></span>`;
+        ½ ★ is a score below 4.5, 5 ★ is 17 or more, and in between every 1.5 points adds half a star.
+        <a class="tip-link" href="/rules/#difficulty">How the score works →</a></span></span>`;
   }
 
   // ---------- visitor statistics (Umami, self-hosted: web/nginx.conf passes /u/ on to it) ----------
@@ -354,6 +355,7 @@
       <button type="button" class="modal-close modal-nav down" id="modal-next" aria-label="Next video" hidden>${icon("M5 9l7 7 7-7")}</button>
       <div id="modal-body"></div>`;
     document.body.appendChild(dlg);
+    loadWishes();
     // stop the video when the pop-up closes (button, Esc or a click next to it)
     // (the close event comes a moment later: when another pop-up was opened in the meantime, keep that one)
     dlg.addEventListener("close", () => {
@@ -475,6 +477,7 @@
           </div>
           ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
           <span class="fam">${families.map(esc).join("<br>")}</span>
+          ${items.length && !(p && p.youtubeId) ? wishButton(key) : ""}
           ${items.length ? startHtml(item) : ""}
           ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
           ${diff}
@@ -482,6 +485,166 @@
         </div>
       </article>`;
   }
+
+  // ---------- Wish Tricks (#61): wish for a pattern without a video, and hear from us when it is online ----------
+  // Own wishes are kept on this device (fo_wishes: [{key, token, at, seen}]); the counts come from the API.
+  const WISH_KEY = "fo_wishes";
+  const WISH = { counts: {}, push: null, email: false, loading: null, online: false };
+  const myWishes = () => { try { const l = JSON.parse(localStorage.getItem(WISH_KEY) || "[]"); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
+  const saveWishes = (l) => { try { localStorage.setItem(WISH_KEY, JSON.stringify(l)); } catch (e) {} };
+  const hasWish = (key) => myWishes().some((w) => w.key === key);
+  const wishCount = (key) => WISH.counts[key] || 0;
+  const wishWord = (n) => `${n} wish${n === 1 ? "" : "es"}`;
+
+  function loadWishes() {
+    if (!WISH.loading) {
+      WISH.loading = PREVIEW ? Promise.resolve() : fetch("/api/wishes/counts", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (j) { Object.assign(WISH, { counts: j.counts || {}, push: j.push, email: j.email, online: true }); paintWishes(); } })
+        .catch(() => {});
+    }
+    return WISH.loading;
+  }
+  // every wish button and count on the page, and whatever else listens (the top 10, the wish page)
+  function paintWishes() {
+    document.querySelectorAll("[data-wish]").forEach((b) => {
+      if (b.classList.contains("wish-btn")) b.outerHTML = wishButton(b.dataset.wish);
+    });
+    document.dispatchEvent(new Event("fo-wishes"));
+  }
+  function wishButton(key) {
+    const n = wishCount(key), mine = hasWish(key);
+    return `<button type="button" class="wish-btn${mine ? " mine" : ""}" data-wish="${esc(key)}"${mine ? " disabled" : ""}>
+      <span>${mine ? "You wished for this ✨" : "Not filmed yet – <b>Wish this trick ✨</b>"}</span>${n ? `<small>${wishWord(n)}</small>` : ""}</button>`;
+  }
+  // The patterns most wished for that still have no video
+  function wishTop(n = 10) {
+    return Object.entries(WISH.counts)
+      .filter(([key, c]) => c > 0 && POP.items.has(key) && !(POP.done.get(key) || {}).youtubeId)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, n);
+  }
+  const wishTopHtml = (n) => wishTop(n).map(([key, c], i) =>
+    `<li><button type="button" data-open="${esc(key)}" aria-label="${esc(key)}: show details"><span class="wish-rank">${i + 1}</span>${patternHtml(key, "sm", key)}<small>${wishWord(c)}</small></button></li>`).join("");
+
+  const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const canPush = () => !!WISH.push && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+
+  function wishForm(key) {
+    const push = canPush(), iosNote = IOS && !STANDALONE;
+    return `<form class="wish-form" id="wish-form" novalidate>
+      <button type="button" class="modal-close" data-wish-close aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+      <h2 id="wish-title">Wish this trick</h2>
+      <div class="wish-pat">${patternHtml(key, "lg", key)}</div>
+      <p>${push || WISH.email ? "When the video is online, we'll let you know. How?" : "When the video is online, you'll see it here on your next visit, on this device."}</p>
+      ${push ? `<label class="opt check"><input type="checkbox" id="wish-push"><span class="opt-name">Notify me by push</span></label>` : ""}
+      ${iosNote && WISH.push && !push ? `<p class="wish-note">On iPhone and iPad, push only works once this site is on your home screen (Share → <b>Add to Home Screen</b>). Email always works.</p>` : ""}
+      ${WISH.email ? `<label class="wish-email">Email <small>only for this; deleted once we've told you</small><input type="email" id="wish-email" maxlength="120" autocomplete="email" placeholder="you@example.com"></label>` : ""}
+      <label class="hp" aria-hidden="true">Website <input type="text" id="wish-website" tabindex="-1" autocomplete="off"></label>
+      ${push || WISH.email ? `<p class="wish-note">Or leave these empty: you'll always see it here on your next visit, on this device.</p>` : ""}
+      <p class="req-msg" id="wish-msg" role="status" hidden></p>
+      <button type="submit" class="draw" id="wish-send">Wish this trick ✨</button>
+    </form>`;
+  }
+
+  function openWish(key) {
+    let dlg = document.getElementById("wish-dialog");
+    if (!dlg) {
+      dlg = document.createElement("dialog");
+      dlg.className = "modal wish-dialog";
+      dlg.id = "wish-dialog";
+      dlg.setAttribute("aria-labelledby", "wish-title");
+      document.body.appendChild(dlg);
+      dlg.addEventListener("click", (ev) => { if (ev.target === dlg || ev.target.closest("[data-wish-close]")) dlg.close(); });
+      dlg.addEventListener("submit", (ev) => { ev.preventDefault(); sendWish(dlg.dataset.key); });
+    }
+    dlg.dataset.key = key;
+    dlg.innerHTML = `<p class="wish-note">One moment…</p>`;
+    dlg.showModal();
+    // the choices depend on what the server can do
+    loadWishes().then(() => { if (dlg.open && dlg.dataset.key === key) dlg.innerHTML = wishForm(key); });
+  }
+
+  async function pushEndpoint() {
+    if (Notification.permission === "denied") throw new Error("Notifications are blocked for this site in your browser. You can use email instead.");
+    const ready = Promise.race([navigator.serviceWorker.ready, new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 10000))]);
+    const reg = await ready;
+    const raw = atob(WISH.push.replace(/-/g, "+").replace(/_/g, "/"));
+    const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({
+      userVisibleOnly: true, applicationServerKey: Uint8Array.from(raw, (c) => c.charCodeAt(0)) });
+    return sub.endpoint;
+  }
+
+  async function sendWish(key) {
+    const dlg = document.getElementById("wish-dialog");
+    const val = (id) => { const el = dlg.querySelector(id); return el ? el.value.trim() : ""; };
+    const say = (text) => { const m = dlg.querySelector("#wish-msg"); m.textContent = text; m.hidden = !text; };
+    const send = dlg.querySelector("#wish-send");
+    const email = val("#wish-email");
+    if (email && !/^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/.test(email)) return say("Please enter a valid email address.");
+    say("");
+    send.disabled = true;
+    send.textContent = "Saving…";
+    try {
+      let push = null;
+      if (dlg.querySelector("#wish-push")?.checked) {
+        try { push = await pushEndpoint(); }
+        catch (e) { throw new Error(/blocked/.test(e.message) ? e.message : "Push could not be switched on here. You can use email instead."); }
+      }
+      const r = await fetch("/api/wishes", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, visitor: VISITOR, email: email || undefined, push: push || undefined, website: val("#wish-website") }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!j.token) throw new Error(j.error || "Your wish could not be saved. Please try again in a moment.");
+      saveWishes([...myWishes().filter((w) => w.key !== key), { key, token: j.token, at: Date.now(), via: [push && "push", email && "email"].filter(Boolean) }]);
+      if (j.count) WISH.counts[key] = j.count;
+      track("Wish", { key, push: !!push, email: !!email });
+      paintWishes();
+      const how = j.email === "sent" ? "We sent you a mail: please click the link in it to confirm your address."
+        : j.email === "failed" ? "The confirmation mail could not be sent, so we can't mail you. You'll still see it here on your next visit."
+        : push || email ? "We'll let you know when the video is online." : "You'll see it here when the video is online.";
+      dlg.innerHTML = `<div class="wish-form wish-done"><h2 id="wish-title">Your wish is saved! ✨</h2><div class="wish-pat">${patternHtml(key, "lg", key)}</div>
+        <p>${how}</p><p class="wish-note">${wishWord(wishCount(key))} for this pattern so far.</p>
+        <button type="button" class="draw" data-wish-close>Close</button> <a class="wish-more" href="/wish/">My wishes</a></div>`;
+    } catch (e) {
+      say(e.message || "Your wish could not be saved. Please try again in a moment.");
+      send.disabled = false;
+      send.textContent = "Wish this trick ✨";
+    }
+  }
+
+  async function removeWish(key) {
+    const w = myWishes().find((x) => x.key === key);
+    saveWishes(myWishes().filter((x) => x.key !== key));
+    if (WISH.counts[key]) WISH.counts[key]--;
+    paintWishes();
+    if (w && w.token) fetch("/api/wishes/remove", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: w.token }) }).catch(() => {});
+  }
+
+  // On any page, once per wish: "Your wish trick 7a6 is online!". Needs nothing but data.json and this device.
+  async function wishBanner() {
+    const open = myWishes().filter((w) => !w.seen);
+    if (PREVIEW || !open.length) return;
+    let data;
+    try { data = await (await fetch("/data.json", { cache: "no-cache" })).json(); } catch (e) { return; }
+    const videos = new Map((data.patterns || []).filter((p) => p.youtubeId).map((p) => [p.key, p]));
+    const online = open.filter((w) => videos.has(w.key));
+    if (!online.length) return;
+    const box = document.createElement("div");
+    box.className = "wish-banners";
+    box.innerHTML = online.map((w) => `<div class="wish-banner" role="status"><span>✨ Your wish trick <b>${esc(videos.get(w.key).siteswap)}</b> is online!</span>
+      <a href="/wish/?open=${encodeURIComponent(w.key)}">Watch it</a><button type="button" aria-label="Close">×</button></div>`).join("");
+    box.addEventListener("click", (ev) => { if (ev.target.closest("button")) ev.target.closest(".wish-banner").remove(); });
+    document.body.appendChild(box);
+    const seen = new Set(online.map((w) => w.key));
+    saveWishes(myWishes().map((w) => (seen.has(w.key) ? { ...w, seen: true } : w)));
+    online.forEach((w) => track("Wish online seen", { key: w.key }));
+  }
+  document.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-wish]");
+    if (b && !b.disabled) { ev.stopPropagation(); openWish(b.dataset.wish); }
+  });
+  wishBanner();
 
   // ---------- menu: the links in the header on wide screens, a tab bar at the bottom on phones ----------
   const tabIcon = (d) => `<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -553,5 +716,6 @@
   const ICON_SOON = `<span class="row-icon" title="Video coming soon" role="img" aria-label="Video coming soon"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`;
   const videoIcon = (p) => (p.youtubeId ? ICON_VIDEO : ICON_SOON);
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch };
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch,
+    wishes: { load: loadWishes, button: wishButton, list: myWishes, has: hasWish, count: wishCount, word: wishWord, remove: removeWish, open: openWish, topHtml: wishTopHtml } };
 })();

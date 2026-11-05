@@ -14,15 +14,15 @@
 <style>html { background: #0d1322; color-scheme: dark; }</style>
 <title>Project Funky Orbit by Piet &amp; Mees</title>
 <meta name="description" content="Follow our progress through hundreds of club passing patterns, with videos of every pattern we land.">
-<link rel="icon" href="favicon.svg?v=3.0.2-71fcdf" type="image/svg+xml">
+<link rel="icon" href="favicon.svg?v=3.1.0-053d20" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=3.0.2-71fcdf">
+<link rel="stylesheet" href="style.css?v=3.1.0-053d20">
 </head>
 <body>
 <!-- Splash with our name when the installed app starts (the phone's own splash only shows the logo); once per app session -->
-<div class="splash" id="splash" hidden aria-hidden="true"><img src="favicon.svg?v=3.0.2-71fcdf" width="128" height="128" alt=""><b>Funky Orbit</b></div>
+<div class="splash" id="splash" hidden aria-hidden="true"><img src="favicon.svg?v=3.1.0-053d20" width="128" height="128" alt=""><b>Funky Orbit</b></div>
 <script>
   (function () {
     var app = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
@@ -34,7 +34,7 @@
 </script>
 <header class="wrap top">
   <a class="brand" href="./" aria-label="Funky Orbit, home">
-    <img src="favicon.svg?v=3.0.2-71fcdf" width="46" height="46" alt="">
+    <img src="favicon.svg?v=3.1.0-053d20" width="46" height="46" alt="">
     <b>Funky Orbit</b>
   </a>
   <nav class="nav" aria-label="Pages">
@@ -43,6 +43,7 @@
     <a href="/gen/">Generator</a>
     <a href="/stats/">Stats</a>
     <a href="/names/">Behind the Name</a>
+    <a href="/wish/">Wish Tricks</a>
   </nav>
 </header>
 
@@ -53,6 +54,15 @@
     <div class="section-head"><h2 id="h-groups">Progress by category</h2></div>
     <div class="tiles" id="tiles" role="group" aria-label="Categories"></div>
     <div class="detail" id="detail" hidden></div>
+  </section>
+
+  <section class="wish-card" id="wish-card" aria-labelledby="h-wish">
+    <div class="section-head">
+      <h2 id="h-wish">Most wished</h2>
+      <a class="wish-more" href="/wish/" data-umami-event="Make a wish">Make a wish →</a>
+    </div>
+    <p class="wish-empty" id="wish-empty">Which pattern should we film next? Pick one and we'll tell you when its video is online.</p>
+    <ol class="wish-top" id="wish-top" hidden></ol>
   </section>
 
   <section class="filter-bar" aria-label="Search and dates">
@@ -87,7 +97,7 @@
         <h2 id="h-feed">Latest videos</h2>
         <span class="label" id="feed-count"></span>
       </div>
-      <div class="legend" aria-label="Digits are coloured by club"><span><i class="sw c-w"></i>white</span><span><i class="sw c-b"></i>blue</span><span><i class="sw c-o"></i>orange</span><span><i class="sw c-r"></i>pink</span></div>
+      <div class="legend" aria-label="Digits are coloured by club"><span><i class="sw c-w"></i>white</span><span><i class="sw c-b"></i>blue</span><span><i class="sw c-o"></i>orange</span><span><i class="sw c-r"></i>pink</span><a href="/rules/#colours">How we pick them →</a></div>
     </div>
     <div class="stills" id="stills"></div>
     <div id="stills-end"></div>
@@ -98,8 +108,8 @@
   </section>
 </main>
 
-<footer class="wrap"><span>funkyorbit.nl · Progress is updated as soon as we log a pattern. <span id="updated"></span></span> <span class="foot-links"><a class="version" href="/changes/">v3.0.2 · What's new</a> · <a class="request-link" href="/request/">Request a feature</a></span></footer>
-<script src="shared.js?v=3.0.2-71fcdf"></script>
-<script src="app.js?v=3.0.2-71fcdf"></script>
+<footer class="wrap"><span>funkyorbit.nl · Progress is updated as soon as we log a pattern. <span id="updated"></span></span> <span class="foot-links"><a class="version" href="/changes/">v3.1.0 · What's new</a> · <a href="/rules/">How it works</a> · <a class="request-link" href="/request/">Request a feature</a></span></footer>
+<script src="shared.js?v=3.1.0-053d20"></script>
+<script src="app.js?v=3.1.0-053d20"></script>
 </body>
 </html>

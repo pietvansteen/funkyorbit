@@ -78,6 +78,7 @@
       <div class="pick-pat${hidden ? " hidden-colors" : ""}">${pat}</div>
       ${p.name ? `<p class="pick-name">${FO.nameLinks(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
+      ${hidden || (FO.doneRow(p.key) || {}).youtubeId ? "" : FO.wishes.button(p.key)}
       ${opts.hidehands ? "" : startHtml(p, shown)}
       <dl class="pick-meta">
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>
@@ -212,7 +213,7 @@
     let data;
     try {
       data = await (await fetch("/data.json", { cache: "no-cache" })).json();
-      FO.setStories(data);
+      FO.initPopup(data); // for the wish dialog and the stories
     } catch (e) {
       $("#pick").innerHTML = `<p class="empty">The pattern list could not be loaded. Open this page once with internet, after that it also works offline.</p>`;
       return;
