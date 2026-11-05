@@ -1,26 +1,26 @@
 /* Funky Orbit web app: works offline in a sports hall without (good) wifi, on every page.
    Pages and data.json come from the network when possible, otherwise the last copy we got.
    Scripts, styles and fonts come from the cache first. The cache name is set by tools/release.py. */
-const VERSION = "fo-site-3.2.0-30083a";
+const VERSION = "fo-site-3.2.1-71666e";
 const PAGES = ["/", "/stats/", "/patterns/", "/gen/", "/names/", "/wish/", "/rules/", "/changes/", "/request/"];
 const FILES = [
   ...PAGES,
-  "/app.js?v=3.2.0-30083a",
-  "/stats/stats.js?v=3.2.0-30083a",
-  "/patterns/patterns.js?v=3.2.0-30083a",
-  "/gen/gen.js?v=3.2.0-30083a",
-  "/map/map.js?v=3.2.0-30083a",
-  "/map/leaflet.js?v=3.2.0-30083a",
-  "/map/leaflet.css?v=3.2.0-30083a",
-  "/names/names.js?v=3.2.0-30083a",
-  "/changes/changes.js?v=3.2.0-30083a",
-  "/request/request.js?v=3.2.0-30083a",
-  "/wish/wish.js?v=3.2.0-30083a",
-  "/rules/rules.js?v=3.2.0-30083a",
-  "/rules/engine.js?v=3.2.0-30083a",
-  "/shared.js?v=3.2.0-30083a",
-  "/style.css?v=3.2.0-30083a",
-  "/favicon.svg?v=3.2.0-30083a",
+  "/app.js?v=3.2.1-71666e",
+  "/stats/stats.js?v=3.2.1-71666e",
+  "/patterns/patterns.js?v=3.2.1-71666e",
+  "/gen/gen.js?v=3.2.1-71666e",
+  "/map/map.js?v=3.2.1-71666e",
+  "/map/leaflet.js?v=3.2.1-71666e",
+  "/map/leaflet.css?v=3.2.1-71666e",
+  "/names/names.js?v=3.2.1-71666e",
+  "/changes/changes.js?v=3.2.1-71666e",
+  "/request/request.js?v=3.2.1-71666e",
+  "/wish/wish.js?v=3.2.1-71666e",
+  "/rules/rules.js?v=3.2.1-71666e",
+  "/rules/engine.js?v=3.2.1-71666e",
+  "/shared.js?v=3.2.1-71666e",
+  "/style.css?v=3.2.1-71666e",
+  "/favicon.svg?v=3.2.1-71666e",
   "/manifest.webmanifest",
   "/changelog.json",
   "/icons/icon-192.png?v=2",

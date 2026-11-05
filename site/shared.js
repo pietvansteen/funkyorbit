@@ -530,11 +530,12 @@
       .filter(([key, c]) => c > 0 && POP.items.has(key) && !POP.done.has(key))
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, n);
   }
+  // the names are in the pop-up; the list itself only counts
   const wishTopHtml = (n) => wishTop(n).map(([key, c], i) => {
     const name = ((POP.items.get(key) || [])[0] || {}).name;
     return `<li><button type="button" data-open="${esc(key)}" aria-label="${esc(key)}: show details"><span class="wish-rank">${i + 1}</span>
       <span class="wish-top-pat">${patternHtml(key, "sm", key)}${name ? `<span class="wish-top-name">${esc(name)}</span>` : ""}</span>
-      <span class="wish-top-n">${wishWord(c)}<small>${wishedBy(key).replace(/^wished by /, "by ")}</small></span></button></li>`;
+      <span class="wish-top-n">${wishWord(c)}</span></button></li>`;
   }).join("");
 
   const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);

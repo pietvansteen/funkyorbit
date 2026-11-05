@@ -972,18 +972,13 @@ body:has(.swipe-page) #modal .start { display: none; }
 .wish-top { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
 .wish-top li + li { border-top: 1px solid var(--line); }
 .wish-top button {
-  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 6px 14px; width: 100%; padding: 10px 14px;
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; width: 100%; padding: 8px 14px;
   background: none; border: 0; color: var(--ink); cursor: pointer; font: inherit; text-align: left;
 }
 .wish-top button:hover { background: var(--track); }
 .wish-top-pat { display: grid; gap: 3px; justify-items: start; min-width: 0; }
 .wish-top-name { color: var(--muted); font-size: 13px; }
-.wish-top-n { display: grid; justify-items: end; text-align: right; font-size: 14px; font-weight: 600; white-space: nowrap; }
-.wish-top-n small { color: var(--muted); font-weight: 400; font-size: 13px; white-space: normal; max-width: 220px; }
-@media (max-width: 560px) {
-  .wish-top button { grid-template-columns: 22px minmax(0, 1fr); }
-  .wish-top-n { grid-column: 2; justify-items: start; text-align: left; }
-}
+.wish-top-n { color: var(--muted); font-size: 13px; white-space: nowrap; }
 .wish-rank { font-family: var(--f-mono); color: var(--muted); font-size: 13px; }
 .wish-banners { position: fixed; z-index: 50; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: grid; gap: 8px; width: min(520px, calc(100vw - 32px)); }
 .wish-banner { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--club-soft); border: 1px solid var(--club); border-radius: var(--radius); box-shadow: 0 8px 28px #0008; }
