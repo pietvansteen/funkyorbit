@@ -552,6 +552,7 @@
       ${push ? `<label class="opt check"><input type="checkbox" id="wish-push"><span class="opt-name">Send me a push notification</span></label>` : ""}
       ${iosNote && WISH.push && !push ? `<p class="wish-note">On iPhone and iPad, push notifications only work once this site is on your home screen (Share → <b>Add to Home Screen</b>). Email always works.</p>` : ""}
       ${WISH.email ? `<label class="wish-email">Email <small>only for this; deleted once we've told you</small><input type="email" id="wish-email" maxlength="120" autocomplete="email" placeholder="you@example.com"></label>` : ""}
+      <label class="wish-email">Anything else? <small>optional, only Piet &amp; Mees see this</small><textarea id="wish-remark" maxlength="300" rows="2" placeholder="Only if you drink a cocktail while you throw it 🍹"></textarea></label>
       <label class="hp" aria-hidden="true">Website <input type="text" id="wish-website" tabindex="-1" autocomplete="off"></label>
       ${push || WISH.email ? `<p class="wish-note">Or leave these empty: you'll always see it here on your next visit, on this device.</p>` : ""}
       <p class="req-msg" id="wish-msg" role="status" hidden></p>
@@ -607,7 +608,7 @@
       }
       const r = await fetch("/api/wishes", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, visitor: VISITOR, name, email: email || undefined, push: push || undefined, website: val("#wish-website") }),
+        body: JSON.stringify({ key, visitor: VISITOR, name, remark: val("#wish-remark") || undefined, email: email || undefined, push: push || undefined, website: val("#wish-website") }),
       });
       const j = await r.json().catch(() => ({}));
       if (!j.token) throw new Error(j.error || "Your wish could not be saved. Please try again in a moment.");

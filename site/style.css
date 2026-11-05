@@ -654,6 +654,7 @@ section:has(> .rows) { margin-bottom: 44px; }
 
 /* ---------- footer links, feature request form ---------- */
 footer .foot-links { white-space: nowrap; }
+@media (max-width: 560px) { footer .foot-links { white-space: normal; } } /* with Requests or Log in it no longer fits on one line */
 footer .foot-links a { color: var(--muted); text-decoration: none; }
 footer .foot-links a:hover { color: var(--orbit); text-decoration: underline; text-underline-offset: 3px; }
 footer .admin-count { color: var(--club) !important; font-weight: 600; }
@@ -960,6 +961,11 @@ body:has(.swipe-page) #modal .start { display: none; }
 .wish-form .modal-close { position: absolute; top: 10px; right: 10px; }
 .wish-email { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
 .wish-email small { font-weight: 500; color: var(--muted); font-size: 13px; }
+.wish-email textarea { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: 400 15px/1.4 var(--f-body); resize: vertical; }
+.wish-email textarea:focus { outline: none; border-color: var(--orbit); box-shadow: 0 0 0 1px var(--orbit); }
+.wished-list .wish-remarks { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.wished-list .wish-remarks li { color: var(--ink); font-size: 14px; }
+.wished-list .wish-remarks b { font-family: var(--f-body); color: var(--muted); font-weight: 600; }
 .wish-email input { padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: 500 16px var(--f-body); }
 .wish-email input:focus { outline: none; border-color: var(--orbit); box-shadow: 0 0 0 1px var(--orbit); }
 .wish-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
@@ -1054,7 +1060,13 @@ body:has(.swipe-page) #modal .start { display: none; }
 .legend a { color: var(--orbit); }
 
 /* ---------- Practised, not filmed yet (Generator and Add page, logged in) ---------- */
-.pick-save { display: inline-flex; align-items: center; min-height: 44px; margin: 14px 0 0 8px; padding: 0 18px; border: 1px solid var(--line); border-radius: 12px; background: none; color: var(--ink); font: 600 15px var(--f-body); cursor: pointer; }
+/* side by side, also on a phone */
+.pick-actions { display: flex; gap: 8px; margin-top: 14px; }
+.pick-actions .pick-add { margin-top: 0; }
+@media (max-width: 560px) {
+  .pick-actions > * { flex: 1 1 0; min-width: 0; justify-content: center; text-align: center; padding: 6px 10px; font-size: 14px; line-height: 1.2; }
+}
+.pick-save { display: inline-flex; align-items: center; min-height: 44px; margin: 0; padding: 0 18px; border: 1px solid var(--line); border-radius: 12px; background: none; color: var(--ink); font: 600 15px var(--f-body); cursor: pointer; }
 .pick-save[aria-pressed="true"] { border-color: var(--orbit); color: var(--orbit); }
 .saved { margin-bottom: 32px; }
 .saved-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }

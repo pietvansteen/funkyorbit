@@ -103,7 +103,7 @@ Reading them: the hidden page `/requests/` (not in the menu, `noindex`, disallow
 
 ## Wish Tricks
 
-On `/wish/` visitors pick a pattern we haven't thrown yet and wish for it with their name, which is shown with the pattern (a thrown pattern always gets its video soon, so the API refuses it). The Wish button is also in the pattern pop-up (not in the generator). Wishes are in `data/wishes.db`, one per visitor per pattern. Visitors see the number of wishes per pattern and a top 10 (top 5 on Progress); `/requests/` shows us the *Most wished* list. Spam is kept out with a honeypot field, 20 wishes per visitor per hour, and 3 confirmation mails per address per day.
+On `/wish/` visitors pick a pattern we haven't thrown yet and wish for it with their name, which is shown with the pattern, and an optional remark that only we see on `/requests/` (a thrown pattern always gets its video soon, so the API refuses it). The Wish button is also in the pattern pop-up (not in the generator). Wishes are in `data/wishes.db`, one per visitor per pattern. Visitors see the number of wishes per pattern and a top 10 (top 5 on Progress); `/requests/` shows us the *Most wished* list. Spam is kept out with a honeypot field, 20 wishes per visitor per hour, and 3 confirmation mails per address per day.
 
 When a pattern gets a video in `data.json`, `likes.py` tells the wishers (it looks every minute, so also right after a restart, and tries what failed again for about an hour). There are three ways, and only the first needs nothing on the server:
 

@@ -106,8 +106,8 @@
     if (!token) return "";
     const ss = p.ss || p.alt || `${p.a} ${p.b}`;
     const saved = SAVED.has(p.key);
-    return `<a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Passed it → Add</a>` + (FO.doneRow(p.key) ? ""
-      : `<button type="button" class="pick-save" data-save="${esc(p.key)}" aria-pressed="${saved}">${saved ? "Saved ✓" : "Practised, save for later"}</button>`);
+    return `<div class="pick-actions"><a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Passed it → Add</a>` + (FO.doneRow(p.key) ? ""
+      : `<button type="button" class="pick-save" data-save="${esc(p.key)}" aria-pressed="${saved}">${saved ? "Saved ✓" : "Practised, save for later"}</button>`) + `</div>`;
   }
 
   // ---------- Practised, not filmed yet (logged in): patterns we threw but still have to film, until they are in Done ----------

@@ -47,6 +47,7 @@ Wish Tricks (#61): visitors wish for a pattern without a video, and hear from us
   GET    /api/wishes/stop?t=...     the unsubscribe link in every mail: removes the address and its wishes (a small HTML page)
   GET    /api/wishes                admin: open wishes per pattern, most wished first
   A wish needs a name; the names of open wishes are public ("names" in /api/wishes/counts).
+  An optional "remark" (300 characters) is only for us: it is only in the admin list.
 
 Practised, not filmed yet (admin only, the Generator and the Add page; stored in SAVED_DB):
 
@@ -181,8 +182,11 @@ def wishes_db():
         " pushed INTEGER NOT NULL DEFAULT 0, news_read INTEGER NOT NULL DEFAULT 0, tries INTEGER NOT NULL DEFAULT 0,"
         " notified INTEGER NOT NULL DEFAULT 0, UNIQUE (key, visitor))"
     )
-    if "name" not in [r[1] for r in con.execute("PRAGMA table_info(wishes)")]:  # added in 3.2.0
+    cols = [r[1] for r in con.execute("PRAGMA table_info(wishes)")]
+    if "name" not in cols:  # added in 3.2.0
         con.execute("ALTER TABLE wishes ADD COLUMN name TEXT")
+    if "remark" not in cols:  # added in 3.2.2
+        con.execute("ALTER TABLE wishes ADD COLUMN remark TEXT")
     return con
 
 
@@ -368,6 +372,7 @@ class Handler(BaseHTTPRequestHandler):
         key, visitor = body.get("key"), body.get("visitor")
         email = str(body.get("email") or "").strip().lower()
         name = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f<>]", "", str(body.get("name") or ""))).strip()
+        remark = re.sub(r"[ \t]+", " ", re.sub(r"[\x00-\x09\x0b-\x1f\x7f]", "", str(body.get("remark") or ""))).strip()
         endpoint = body.get("push") or None
         if not (isinstance(visitor, str) and VISITOR_RE.match(visitor)):
             return self._send(400, {"error": "Something went wrong. Please reload the page and try again."})
@@ -375,6 +380,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": "Please fill in your name."})
         if len(name) > 40:
             return self._send(400, {"error": "Your name can be 40 characters at most."})
+        if len(remark) > 300:
+            return self._send(400, {"error": "Your remark can be 300 characters at most."})
         known = load_known()
         if not isinstance(key, str) or key not in known["list"]:
             return self._send(400, {"error": "That pattern is not on our list."})
@@ -397,11 +404,11 @@ class Handler(BaseHTTPRequestHandler):
             confirmed = 1 if email and con.execute("SELECT 1 FROM wishes WHERE email = ? AND email_confirmed = 1", (email,)).fetchone() else 0
             if old:
                 same = old[2] == email
-                con.execute("UPDATE wishes SET endpoint = COALESCE(?, endpoint), email = COALESCE(?, email), email_confirmed = ?, name = ? WHERE token = ?",
-                            (endpoint, email or None, (old[3] if same else confirmed) if email else old[3], name, token))
+                con.execute("UPDATE wishes SET endpoint = COALESCE(?, endpoint), email = COALESCE(?, email), email_confirmed = ?, name = ?, remark = COALESCE(?, remark) WHERE token = ?",
+                            (endpoint, email or None, (old[3] if same else confirmed) if email else old[3], name, remark or None, token))
             else:
-                con.execute("INSERT INTO wishes (key, created, visitor, token, endpoint, email, email_confirmed, name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                            (key, int(time.time()), visitor, token, endpoint, email or None, confirmed, name))
+                con.execute("INSERT INTO wishes (key, created, visitor, token, endpoint, email, email_confirmed, name, remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (key, int(time.time()), visitor, token, endpoint, email or None, confirmed, name, remark or None))
             count = con.execute("SELECT COUNT(*) FROM wishes WHERE key = ? AND notified = 0", (key,)).fetchone()[0]
             confirmed_now = con.execute("SELECT email_confirmed FROM wishes WHERE token = ?", (token,)).fetchone()[0]
         mail = None
@@ -452,8 +459,12 @@ class Handler(BaseHTTPRequestHandler):
                 "SELECT key, COUNT(*), SUM(endpoint IS NOT NULL), SUM(email IS NOT NULL AND email_confirmed = 1),"
                 " GROUP_CONCAT(name, ', ') FROM wishes"
                 " WHERE notified = 0 GROUP BY key ORDER BY COUNT(*) DESC, MIN(created)").fetchall()
+            remarks = {}
+            for key, name, remark in con.execute(
+                    "SELECT key, name, remark FROM wishes WHERE notified = 0 AND remark IS NOT NULL AND remark != '' ORDER BY created"):
+                remarks.setdefault(key, []).append({"name": name or "", "remark": remark})
         self._send(200, {"wishes": [{"key": r[0], "title": wish_title(r[0]), "count": r[1], "push": r[2], "email": r[3],
-                                     "names": r[4] or ""} for r in rows]})
+                                     "names": r[4] or "", "remarks": remarks.get(r[0], [])} for r in rows]})
 
     def _saved(self, method):
         """Practised, not filmed yet: a pattern stays on the list until it is in Done."""
