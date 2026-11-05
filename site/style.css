@@ -929,6 +929,12 @@ body:has(.swipe-page) #modal .start { display: none; }
 .swipe-who-chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: end; }
 .swipe-who-chips span { padding: 2px 8px; border-radius: 99px; background: var(--orbit-soft); color: var(--orbit); font-size: 12px; font-weight: 600; }
 .swipe-logout { text-align: center; margin: 24px 0 40px; }
+@media (max-width: 560px) {
+  /* up to four names: below the pattern, or they would run over the siteswap */
+  .swipe-over .row { grid-template-columns: minmax(0, 1fr); }
+  .swipe-over .row .row-pat { grid-column: 1; grid-row: auto; }
+  .swipe-over .swipe-who-chips { grid-column: 1; justify-content: start; }
+}
 @media (max-width: 760px) {
   /* while swiping on a phone, only the tab bar stays around the cards */
   body:has(.swipe-page #deck:not([hidden])) .top { display: none; }

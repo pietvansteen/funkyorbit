@@ -42,7 +42,7 @@ cd funkyorbit
 echo "TUNNEL_TOKEN=<cloudflare-tunnel-token>" > .env
 sudo docker network create tunnel   # once; the tunnel shares it with puzzullu.funkyorbit.nl
 echo "ADMIN_TOKEN=<password for /requests/ and /add/>" >> .env
-echo "SWIPE_TOKEN=<password for /catch/ only>" >> .env
+echo "SWIPE_TOKENS=Hanna=<password>,Uwe=<password>" >> .env   # personal passwords for /catch/ only
 echo "SHEET_WRITE_URL=<Apps Script web app /exec URL>" >> .env
 echo "SHEET_WRITE_SECRET=<the SECRET script property>" >> .env
 echo "UMAMI_DB_PASSWORD=$(openssl rand -hex 16)" >> .env
@@ -118,9 +118,9 @@ After a change to `FunkyOrbit.gs`: *Deploy > Manage deployments*, edit, *New ver
 
 ## Rating patterns for a show (Catch or Drop)
 
-The hidden page `/catch/` (`noindex`, disallowed in `robots.txt`) is where Piet, Mees and Hanna rate the filmed patterns for a show: swipe right to catch it (nice and doable on stage), left to drop it. Log in once per device with **Log in** in the footer (`/login/`, also the way in for the installed app, which has no address bar), using `SWIPE_TOKEN` from `.env` or `ADMIN_TOKEN`. The menu then shows **Catch or Drop**, on phones under **More**. `SWIPE_TOKEN` opens nothing else. Give Hanna that password.
+The hidden page `/catch/` (`noindex`, disallowed in `robots.txt`) is where Piet, Mees, Hanna and Uwe rate the filmed patterns for a show: swipe right to catch it (nice and doable on stage), left to drop it. Log in once per device with **Log in** in the footer (`/login/`, also the way in for the installed app, which has no address bar), using a personal password from `SWIPE_TOKENS` in `.env` (`Hanna=...,Uwe=...`, letters and digits only) or `ADMIN_TOKEN`. The menu then shows **Catch or Drop**, on phones under **More**. A personal password opens nothing else and keeps you under your own name: no choosing a name, and the API refuses swipes as anyone else. The admin password chooses a name, as Piet and Mees do. Give each person their own password.
 
-Everyone judges each pattern with a video once. A card always fits the screen and shows how much fun we rated a pattern and its difficulty, with the rest of the details behind **More info** (not the start position, which does not matter for a show). A clear layer over a playing video takes the touches: a horizontal drag swipes and a tap pauses or plays (through the YouTube IFrame API), so YouTube's own controls are not used on this page. **Skip** puts a card at the back of the stack for later; that is remembered on the device, not on the server. The overview shows the catches by match (all three, two, one) or by family. A pattern everyone has judged is always in it, also when new videos have added new cards; someone with no cards left also sees what the others have caught so far. Swipes are stored in `data/swipes.db` (`GET /api/swipes`, `POST /api/swipe` and `DELETE /api/swipe`). To add a person, extend `PEOPLE` in `likes/likes.py`.
+Everyone judges each pattern with a video once. A card always fits the screen and shows how much fun we rated a pattern and its difficulty, with the rest of the details behind **More info** (not the start position, which does not matter for a show). A clear layer over a playing video takes the touches: a horizontal drag swipes and a tap pauses or plays (through the YouTube IFrame API), so YouTube's own controls are not used on this page. **Skip** puts a card at the back of the stack for later; that is remembered on the device, not on the server. The overview shows the catches by match (all four, three, two, one) or by family. It opens for good once you have had every card one time (a skipped card counts, remembered on the device), also when new videos add new cards later, and it only shows cards you have judged yourself. Before that, it shows only the patterns everyone has judged. Swipes are stored in `data/swipes.db` (`GET /api/swipes`, `POST /api/swipe` and `DELETE /api/swipe`). To add a person, extend `PEOPLE` in `likes/likes.py` and give them a password in `SWIPE_TOKENS`.
 
 ## Versions and release notes
 

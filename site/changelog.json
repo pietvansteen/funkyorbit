@@ -1,5 +1,12 @@
 [
   {
+    "version": "3.0.2",
+    "date": "2026-11-05",
+    "changes": [
+      "A page only for us: one more person, and a personal password that keeps you under your own name"
+    ]
+  },
+  {
     "version": "3.0.1",
     "date": "2026-11-04",
     "changes": [

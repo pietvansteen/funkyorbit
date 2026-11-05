@@ -6,7 +6,7 @@ Funky Orbit local server: the whole site as on the server, on http://localhost:8
 
 Starts the likes API (port 8000, or PORT - 90) and the sync (live Sheet, waits for sync-now like on the server),
 and serves site/ with /data.json and /api/ as web/nginx.conf does. Data goes to data/ (gitignored).
-Settings come from .env next to docker-compose.yml (gitignored): ADMIN_TOKEN (default "test"), SWIPE_TOKEN (default "swipe"),
+Settings come from .env next to docker-compose.yml (gitignored): ADMIN_TOKEN (default "test"), SWIPE_TOKENS (default "Hanna=swipe,Uwe=uwe"),
 SHEET_WRITE_URL and SHEET_WRITE_SECRET (without them the Add page cannot save).
 Add CSV=1 to sync from testdata/ instead of the live Sheet. Ctrl+C stops everything.
 """
@@ -93,7 +93,7 @@ def main():
     data = os.path.join(ROOT, "data")
     env = dict(os.environ, DB_FILE=f"{data}/likes.db", REQUESTS_DB=f"{data}/requests.db", SWIPES_DB=f"{data}/swipes.db", DATA_FILE=f"{data}/data.json",
                OUT_FILE=f"{data}/data.json", INTERVAL="86400", PORT=str(API_PORT), TZ="Europe/Amsterdam",
-               ADMIN_TOKEN=conf.get("ADMIN_TOKEN") or "test", SWIPE_TOKEN=conf.get("SWIPE_TOKEN") or "swipe",
+               ADMIN_TOKEN=conf.get("ADMIN_TOKEN") or "test", SWIPE_TOKENS=conf.get("SWIPE_TOKENS") or "Hanna=swipe,Uwe=uwe",
                SHEET_WRITE_URL=conf.get("SHEET_WRITE_URL", ""), SHEET_WRITE_SECRET=conf.get("SHEET_WRITE_SECRET", ""))
     if os.environ.get("CSV"):
         for name in ("DONE", "PROGRESS", "COLORS", "FAMILIES", "SYNC_COLORS", "DIFFICULTY", "NAMES"):

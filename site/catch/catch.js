@@ -1,4 +1,4 @@
-/* Funky Orbit — Catch or Drop: rate filmed patterns for a show (hidden page, #57; ADMIN_TOKEN or SWIPE_TOKEN; /api/swipes). */
+/* Funky Orbit — Catch or Drop: rate filmed patterns for a show (hidden page, #57; ADMIN_TOKEN or a personal password from SWIPE_TOKENS; /api/swipes). */
 (function () {
   "use strict";
 
@@ -9,7 +9,7 @@
   const WORDS = ["", "One person", "Two people", "Three people", "Four people", "Five people"];
   const STACK = 3; // cards in the DOM: the top one and the two behind it
   const ITEMS = new Map(); // key -> the pattern on the list, for its difficulty
-  let token = "", person = "", people = [], swipes = [], cards = [], queue = [], last = null, overMode = "match";
+  let locked = null, token = "", person = "", people = [], swipes = [], cards = [], queue = [], last = null, overMode = "match";
 
   const stored = (k) => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } };
   const store = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} };
@@ -298,16 +298,23 @@
   });
 
   // ---------- overview ----------
-  // A pattern everyone has swiped is always in it, so new videos never take the overview away.
-  // Someone with no cards left also sees what the others have swiped so far.
+  // Opens for good once you have had every card one time (a card you skipped counts), remembered on this device.
+  // It only shows cards you have judged yourself, so it never influences a card you still have to decide on.
+  // Before that: only the patterns everyone has judged.
   function renderOverview() {
     const box = $("#overview");
-    const finished = !queue.length && cards.length > 0;
-    const swipedBy = new Map(); // key -> how many of the people have swiped it, left or right
+    const skipped = skippedKeys();
+    if (cards.length && queue.every((k) => skipped.has(k))) store(`fo_seen_all_${person}`, "1");
+    const seenAll = !!stored(`fo_seen_all_${person}`);
+    const mine = new Set(swipes.filter((s) => s.person === person).map((s) => s.key));
+    const swipedBy = new Map(); // key -> how many of the people have judged it
     for (const s of swipes) if (people.includes(s.person)) swipedBy.set(s.key, (swipedBy.get(s.key) || 0) + 1);
-    const inView = (key) => finished || swipedBy.get(key) === people.length;
-    box.hidden = !finished && ![...swipedBy.keys()].some(inView);
-    $("#over-note").hidden = box.hidden || finished;
+    const inView = (key) => mine.has(key) && (seenAll || swipedBy.get(key) === people.length);
+    box.hidden = !seenAll && ![...mine].some(inView);
+    $("#over-note").hidden = box.hidden || !queue.length;
+    $("#over-note").textContent = seenAll
+      ? "The cards you have judged. The ones you still have left join in once you have judged them."
+      : "The patterns all of you have judged. Go through your remaining cards once to see everyone's catches.";
     if (box.hidden) return;
     document.querySelectorAll("#over-mode button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === overMode)));
     const who = new Map(); // key -> who swiped right, in the order of the list of people
@@ -361,6 +368,7 @@
     const j = await r.json();
     people = j.people;
     swipes = j.swipes;
+    locked = j.person; // a personal password: always this person, no choosing
     let data;
     try {
       data = await (await fetch("/data.json", { cache: "no-cache" })).json();
@@ -371,8 +379,9 @@
     likes.load();
     for (const p of data.all || []) if (!ITEMS.has(p.key)) ITEMS.set(p.key, p);
     cards = [...new Set((data.patterns || []).filter((p) => p.youtubeId).map((p) => p.key))];
-    const saved = stored(PERSON);
-    if (people.includes(saved)) { person = saved; deal(); } else choose();
+    const saved = locked || stored(PERSON);
+    $("#switch").hidden = !!locked;
+    if (people.includes(saved)) { person = saved; store(PERSON, saved); deal(); } else choose();
   }
   start();
 })();

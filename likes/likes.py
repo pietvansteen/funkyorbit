@@ -28,11 +28,13 @@ Logging a pattern we juggled (hidden Add page, admin only):
                                     then the sync is asked to run right away (the file sync-now next to data.json).
   POST  /api/sync                   admin: ask the sync to run right away (after a row in Done was changed or deleted)
 
-Rating patterns for a show (hidden Swipe page; ADMIN_TOKEN or SWIPE_TOKEN, which opens nothing else):
+Rating patterns for a show (hidden Catch or Drop page; ADMIN_TOKEN, or a person's password from SWIPE_TOKENS, which opens nothing else):
 
-  GET    /api/swipes                {"people": [...], "swipes": [{"person", "key", "choice", "at"}, ...], "admin": bool}
+  GET    /api/swipes                {"people": [...], "swipes": [{"person", "key", "choice", "at"}, ...], "admin": bool,
+                                     "person": the person a personal password belongs to, else null}
   POST   /api/swipe                 body {"person", "key", "choice": "right" | "left"}
   DELETE /api/swipe                 body {"person", "key"}: undo
+                                    A personal password can only swipe as that person.
 
 Admin calls need the header  Authorization: Bearer <ADMIN_TOKEN>  (ADMIN_TOKEN from the environment).
 """
@@ -57,8 +59,27 @@ PORT = int(os.environ.get("PORT", "8000"))
 REQUESTS_DB = os.environ.get("REQUESTS_DB", "/data/requests.db")
 SWIPES_DB = os.environ.get("SWIPES_DB", "/data/swipes.db")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
-SWIPE_TOKEN = os.environ.get("SWIPE_TOKEN", "")
-PEOPLE = ["Piet", "Mees", "Hanna"]  # who can choose their name on the Swipe page
+PEOPLE = ["Piet", "Mees", "Hanna", "Uwe"]  # who can swipe on the Catch or Drop page
+
+
+def swipe_tokens():
+    """Personal passwords from SWIPE_TOKENS ("Hanna=...,Uwe=..."), as password -> person.
+    The old single SWIPE_TOKEN still counts as Hanna's."""
+    tokens = {}
+    for part in os.environ.get("SWIPE_TOKENS", "").split(","):
+        person, _, token = part.partition("=")
+        person, token = person.strip(), token.strip()
+        if person in PEOPLE and token:
+            tokens[token] = person
+        elif part.strip():
+            print(f"SWIPE_TOKENS: ignored an entry for '{person}'", flush=True)
+    old = os.environ.get("SWIPE_TOKEN", "")
+    if old:
+        tokens.setdefault(old, "Hanna")
+    return tokens
+
+
+SWIPE_TOKENS = swipe_tokens()
 SHEET_WRITE_URL = os.environ.get("SHEET_WRITE_URL", "")  # the Apps Script web app (apps-script/FunkyOrbit.gs)
 SHEET_WRITE_SECRET = os.environ.get("SHEET_WRITE_SECRET", "")
 SYNC_FLAG = os.path.join(os.path.dirname(os.path.abspath(DATA_FILE)), "sync-now")
@@ -189,31 +210,35 @@ class Handler(BaseHTTPRequestHandler):
         return True
 
     def _swiper(self):
-        """The Swipe page: "admin" or "swipe" for a correct password; sends the error itself otherwise."""
-        if not (ADMIN_TOKEN or SWIPE_TOKEN):
-            self._send(503, {"error": "no password set (SWIPE_TOKEN)"})
+        """The Catch or Drop page: {"admin": bool, "person": name or None} for a correct password; sends the error itself otherwise."""
+        if not (ADMIN_TOKEN or SWIPE_TOKENS):
+            self._send(503, {"error": "no password set (SWIPE_TOKENS)"})
             return None
         got = (self.headers.get("Authorization") or "").removeprefix("Bearer ").strip().encode()
-        # both always compared; an empty password in the environment never matches
+        # every password always compared; an empty one in the environment never matches
         admin = bool(ADMIN_TOKEN) & hmac.compare_digest(got, ADMIN_TOKEN.encode())
-        swipe = bool(SWIPE_TOKEN) & hmac.compare_digest(got, SWIPE_TOKEN.encode())
-        if admin or swipe:
-            return "admin" if admin else "swipe"
+        person = None
+        for token, name in SWIPE_TOKENS.items():
+            if hmac.compare_digest(got, token.encode()):
+                person = name
+        if admin or person:
+            return {"admin": admin, "person": None if admin else person}
         time.sleep(1)  # slows down guessing
         self._send(401, {"error": "wrong password"})
         return None
 
     def _swipes_get(self):
-        role = self._swiper()
-        if not role:
+        who = self._swiper()
+        if not who:
             return
         with lock, swipes_db() as con:
             rows = con.execute("SELECT person, key, choice, at FROM swipes ORDER BY at").fetchall()
-        self._send(200, {"people": PEOPLE, "admin": role == "admin", "swipes": [
+        self._send(200, {"people": PEOPLE, "admin": who["admin"], "person": who["person"], "swipes": [
             {"person": r[0], "key": r[1], "choice": r[2], "at": r[3]} for r in rows]})
 
     def _swipe_write(self, delete):
-        if not self._swiper():
+        who = self._swiper()
+        if not who:
             return
         body = self._body(512)
         if body is None:
@@ -221,6 +246,8 @@ class Handler(BaseHTTPRequestHandler):
         person, key, choice = body.get("person"), body.get("key"), body.get("choice")
         if person not in PEOPLE:
             return self._send(400, {"error": "unknown person"})
+        if who["person"] and person != who["person"]:
+            return self._send(403, {"error": "this password can only swipe as " + who["person"]})
         keys = known_keys()
         if not isinstance(key, str) or not key or len(key) > 80 or (keys and key not in keys):
             return self._send(400, {"error": "unknown pattern"})
