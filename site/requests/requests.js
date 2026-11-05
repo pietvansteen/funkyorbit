@@ -19,9 +19,15 @@
     $("#pw").focus();
   }
 
+  // The newest 3, so Most wished stays close; the rest behind Show all (remembered until the page is closed)
+  const FIRST = 3;
+  let showAll = false;
   function render(list, newCount) {
     $("#req-count").textContent = `${list.length} request${list.length === 1 ? "" : "s"} · ${newCount} new`;
-    $("#req-list").innerHTML = list.length ? list.map((r) => {
+    const shown = showAll ? list : list.slice(0, FIRST);
+    const more = list.length > FIRST
+      ? `<p class="load-more"><button type="button" class="chip" id="req-more">${showAll ? "Show fewer" : `Show all ${list.length} requests`}</button></p>` : "";
+    $("#req-list").innerHTML = (list.length ? shown.map((r) => {
       const d = new Date(r.created * 1000);
       const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
       // Done and No fold up to one line (tap to open), so the open requests stay easy to scan.
@@ -38,7 +44,7 @@
           ${STATUSES.map((s) => `<button type="button" data-status="${s}" aria-pressed="${s === r.status}">${s}</button>`).join("")}
         </div>
       </${folded ? "details" : "article"}>`;
-    }).join("") : `<p class="empty">No requests yet.</p>`;
+    }).join("") : `<p class="empty">No requests yet.</p>`) + more;
   }
 
   async function load() {
@@ -85,6 +91,12 @@
   });
 
   document.addEventListener("click", async (ev) => {
+    if (ev.target.closest("#req-more")) {
+      showAll = !showAll;
+      load();
+      if (!showAll) $("#req-list").scrollIntoView({ block: "start" });
+      return;
+    }
     const b = ev.target.closest("[data-status]");
     if (!b) return;
     const id = b.parentElement.dataset.id;
