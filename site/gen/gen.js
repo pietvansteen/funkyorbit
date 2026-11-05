@@ -78,7 +78,7 @@
       <div class="pick-pat${hidden ? " hidden-colors" : ""}">${pat}</div>
       ${p.name ? `<p class="pick-name">${FO.nameLinks(p.name)}</p>` : ""}
       ${p.done ? `<p class="pick-done">Already filmed</p>` : ""}
-      ${hidden || (FO.doneRow(p.key) || {}).youtubeId ? "" : FO.wishes.button(p.key)}
+      ${hidden || FO.doneRow(p.key) ? "" : FO.wishes.button(p.key)}
       ${opts.hidehands ? "" : startHtml(p, shown)}
       <dl class="pick-meta">
         <div><dt>Family</dt><dd>${p.families.map(esc).join("<br>")}</dd></div>

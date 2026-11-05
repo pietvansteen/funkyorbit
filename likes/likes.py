@@ -80,7 +80,7 @@ WISHES_DB = os.environ.get("WISHES_DB", "/data/wishes.db")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")  # tools/make_vapid.py; without it no push
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")  # the mail service (resend.com); without it no email
-MAIL_FROM = os.environ.get("MAIL_FROM", "Funky Orbit <wishes@funkyorbit.nl>")
+MAIL_FROM = os.environ.get("MAIL_FROM", "Funky Orbit <wishes@mail.funkyorbit.nl>")
 SITE_URL = os.environ.get("SITE_URL", "https://funkyorbit.nl").rstrip("/")
 WISH_LOOP = int(os.environ.get("WISH_LOOP", "60"))  # seconds between looks at data.json
 PEOPLE = ["Piet", "Mees", "Hanna", "Uwe"]  # who can swipe on the Catch or Drop page
@@ -355,6 +355,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, {"error": "That pattern is not on our list."})
         if key in known["videos"]:
             return self._send(409, {"error": "This pattern already has a video!"})
+        if key in known["keys"]:  # thrown: the video is always online soon, so there is nothing to wish for
+            return self._send(409, {"error": "We already threw this pattern: the video is coming soon!"})
         if email and (len(email) > 120 or not EMAIL_RE.match(email)):
             return self._send(400, {"error": "Please enter a valid email address."})
         if email and not RESEND_API_KEY:
@@ -411,7 +413,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not row or not row[1]:
                     return self._send_html(404, "This link no longer works", "This wish was removed or has already come true.")
                 con.execute("UPDATE wishes SET email_confirmed = 1 WHERE email = ?", (row[1],))
-                return self._send_html(200, "Your wish is confirmed!", "We'll mail you when the video is online. After that we delete your address.")
+                return self._send_html(200, "Your wish is confirmed!", "We'll mail you when the video is online, so keep an eye on your spam folder too. After that we delete your address.")
             if row and row[1]:  # the address goes, with its wishes; a wish that also has a push subscription stays for that
                 con.execute("DELETE FROM wishes WHERE email = ? AND endpoint IS NULL", (row[1],))
                 con.execute("UPDATE wishes SET email = NULL, email_confirmed = 0 WHERE email = ?", (row[1],))

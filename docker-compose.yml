@@ -48,7 +48,7 @@ services:
       SHEET_WRITE_SECRET: ${SHEET_WRITE_SECRET:-}  # its SECRET script property, from .env
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}    # push notifications for Wish Tricks (tools/make_vapid.py), from .env
       RESEND_API_KEY: ${RESEND_API_KEY:-}          # the mail service for Wish Tricks (resend.com), from .env
-      MAIL_FROM: ${MAIL_FROM:-Funky Orbit <wishes@funkyorbit.nl>}
+      MAIL_FROM: ${MAIL_FROM:-Funky Orbit <wishes@mail.funkyorbit.nl>}
     volumes:
       - ./likes:/app:ro
       - ./data:/data

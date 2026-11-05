@@ -21,14 +21,13 @@
   }
 
   function row(p) {
-    const n = wishes.count(p.key), mine = wishes.has(p.key), thrown = doneRow(p.key);
+    const n = wishes.count(p.key), mine = wishes.has(p.key);
     return `<li class="wish-row">
       <button type="button" class="wish-open" data-open="${esc(p.key)}" aria-label="${esc(label(p))}: show details">
         ${patHtml(p)}
         <small>${p.name ? `${esc(p.name)} · ` : ""}${esc(p.family)}</small>
       </button>
       <div class="wish-meta">
-        ${thrown ? `<span class="wish-soon">Thrown, video coming soon</span>` : ""}
         ${p.stars != null ? `<span>${difficulty(p, maxScore, false)}</span>` : ""}
         ${n ? `<span>${wishes.word(n)}</span>` : ""}
         <button type="button" class="wish-go" data-wish="${esc(p.key)}"${mine ? " disabled" : ""}>${mine ? "Wished ✨" : "Wish ✨"}</button>
@@ -39,15 +38,17 @@
     const q = query.trim().toLowerCase();
     const list = ITEMS.filter((p) => found(p, q))
       .sort((a, b) => wishes.count(b.key) - wishes.count(a.key)); // the rest keeps the order of the list
-    $("#count").textContent = `${list.length} without a video`;
+    $("#count").textContent = `${list.length} not thrown yet`;
     $("#list").innerHTML = list.length ? list.slice(0, shown).map(row).join("")
-      : `<li class="wish-row">No pattern without a video matches “${esc(query.trim())}”.</li>`;
+      : `<li class="wish-row">No pattern we still have to throw matches “${esc(query.trim())}”.</li>`;
     $("#more").hidden = list.length <= shown;
-    // already filmed: no wish needed, just a link to the video
+    // already thrown: no wish needed, just a link to the video, or the news that it is coming
     const filmed = q ? FILMED.filter((p) => found(p, q)).slice(0, 5) : [];
     $("#filmed").innerHTML = filmed.length ? `<ul class="wish-list">${filmed.map((p) => `<li class="wish-row">
-      <button type="button" class="wish-open" data-open="${esc(p.key)}" aria-label="${esc(label(p))}: watch the video">${patHtml(p)}<small>${esc(p.family)}</small></button>
-      <div class="wish-meta"><span>Already filmed!</span><button type="button" class="wish-go quiet" data-open="${esc(p.key)}">Watch the video</button></div></li>`).join("")}</ul>` : "";
+      <button type="button" class="wish-open" data-open="${esc(p.key)}" aria-label="${esc(label(p))}: show details">${patHtml(p)}<small>${esc(p.family)}</small></button>
+      <div class="wish-meta">${doneRow(p.key).youtubeId
+        ? `<span>Already filmed!</span><button type="button" class="wish-go quiet" data-open="${esc(p.key)}">Watch the video</button>`
+        : `<span class="wish-soon">Thrown, video coming soon</span>`}</div></li>`).join("")}</ul>` : "";
     try {
       const url = new URL(location.href);
       query.trim() ? url.searchParams.set("q", query.trim()) : url.searchParams.delete("q");
@@ -105,8 +106,8 @@
       seen.add(p.key);
       byKey.set(p.key, p);
       maxScore = Math.max(maxScore, p.score || 0);
-      const row0 = doneRow(p.key);
-      (row0 && row0.youtubeId ? FILMED : ITEMS).push(p);
+      const row0 = doneRow(p.key); // thrown: not wishable, also without a video yet
+      (row0 ? FILMED : ITEMS).push(p);
     }
     const params = new URLSearchParams(location.search);
     query = params.get("q") || "";

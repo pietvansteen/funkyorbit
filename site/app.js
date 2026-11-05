@@ -309,7 +309,7 @@
     renderGroups(DATA);
     initPopup(DATA);
     const paintTop = () => {
-      const html = window.FO.wishes.topHtml(10);
+      const html = window.FO.wishes.topHtml(5);
       $("#wish-top").innerHTML = html;
       $("#wish-top").hidden = !html;
       $("#wish-empty").hidden = !!html;

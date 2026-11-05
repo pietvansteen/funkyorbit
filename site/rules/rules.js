@@ -180,7 +180,7 @@
     if (!typed) { box.innerHTML = ""; return; }
     const p = R.parse(typed);
     if (!p) {
-      box.innerHTML = `<p>That is not a valid siteswap. In a siteswap, no two throws may land on the same beat: 7a6 works, 7a5 does not. Sync is written as two parts, like <b>33p3 4p44</b>.</p>`;
+      box.innerHTML = `<p>That is not a valid siteswap. In a siteswap, no two throws may land on the same beat: 756 works, 7a6 does not. Sync is written as two parts, like <b>33p3 4p44</b>.</p>`;
       return;
     }
     const item = byKey.get(p.popcorn ? R.syncCanon(p.a, p.b) : R.keyOf(p));
@@ -209,7 +209,7 @@
   $("#throws-table").innerHTML = [["2", "1", "Zip: goes blind, to the other hand"], ["4", "", "Hold: an active single spin in the same hand"], ["5", "", "Zap: half a spin, a quick low pass"],
     ["6", "3", "Self: single spin to the other hand"], ["7", "3p", "Single pass, the easiest pass"], ["8", "4", "Heff: double self"], ["9", "4p", "Double pass"], ["a", "5", "Triple self"], ["b", "5p", "Triple pass"]]
     .map(([t, s, what]) => `<tr><td class="t">${t}</td><td class="t">${s}</td><td style="white-space:normal">${what}</td></tr>`).join("");
-  $("#try-examples").insertAdjacentHTML("beforeend", ["7a6", "97586", "9955966", "33p3 4p44", "b97"].map((s) => `<button type="button" data-try="${s}">${s}</button>`).join(""));
+  $("#try-examples").insertAdjacentHTML("beforeend", ["756", "97586", "9955966", "33p3 4p44", "b97"].map((s) => `<button type="button" data-try="${s}">${s}</button>`).join(""));
 
   $("#try-form").addEventListener("submit", (ev) => { ev.preventDefault(); showTry($("#try").value); });
   $("#try").addEventListener("input", (ev) => { showTry(ev.target.value, true); });

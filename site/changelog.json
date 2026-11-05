@@ -1,5 +1,16 @@
 [
   {
+    "version": "3.1.1",
+    "date": "2026-11-05",
+    "changes": [
+      "Wish Tricks: you can only wish for patterns we haven't thrown yet, a thrown pattern gets its video soon anyway",
+      "Wish Tricks: clearer wording, it now says push notification",
+      "Wish Tricks: a reminder to check your spam folder for the confirmation mail",
+      "Progress: Most wished shows the top 5",
+      "How it works: the first example in Try a siteswap was not a valid siteswap, now it is 756"
+    ]
+  },
+  {
     "version": "3.1.0",
     "date": "2026-11-05",
     "changes": [

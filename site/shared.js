@@ -477,7 +477,7 @@
           </div>
           ${p ? "" : `<span class="not-yet">Not thrown yet</span>`}
           <span class="fam">${families.map(esc).join("<br>")}</span>
-          ${items.length && !(p && p.youtubeId) ? wishButton(key) : ""}
+          ${items.length && !p ? wishButton(key) : ""}
           ${items.length ? startHtml(item) : ""}
           ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
           ${diff}
@@ -517,10 +517,10 @@
     return `<button type="button" class="wish-btn${mine ? " mine" : ""}" data-wish="${esc(key)}"${mine ? " disabled" : ""}>
       <span>${mine ? "You wished for this ✨" : "Not filmed yet – <b>Wish this trick ✨</b>"}</span>${n ? `<small>${wishWord(n)}</small>` : ""}</button>`;
   }
-  // The patterns most wished for that still have no video
+  // The patterns most wished for that we have not thrown yet
   function wishTop(n = 10) {
     return Object.entries(WISH.counts)
-      .filter(([key, c]) => c > 0 && POP.items.has(key) && !(POP.done.get(key) || {}).youtubeId)
+      .filter(([key, c]) => c > 0 && POP.items.has(key) && !POP.done.has(key))
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, n);
   }
   const wishTopHtml = (n) => wishTop(n).map(([key, c], i) =>
@@ -536,8 +536,8 @@
       <h2 id="wish-title">Wish this trick</h2>
       <div class="wish-pat">${patternHtml(key, "lg", key)}</div>
       <p>${push || WISH.email ? "When the video is online, we'll let you know. How?" : "When the video is online, you'll see it here on your next visit, on this device."}</p>
-      ${push ? `<label class="opt check"><input type="checkbox" id="wish-push"><span class="opt-name">Notify me by push</span></label>` : ""}
-      ${iosNote && WISH.push && !push ? `<p class="wish-note">On iPhone and iPad, push only works once this site is on your home screen (Share → <b>Add to Home Screen</b>). Email always works.</p>` : ""}
+      ${push ? `<label class="opt check"><input type="checkbox" id="wish-push"><span class="opt-name">Send me a push notification</span></label>` : ""}
+      ${iosNote && WISH.push && !push ? `<p class="wish-note">On iPhone and iPad, push notifications only work once this site is on your home screen (Share → <b>Add to Home Screen</b>). Email always works.</p>` : ""}
       ${WISH.email ? `<label class="wish-email">Email <small>only for this; deleted once we've told you</small><input type="email" id="wish-email" maxlength="120" autocomplete="email" placeholder="you@example.com"></label>` : ""}
       <label class="hp" aria-hidden="true">Website <input type="text" id="wish-website" tabindex="-1" autocomplete="off"></label>
       ${push || WISH.email ? `<p class="wish-note">Or leave these empty: you'll always see it here on your next visit, on this device.</p>` : ""}
@@ -588,7 +588,7 @@
       let push = null;
       if (dlg.querySelector("#wish-push")?.checked) {
         try { push = await pushEndpoint(); }
-        catch (e) { throw new Error(/blocked/.test(e.message) ? e.message : "Push could not be switched on here. You can use email instead."); }
+        catch (e) { throw new Error(/blocked/.test(e.message) ? e.message : "Push notifications could not be switched on here. You can use email instead."); }
       }
       const r = await fetch("/api/wishes", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -596,11 +596,11 @@
       });
       const j = await r.json().catch(() => ({}));
       if (!j.token) throw new Error(j.error || "Your wish could not be saved. Please try again in a moment.");
-      saveWishes([...myWishes().filter((w) => w.key !== key), { key, token: j.token, at: Date.now(), via: [push && "push", email && "email"].filter(Boolean) }]);
+      saveWishes([...myWishes().filter((w) => w.key !== key), { key, token: j.token, at: Date.now(), via: [push && "push notification", email && "email"].filter(Boolean) }]);
       if (j.count) WISH.counts[key] = j.count;
       track("Wish", { key, push: !!push, email: !!email });
       paintWishes();
-      const how = j.email === "sent" ? "We sent you a mail: please click the link in it to confirm your address."
+      const how = j.email === "sent" ? "We sent you a mail: please click the link in it to confirm your address. Not there? Check your spam folder."
         : j.email === "failed" ? "The confirmation mail could not be sent, so we can't mail you. You'll still see it here on your next visit."
         : push || email ? "We'll let you know when the video is online." : "You'll see it here when the video is online.";
       dlg.innerHTML = `<div class="wish-form wish-done"><h2 id="wish-title">Your wish is saved! ✨</h2><div class="wish-pat">${patternHtml(key, "lg", key)}</div>
@@ -621,7 +621,7 @@
     if (w && w.token) fetch("/api/wishes/remove", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: w.token }) }).catch(() => {});
   }
 
-  // On any page, once per wish: "Your wish trick 7a6 is online!". Needs nothing but data.json and this device.
+  // On any page, once per wish: "Your wish trick 756 is online!". Needs nothing but data.json and this device.
   async function wishBanner() {
     const open = myWishes().filter((w) => !w.seen);
     if (PREVIEW || !open.length) return;
