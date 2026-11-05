@@ -560,7 +560,18 @@
     </form>`;
   }
 
+  // On an iPhone the keyboard does not make 100dvh smaller: follow the part of the screen that is really visible
+  function followViewport() {
+    const vv = window.visualViewport;
+    if (!vv || followViewport.on) return;
+    followViewport.on = true;
+    const set = () => document.documentElement.style.setProperty("--vvh", `${Math.round(vv.height)}px`);
+    vv.addEventListener("resize", set);
+    set();
+  }
+
   function openWish(key) {
+    followViewport();
     let dlg = document.getElementById("wish-dialog");
     if (!dlg) {
       dlg = document.createElement("dialog");

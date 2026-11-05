@@ -1,5 +1,13 @@
 [
   {
+    "version": "3.2.4",
+    "date": "2026-11-05",
+    "changes": [
+      "Wish Tricks: on an iPhone the wish form scrolls, so you can always reach the button, also with a long remark",
+      "A page only for us: one more person, Wiebke"
+    ]
+  },
+  {
     "version": "3.2.3",
     "date": "2026-11-05",
     "changes": [

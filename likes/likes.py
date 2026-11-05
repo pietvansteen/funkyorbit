@@ -92,11 +92,11 @@ RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")  # the mail service (resen
 MAIL_FROM = os.environ.get("MAIL_FROM", "Funky Orbit <wishes@mail.funkyorbit.nl>")
 SITE_URL = os.environ.get("SITE_URL", "https://funkyorbit.nl").rstrip("/")
 WISH_LOOP = int(os.environ.get("WISH_LOOP", "60"))  # seconds between looks at data.json
-PEOPLE = ["Piet", "Mees", "Hanna", "Uwe"]  # who can swipe on the Catch or Drop page
+PEOPLE = ["Piet", "Mees", "Hanna", "Uwe", "Wiebke"]  # who can swipe on the Catch or Drop page
 
 
 def swipe_tokens():
-    """Personal passwords from SWIPE_TOKENS ("Hanna=...,Uwe=..."), as password -> person.
+    """Personal passwords from SWIPE_TOKENS ("Hanna=...,Uwe=...,Wiebke=..."), as password -> person.
     The old single SWIPE_TOKEN still counts as Hanna's."""
     tokens = {}
     for part in os.environ.get("SWIPE_TOKENS", "").split(","):

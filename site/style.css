@@ -954,7 +954,9 @@ body:has(.swipe-page) #modal .start { display: none; }
 .wish-btn.mine { color: var(--muted); cursor: default; }
 .wish-btn.mine:hover { border-color: var(--line); color: var(--muted); }
 .wish-line small { color: var(--muted); font-size: 13px; }
-.wish-dialog { max-width: min(440px, calc(100vw - 32px)); }
+.wish-dialog { max-width: min(440px, calc(100vw - 32px)); max-height: calc(var(--vvh, 100dvh) - 24px); }
+/* the form scrolls by itself, so Wish this trick can always be reached, also with the keyboard open on an iPhone */
+.wish-dialog .wish-form, .wish-dialog .wish-done { max-height: calc(var(--vvh, 100dvh) - 24px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .wish-form { position: relative; display: grid; gap: 12px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .wish-form h2 { margin: 0; padding-right: 40px; font-family: var(--f-display); font-weight: 500; font-size: 20px; }
 .wish-form p { margin: 0; }
