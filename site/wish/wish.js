@@ -27,9 +27,9 @@
         ${patHtml(p)}
         <small>${p.name ? `${esc(p.name)} · ` : ""}${esc(p.family)}</small>
       </button>
-      <div class="wish-meta">
-        ${p.stars != null ? `<span>${difficulty(p, maxScore, false)}</span>` : ""}
-        ${n ? `<span>${wishes.word(n)}</span>` : ""}
+      <div class="wish-meta cols">
+        <span class="wish-stars">${p.stars != null ? difficulty(p, maxScore, false) : ""}</span>
+        <span class="wish-n">${n ? wishes.word(n) : ""}</span>
         <button type="button" class="wish-go" data-wish="${esc(p.key)}"${mine ? " disabled" : ""}>${mine ? "Wished ✨" : "Wish ✨"}</button>
       </div></li>`;
   }

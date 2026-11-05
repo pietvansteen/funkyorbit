@@ -1,5 +1,12 @@
 [
   {
+    "version": "3.1.2",
+    "date": "2026-11-05",
+    "changes": [
+      "Wish Tricks: on a wide screen the stars line up from row to row"
+    ]
+  },
+  {
     "version": "3.1.1",
     "date": "2026-11-05",
     "changes": [
