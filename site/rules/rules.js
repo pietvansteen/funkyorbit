@@ -180,7 +180,7 @@
     if (!typed) { box.innerHTML = ""; return; }
     const p = R.parse(typed);
     if (!p) {
-      box.innerHTML = `<p>That is not a valid siteswap. In a siteswap, no two throws may land on the same beat: 756 works, 7a6 does not. Sync is written as two parts, like <b>33p3 4p44</b>.</p>`;
+      box.innerHTML = `<p><span class="try-bad">That is not a valid siteswap.</span> In a siteswap, no two throws may land on the same beat: 756 works, 7a6 does not. Sync is written as two parts, like <b>33p3 4p44</b>.</p>`;
       return;
     }
     const item = byKey.get(p.popcorn ? R.syncCanon(p.a, p.b) : R.keyOf(p));

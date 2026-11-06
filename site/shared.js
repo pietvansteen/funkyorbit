@@ -121,6 +121,15 @@
     return (p._throws = new Set(t));
   }
 
+  // Dragons (9_5): a 9 and a 5 by the same juggler, one throw apart, so two beats later in the siteswap, cyclic.
+  // The same count as the milestones (site/add/milestones.js), which adds up to the Sheet's total; sync has none.
+  function dragonsOf(p) {
+    const ss = (p.ss || "").toLowerCase(), n = ss.length;
+    let d = 0;
+    for (let i = 0; i < n; i++) if (ss[i] === "9" && ss[(i + 2) % n] === "5") d++;
+    return d;
+  }
+
   // Clubs = throw sum / period; a sync pattern counts the throws of both jugglers per beat.
   function clubsOf(p) {
     if (p.ss) return [...p.ss.toLowerCase()].reduce((s, c) => s + parseInt(c, 36), 0) / p.ss.length;
@@ -745,6 +754,6 @@
   const ICON_SOON = `<span class="row-icon" title="Video coming soon" role="img" aria-label="Video coming soon"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`;
   const videoIcon = (p) => (p.youtubeId ? ICON_VIDEO : ICON_SOON);
 
-  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch,
+  window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, dragonsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch,
     wishes: { load: loadWishes, button: wishButton, by: wishedBy, list: myWishes, has: hasWish, count: wishCount, word: wishWord, remove: removeWish, open: openWish, topHtml: wishTopHtml } };
 })();

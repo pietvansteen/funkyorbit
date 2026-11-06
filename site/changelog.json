@@ -1,5 +1,15 @@
 [
   {
+    "version": "3.3.0",
+    "date": "2026-11-06",
+    "changes": [
+      "All patterns: a filter for patterns with a dragon (9_5) in Filter & sort",
+      "All patterns and How it works: \"Not a valid siteswap\" is now red, so you don't miss it",
+      "Generator: the name of a named pattern stands out more",
+      "A page only for us: one more person, Markus"
+    ]
+  },
+  {
     "version": "3.2.4",
     "date": "2026-11-05",
     "changes": [

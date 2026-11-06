@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, clubsOf, throwsOf, localSiteswap, nameLinks, updated, likes, initPopup, openPattern, doneRow, track, trackSearch } = window.FO;
+  const { esc, fmt, siteswap, syncPattern, cyclicIncludes, clubsOf, dragonsOf, throwsOf, localSiteswap, nameLinks, updated, likes, initPopup, openPattern, doneRow, track, trackSearch } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   let ITEMS = [];
@@ -11,7 +11,7 @@
   const groupClosed = new Set(); // groups the visitor closed while a search had opened them (until the search changes)
   // sort and the filters of the Filter & sort panel; all in the URL (#50)
   const filters = {
-    sort: "family", mode: "global", period: "all", thrown: "all", video: false, film: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5, clubs: new Set(),
+    sort: "family", mode: "global", period: "all", thrown: "all", video: false, film: false, named: false, dragon: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5, clubs: new Set(),
     colorsIn: new Set(), colorsOut: new Set(), throwsIn: new Set(), throwsOut: new Set(),
   };
   const LISTS = { colorsIn: "colorsOut", colorsOut: "colorsIn", throwsIn: "throwsOut", throwsOut: "throwsIn" }; // a value is in one of a pair, never both
@@ -25,7 +25,7 @@
     dull: { title: "Least fun first", dir: 1, value: (p) => BEST_RATING.get(p.key) },
   };
   const extraFilters = () => filters.clubs.size + filters.colorsIn.size + filters.colorsOut.size + filters.throwsIn.size + filters.throwsOut.size
-    + (filters.period !== "all") + (filters.thrown !== "all") + filters.video + filters.film + filters.named + !anyStars() + !anyRating() + (filters.mode === "local");
+    + (filters.period !== "all") + (filters.thrown !== "all") + filters.video + filters.film + filters.named + filters.dragon + !anyStars() + !anyRating() + (filters.mode === "local");
   // choosing Local is a filter, but only narrows the list once something is typed
   const filtering = () => !!query.trim() || extraFilters() - (filters.mode === "local") > 0;
   const BEST_RATING = new Map(); // key -> our highest rating, when we threw it more than once
@@ -123,6 +123,7 @@
     if (filters.video && !(row && row.youtubeId)) return false;
     if (filters.film && row && row.youtubeId) return false;
     if (filters.named && !(p.name || (row && row.name))) return false;
+    if (filters.dragon && !dragonsOf(p)) return false;
     if (!anyStars() && (p.stars == null || p.stars < filters.lo || p.stars > filters.hi)) return false;
     const cs = colorsOf(p), ts = throwsOf(p);
     for (const c of filters.colorsIn) if (!cs.includes(c)) return false; // all chosen colours (AND)
@@ -209,6 +210,7 @@
       set("video", filters.video && "1");
       set("film", filters.film && "1");
       set("named", filters.named && "1");
+      set("dragon", filters.dragon && "1");
       history.replaceState(null, "", url);
     } catch (e) {}
   }
@@ -320,7 +322,7 @@
     query = "";
     $("#q").value = "";
     const sorted = filters.sort !== "family";
-    Object.assign(filters, { sort: "family", mode: "global", period: "all", thrown: "all", video: false, film: false, named: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5 });
+    Object.assign(filters, { sort: "family", mode: "global", period: "all", thrown: "all", video: false, film: false, named: false, dragon: false, lo: 0.5, hi: 5, rlo: 0.5, rhi: 5 });
     for (const k of ["clubs", ...Object.keys(LISTS)]) filters[k].clear();
     if (sorted) render();
     applyFilter();
@@ -330,10 +332,11 @@
   function checkSiteswap() {
     const box = $("#ss-check"), q = query.trim().toLowerCase(), R = window.FORules;
     const looks = R && /\d/.test(q) && /^[0-9a-z()|,*\s]+$/.test(q) && !/[a-z]{3}/.test(q.replace(/p/g, ""));
+    box.classList.remove("bad");
     if (!looks || q.replace(/\s+/g, "").length < 2) { box.hidden = true; return; }
     const p = R.parse(q);
     // half typed (96 of 966) is not valid either, but then the matches say enough
-    if (!p) { box.textContent = "Not a valid siteswap."; box.hidden = ITEMS.some(matches); return; }
+    if (!p) { box.textContent = "Not a valid siteswap."; box.classList.add("bad"); box.hidden = ITEMS.some(matches); return; }
     const key = p.popcorn ? R.syncCanon(p.a, p.b) : R.keyOf(p);
     const listed = ITEMS.some((x) => x.key === key || (x.a && R.syncCanon(x.a, x.b) === key));
     box.innerHTML = listed ? "Valid siteswap, on our list." : `Valid siteswap, but not on our list. <a href="/rules/?try=${encodeURIComponent(q)}">How would it score?</a>`;
@@ -453,6 +456,7 @@
     filters.video = params.get("video") === "1";
     filters.film = params.get("film") === "1";
     filters.named = params.get("named") === "1";
+    filters.dragon = params.get("dragon") === "1";
     for (const n of (params.get("clubs") || "").split(",")) if (clubs.includes(+n)) filters.clubs.add(+n);
     // a link with filters shows them
     if (extraFilters() || filters.sort !== "family") { $("#filter-panel").hidden = false; $("#more").setAttribute("aria-expanded", "true"); }

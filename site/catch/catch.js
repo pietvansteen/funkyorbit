@@ -6,7 +6,7 @@
   const $ = (sel, el = document) => el.querySelector(sel);
 
   const PERSON = "fo_person";
-  const WORDS = ["", "One person", "Two people", "Three people", "Four people", "Five people"];
+  const WORDS = ["", "One person", "Two people", "Three people", "Four people", "Five people", "Six people"];
   const STACK = 3; // cards in the DOM: the top one and the two behind it
   const ITEMS = new Map(); // key -> the pattern on the list, for its difficulty
   let locked = null, token = "", person = "", people = [], swipes = [], cards = [], queue = [], last = null, overMode = "match";
