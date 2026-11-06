@@ -1,5 +1,12 @@
 [
   {
+    "version": "3.3.1",
+    "date": "2026-11-06",
+    "changes": [
+      "Most wished: with the same number of wishes, the newest wish comes first, and sync patterns come after the others"
+    ]
+  },
+  {
     "version": "3.3.0",
     "date": "2026-11-06",
     "changes": [

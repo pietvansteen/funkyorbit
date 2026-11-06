@@ -37,7 +37,7 @@
   function renderList() {
     const q = query.trim().toLowerCase();
     const list = ITEMS.filter((p) => found(p, q))
-      .sort((a, b) => wishes.count(b.key) - wishes.count(a.key)); // the rest keeps the order of the list
+      .sort((a, b) => wishes.order(a.key, b.key)); // as Most wished; the rest keeps the order of the list
     $("#count").textContent = `${list.length} not thrown yet`;
     $("#list").innerHTML = list.length ? list.slice(0, shown).map(row).join("")
       : `<li class="wish-row">No pattern we still have to throw matches “${esc(query.trim())}”.</li>`;

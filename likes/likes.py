@@ -38,7 +38,8 @@ Rating patterns for a show (hidden Catch or Drop page; ADMIN_TOKEN, or a person'
 
 Wish Tricks (#61): visitors wish for a pattern without a video, and hear from us when its video is online (stored in WISHES_DB):
 
-  GET    /api/wishes/counts         {"counts": {key: open wishes}, "push": VAPID public key or null, "email": bool}
+  GET    /api/wishes/counts         {"counts": {key: open wishes}, "latest": {key: time of the newest open wish}, "names": {...},
+                                     "push": VAPID public key or null, "email": bool}
   POST   /api/wishes                body {"key", "visitor", "email"?, "push"?: endpoint, "website"}  (website = honeypot, must be empty)
                                     -> {"ok": true, "token", "count", "email": "sent" | "confirmed" | null}
   POST   /api/wishes/remove         body {"token"}: take a wish back
@@ -355,12 +356,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def _wish_counts(self):
         with lock, wishes_db() as con:
-            counts = dict(con.execute("SELECT key, COUNT(*) FROM wishes WHERE notified = 0 GROUP BY key"))
+            counts, latest = {}, {}
+            for key, n, newest in con.execute("SELECT key, COUNT(*), MAX(created) FROM wishes WHERE notified = 0 GROUP BY key"):
+                counts[key], latest[key] = n, newest
             names = {}
             for key, name in con.execute("SELECT key, name FROM wishes WHERE notified = 0 AND name IS NOT NULL ORDER BY created"):
                 if name not in names.setdefault(key, []):
                     names[key].append(name)
-        self._send(200, {"counts": counts, "names": names, "push": webpush.public_key(VAPID_PRIVATE_KEY) if VAPID_PRIVATE_KEY else None,
+        self._send(200, {"counts": counts, "latest": latest, "names": names, "push": webpush.public_key(VAPID_PRIVATE_KEY) if VAPID_PRIVATE_KEY else None,
                          "email": bool(RESEND_API_KEY)})
 
     def _wish_post(self):
@@ -458,7 +461,9 @@ class Handler(BaseHTTPRequestHandler):
             rows = con.execute(
                 "SELECT key, COUNT(*), SUM(endpoint IS NOT NULL), SUM(email IS NOT NULL AND email_confirmed = 1),"
                 " GROUP_CONCAT(name, ', ') FROM wishes"
-                " WHERE notified = 0 GROUP BY key ORDER BY COUNT(*) DESC, MIN(created)").fetchall()
+                " WHERE notified = 0 GROUP BY key"
+                # as Most wished on the site: most wishes; then the others before sync (a space) and popcorn ("("); then the newest wish
+                " ORDER BY COUNT(*) DESC, (key LIKE '% %' OR key LIKE '(%'), MAX(created) DESC").fetchall()
             remarks = {}
             for key, name, remark in con.execute(
                     "SELECT key, name, remark FROM wishes WHERE notified = 0 AND remark IS NOT NULL AND remark != '' ORDER BY created"):

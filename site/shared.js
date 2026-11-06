@@ -498,7 +498,7 @@
   // ---------- Wish Tricks (#61): wish for a pattern without a video, and hear from us when it is online ----------
   // Own wishes are kept on this device (fo_wishes: [{key, token, at, seen}]); the counts come from the API.
   const WISH_KEY = "fo_wishes";
-  const WISH = { counts: {}, names: {}, push: null, email: false, loading: null, online: false };
+  const WISH = { counts: {}, latest: {}, names: {}, push: null, email: false, loading: null, online: false };
   const myWishes = () => { try { const l = JSON.parse(localStorage.getItem(WISH_KEY) || "[]"); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
   const saveWishes = (l) => { try { localStorage.setItem(WISH_KEY, JSON.stringify(l)); } catch (e) {} };
   const hasWish = (key) => myWishes().some((w) => w.key === key);
@@ -509,7 +509,7 @@
     if (!WISH.loading) {
       WISH.loading = PREVIEW ? Promise.resolve() : fetch("/api/wishes/counts", { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
-        .then((j) => { if (j) { Object.assign(WISH, { counts: j.counts || {}, names: j.names || {}, push: j.push, email: j.email, online: true }); paintWishes(); } })
+        .then((j) => { if (j) { Object.assign(WISH, { counts: j.counts || {}, latest: j.latest || {}, names: j.names || {}, push: j.push, email: j.email, online: true }); paintWishes(); } })
         .catch(() => {});
     }
     return WISH.loading;
@@ -533,11 +533,18 @@
     return `<div class="wish-line" data-wish-line="${esc(key)}"><button type="button" class="wish-btn${mine ? " mine" : ""}" data-wish="${esc(key)}"${mine ? " disabled" : ""}>
       ${mine ? "✨ You wished for this" : "✨ Wish this trick"}</button>${by ? `<small>${by}</small>` : ""}</div>`;
   }
+  // Most wished first; with as many wishes, the others before the sync patterns, and then the newest wish first.
+  // Two patterns without wishes stay in the order they had.
+  const isSync = (key) => ((POP.items.get(key) || [])[0] || {}).kind === "Sync";
+  function wishOrder(a, b) {
+    if (!wishCount(a) && !wishCount(b)) return 0;
+    return wishCount(b) - wishCount(a) || isSync(a) - isSync(b) || (WISH.latest[b] || 0) - (WISH.latest[a] || 0) || a.localeCompare(b);
+  }
   // The patterns most wished for that we have not thrown yet
   function wishTop(n = 10) {
     return Object.entries(WISH.counts)
       .filter(([key, c]) => c > 0 && POP.items.has(key) && !POP.done.has(key))
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, n);
+      .sort((a, b) => wishOrder(a[0], b[0])).slice(0, n);
   }
   // the names are in the pop-up; the list itself only counts
   const wishTopHtml = (n) => wishTop(n).map(([key, c], i) => {
@@ -634,6 +641,7 @@
       if (!j.token) throw new Error(j.error || "Your wish could not be saved. Please try again in a moment.");
       saveWishes([...myWishes().filter((w) => w.key !== key), { key, token: j.token, at: Date.now(), via: [push && "push notification", email && "email"].filter(Boolean) }]);
       if (j.count) WISH.counts[key] = j.count;
+      WISH.latest[key] = Math.floor(Date.now() / 1000);
       try { localStorage.setItem("fo_wish_name", name); } catch (e) {}
       if (!(WISH.names[key] || []).includes(name)) (WISH.names[key] = WISH.names[key] || []).push(name);
       track("Wish", { key, push: !!push, email: !!email });
@@ -755,5 +763,5 @@
   const videoIcon = (p) => (p.youtubeId ? ICON_VIDEO : ICON_SOON);
 
   window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, dragonsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch,
-    wishes: { load: loadWishes, button: wishButton, by: wishedBy, list: myWishes, has: hasWish, count: wishCount, word: wishWord, remove: removeWish, open: openWish, topHtml: wishTopHtml } };
+    wishes: { load: loadWishes, button: wishButton, by: wishedBy, list: myWishes, has: hasWish, count: wishCount, order: wishOrder, word: wishWord, remove: removeWish, open: openWish, topHtml: wishTopHtml } };
 })();
