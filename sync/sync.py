@@ -3,6 +3,7 @@
 Funky Orbit sync: fetches the "Done" and "Progress" tabs from the Google Sheet
 and writes a single data.json for the website. Runs once a day by default, and at once
 when the likes API asks for it (after we log a pattern on the Add page: the file sync-now next to data.json).
+A video only goes into data.json once it can be watched (#72): see "videos" below.
 
 Standard library only, no pip needed.
 
@@ -21,12 +22,14 @@ Settings via environment variables (see docker-compose.yml):
 """
 
 import csv
+import http.client
 import io
 import json
 import os
 import re
 import sys
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
@@ -41,8 +44,13 @@ NAMES_GID = os.environ.get("NAMES_GID", "7720")
 OUT_FILE = os.environ.get("OUT_FILE", "/data/data.json")
 INTERVAL = int(os.environ.get("INTERVAL", "86400"))
 SYNC_FLAG = os.path.join(os.path.dirname(os.path.abspath(OUT_FILE)), "sync-now")
+VIDEOS_FILE = os.path.join(os.path.dirname(os.path.abspath(OUT_FILE)), "videos.json")  # holds private ids: never serve it
 
 EXPORT_URL = "https://docs.google.com/spreadsheets/d/{sheet}/export?format=csv&gid={gid}"
+OEMBED_URL = "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={id}&format=json"
+VIDEO_RECHECK = 7 * 86400  # a video that was public is looked at again after a week, in case it was taken down
+VIDEO_MAX_FAILS = 3  # YouTube not answering: stop asking for this run, so an offline sync doesn't wait for every video
+PENDING_TIMES = ("12:05", "12:15")  # our videos go public at 12:00 (Europe/Amsterdam); the second time is for a late one
 
 
 def log(msg):
@@ -117,6 +125,67 @@ def parse_datetime(date_str, file_name):
         if h is not None and (int(h), int(mi)) != (0, 0):  # 00:00 is a date without a time
             time_str = f"{int(h):02d}:{mi}"
     return date_iso, time_str
+
+
+# ---------------------------------------------------------------- videos
+
+# A Done row can have a link to a video that is still private (or gone): the site then acts as if there is no video
+# yet, so the id stays out of data.json. videos.json remembers per id {"public": True/False/None, "at": time};
+# None means YouTube never gave an answer for it, and such a video stays visible.
+
+def video_status(vid):
+    """True = can be watched (public or unlisted), False = private or gone, None = YouTube could not tell."""
+    req = urllib.request.Request(OEMBED_URL.format(id=vid), headers={"User-Agent": "funkyorbit-sync/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=10):
+            return True
+    except urllib.error.HTTPError as e:
+        return False if e.code in (400, 401, 403, 404) else None  # 400 is what an id that never existed gets
+    except (OSError, http.client.HTTPException):
+        return None
+
+
+def load_videos():
+    try:
+        with open(VIDEOS_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def hide_unavailable_videos(patterns):
+    """Removes the id of every video that cannot be watched. Public videos are only looked at again after a while,
+    all others on every sync, so a video shows up with the first sync after it goes public."""
+    known, checked, fails, now = load_videos(), {}, 0, time.time()
+    for vid in dict.fromkeys(p["youtubeId"] for p in patterns if p["youtubeId"]):
+        entry = known.get(vid)
+        if not (entry and entry["public"] and now - entry["at"] < VIDEO_RECHECK):
+            status = video_status(vid) if fails < VIDEO_MAX_FAILS else None
+            fails += status is None
+            if status is not None or entry is None:  # without an answer the last known state stays
+                entry = {"public": status, "at": now}
+        checked[vid] = entry
+    write_atomic(checked, VIDEOS_FILE)
+    hidden = {vid for vid, entry in checked.items() if entry["public"] is False}
+    for p in patterns:
+        if p["youtubeId"] in hidden:
+            p["youtubeId"] = None
+    if hidden:
+        log(f"{len(hidden)} video(s) not public yet, left out")
+    if fails:
+        log(f"WARNING: YouTube did not answer for {fails} video(s), kept what we knew")
+
+
+def pending_went_public():
+    """Looks only at the videos that are not known to be public. True when one can be watched now."""
+    known, changed = load_videos(), False
+    for vid, entry in known.items():
+        if not entry["public"] and video_status(vid):
+            entry.update(public=True, at=time.time())
+            changed = True
+    if changed:
+        write_atomic(known, VIDEOS_FILE)
+    return changed
 
 
 # ---------------------------------------------------------------- parsing the tabs
@@ -525,6 +594,7 @@ def parse_sheet_stats(rows):
 
 def build(done_rows, progress_rows, color_rows=None, fam_rows=None, sync_color_rows=None, difficulty_rows=None, name_rows=None):
     patterns = parse_done(done_rows)
+    hide_unavailable_videos(patterns)
     colors = parse_colors(color_rows)
     for p in patterns:
         p["colors"] = color_for(colors, p["siteswap"])
@@ -590,10 +660,21 @@ def sync_once():
     return data
 
 
+last_pending_check = None  # the HH:MM of the last look at the pending videos, so one minute counts once
+
+
 def wait():
-    """Sleep INTERVAL seconds, or less when the likes API asks for a sync. Returns the asked-for row nr, or None."""
+    """Sleep INTERVAL seconds, or less when the likes API asks for a sync or a pending video has gone public.
+    Returns the asked-for row nr ("" without one), or None."""
+    global last_pending_check
     end = time.time() + INTERVAL
     while time.time() < end:
+        now = time.strftime("%H:%M")
+        if now in PENDING_TIMES and now != last_pending_check:
+            last_pending_check = now
+            if pending_went_public():
+                log("a pending video is public now")
+                return ""
         if os.path.exists(SYNC_FLAG):
             try:
                 with open(SYNC_FLAG, encoding="utf-8") as f:

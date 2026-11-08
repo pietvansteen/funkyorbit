@@ -1,5 +1,12 @@
 [
   {
+    "version": "3.5.0",
+    "date": "2026-11-08",
+    "changes": [
+      "A video only appears on the site once it is public; until then the pattern shows \"video coming soon\", and wishes are only answered when the video can really be watched"
+    ]
+  },
+  {
     "version": "3.4.0",
     "date": "2026-11-08",
     "changes": [
