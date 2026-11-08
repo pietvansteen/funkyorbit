@@ -105,23 +105,14 @@
     try { token = localStorage.getItem("fo_admin") || ""; } catch (e) {}
     if (!token) return "";
     const ss = p.ss || p.alt || `${p.a} ${p.b}`;
-    const saved = SAVED.has(p.key);
-    return `<div class="pick-actions"><a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Passed it → Add</a>` + (FO.doneRow(p.key) ? ""
-      : `<button type="button" class="pick-save" data-save="${esc(p.key)}" aria-pressed="${saved}">${saved ? "Saved ✓" : "Practised, save for later"}</button>`) + `</div>`;
+    return `<div class="pick-actions"><a class="pick-add" href="/add/?ss=${encodeURIComponent(ss)}">Passed it → Add</a>${FO.saved.button(p.key)}</div>`;
   }
 
-  // ---------- Practised, not filmed yet (logged in): patterns we threw but still have to film, until they are in Done ----------
-  const SAVED = new Set();
-  const adminToken = () => { try { return localStorage.getItem("fo_admin") || ""; } catch (e) { return ""; } };
-  async function savedApi(method, key) {
-    const r = await fetch("/api/saved", { method, cache: "no-store", headers: { Authorization: `Bearer ${adminToken()}`, "Content-Type": "application/json" },
-      body: method === "GET" ? undefined : JSON.stringify({ key }) });
-    return r.ok ? r.json() : null;
-  }
+  // ---------- Practised, not filmed yet: the list itself is FO.saved ----------
   function renderSaved() {
     const box = $("#saved");
     if (!box) return;
-    const keys = [...SAVED];
+    const keys = FO.saved.keys();
     box.hidden = !keys.length;
     $("#saved-list").innerHTML = keys.map((key) => {
       const item = PATTERNS.find((x) => x.key === key) || {};
@@ -131,19 +122,14 @@
     }).join("");
   }
   async function loadSaved() {
-    if (!adminToken()) return;
-    const j = await savedApi("GET").catch(() => null);
-    if (!j) return;
-    SAVED.clear();
-    j.saved.forEach((x) => SAVED.add(x.key));
+    if (!(await FO.saved.load())) return;
     renderSaved();
     if (current) show(current);
   }
-  async function toggleSaved(key, on) {
-    on ? SAVED.add(key) : SAVED.delete(key);
+  function toggleSaved(key, on) {
+    FO.saved.set(key, on);
     renderSaved();
     if (current) show(current);
-    await savedApi(on ? "POST" : "DELETE", key).catch(() => null);
   }
 
   // Tap one digit open: the other digits of this pattern stay grey until you tap them too.

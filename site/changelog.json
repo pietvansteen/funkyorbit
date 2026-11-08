@@ -1,5 +1,14 @@
 [
   {
+    "version": "3.4.0",
+    "date": "2026-11-08",
+    "changes": [
+      "Statistics: the practice calculator now works with the time still to go, so the answer shrinks with every pattern we throw",
+      "All patterns: when logged in, a pattern can be saved as practised from its pop-up, just like in the Generator",
+      "All patterns: \"Not a valid siteswap\" now also shows for something like bb666bas, and 3p on its own is no longer called valid"
+    ]
+  },
+  {
     "version": "3.3.1",
     "date": "2026-11-06",
     "changes": [

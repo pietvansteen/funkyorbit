@@ -328,10 +328,11 @@
     applyFilter();
   }
 
-  // Under the search box, quietly: whether what was typed is a valid siteswap at all, and whether it is on our list
+  // Under the search box, quietly: whether what was typed is a valid siteswap at all, and whether it is on our list.
+  // Anything with a digit counts as a try (#71); a search for a name that finds something says nothing, see below.
   function checkSiteswap() {
     const box = $("#ss-check"), q = query.trim().toLowerCase(), R = window.FORules;
-    const looks = R && /\d/.test(q) && /^[0-9a-z()|,*\s]+$/.test(q) && !/[a-z]{3}/.test(q.replace(/p/g, ""));
+    const looks = R && /\d/.test(q);
     box.classList.remove("bad");
     if (!looks || q.replace(/\s+/g, "").length < 2) { box.hidden = true; return; }
     const p = R.parse(q);
@@ -426,7 +427,7 @@
       return;
     }
     ITEMS = data.all || [];
-    initPopup(data);
+    initPopup(data, { saveable: true });
     for (const p of data.patterns || []) if (p.rating != null && !(BEST_RATING.get(p.key) >= p.rating)) BEST_RATING.set(p.key, p.rating);
     likes.load();
     const keys = new Map(ITEMS.map((p) => [p.key, p.done]));

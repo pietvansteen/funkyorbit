@@ -342,7 +342,10 @@
   const POP = { items: new Map(), done: new Map(), firstTry: new Set(), maxScore: 0, list: null, index: 0, autoplay: false };
   const doneRow = (key) => POP.done.get(key);
 
-  function initPopup(data) {
+  // saveable: the pop-up has the "Practised, save for later" button on logged-in devices (All patterns, #69)
+  function initPopup(data, { saveable = false } = {}) {
+    POP.saveable = saveable;
+    if (saveable) loadSaved();
     setStories(data);
     for (const p of data.all || []) {
       if (!POP.items.has(p.key)) POP.items.set(p.key, []);
@@ -373,7 +376,9 @@
       document.documentElement.classList.remove("pop-open");
     });
     dlg.addEventListener("click", (ev) => {
-      if (ev.target === dlg || ev.target.closest("#modal-close")) closePopup();
+      const save = ev.target.closest("[data-save]");
+      if (save) setSaved(save.dataset.save, !SAVED.has(save.dataset.save));
+      else if (ev.target === dlg || ev.target.closest("#modal-close")) closePopup();
       else if (ev.target.closest("#modal-prev")) stepPopup(-1);
       else if (ev.target.closest("#modal-next")) stepPopup(1);
     });
@@ -489,10 +494,47 @@
           ${items.length ? startHtml(item) : ""}
           ${p ? `<div class="pop-row"><span class="pop-label">Rating</span> ${stars(p.rating)}</div>` : ""}
           ${diff}
+          ${POP.saveable ? saveButton(key) : ""}
           ${items.length && !p ? wishButton(key) : ""}
           ${p ? `<span class="when">${esc(when(p))}${p.location ? ` · ${esc(p.location)}` : ""}</span>` : ""}
         </div>
       </article>`;
+  }
+
+  // ---------- Practised, not filmed yet (logged in): patterns we threw but still have to film, until they are in Done ----------
+  const SAVED = new Set();
+  async function savedApi(method, key) {
+    const r = await fetch("/api/saved", { method, cache: "no-store", headers: { Authorization: `Bearer ${stored("fo_admin")}`, "Content-Type": "application/json" },
+      body: method === "GET" ? undefined : JSON.stringify({ key }) });
+    return r.ok ? r.json() : null;
+  }
+  function paintSaved() {
+    document.querySelectorAll("[data-save]").forEach((b) => {
+      const on = SAVED.has(b.dataset.save);
+      b.setAttribute("aria-pressed", String(on));
+      b.textContent = on ? "Saved ✓" : "Practised, save for later";
+    });
+  }
+  // true once the list is here
+  async function loadSaved() {
+    if (!stored("fo_admin")) return false;
+    const j = await savedApi("GET").catch(() => null);
+    if (!j) return false;
+    SAVED.clear();
+    j.saved.forEach((x) => SAVED.add(x.key));
+    paintSaved();
+    return true;
+  }
+  function setSaved(key, on) {
+    on ? SAVED.add(key) : SAVED.delete(key);
+    paintSaved();
+    savedApi(on ? "POST" : "DELETE", key).catch(() => null);
+  }
+  // nothing for visitors, or for a pattern that is in Done by now
+  function saveButton(key) {
+    if (!stored("fo_admin") || POP.done.has(key)) return "";
+    const on = SAVED.has(key);
+    return `<button type="button" class="pick-save" data-save="${esc(key)}" aria-pressed="${on}">${on ? "Saved ✓" : "Practised, save for later"}</button>`;
   }
 
   // ---------- Wish Tricks (#61): wish for a pattern without a video, and hear from us when it is online ----------
@@ -763,5 +805,6 @@
   const videoIcon = (p) => (p.youtubeId ? ICON_VIDEO : ICON_SOON);
 
   window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, dragonsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch,
+    saved: { keys: () => [...SAVED], load: loadSaved, set: setSaved, button: saveButton },
     wishes: { load: loadWishes, button: wishButton, by: wishedBy, list: myWishes, has: hasWish, count: wishCount, order: wishOrder, word: wishWord, remove: removeWish, open: openWish, topHtml: wishTopHtml } };
 })();

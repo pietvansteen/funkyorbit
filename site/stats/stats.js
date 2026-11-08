@@ -70,8 +70,8 @@
           Every pattern gets a time from its difficulty stars: ½ ★ 15 min, 1 ★ 19, 1½ ★ 23, 2 ★ 26, 2½ ★ 30, 3 ★ 40, 3½ ★ 50,
           4 ★ 60, 4½ ★ 2 h and 5 ★ 4 h. Within a star level it goes from 10% less (lowest score) to 10% more (highest score).
           Time juggled so far adds up the patterns we have thrown; time to go the rest.</span></span></div>
-      ${hours(val.get("whole list")) ? `<div class="plan" data-total="${hours(val.get("whole list"))}">
-        <h4>How long would the whole list take?</h4>
+      ${hours(val.get("time to go")) ? `<div class="plan" data-total="${hours(val.get("time to go"))}">
+        <h4>How long until we finish the list?</h4>
         <label class="plan-row"><span>Practice days per week</span><input type="range" id="plan-days" min="1" max="7" step="1" value="2"><b id="plan-days-v"></b></label>
         <label class="plan-row"><span>Hours per session</span><input type="range" id="plan-hours" min="1" max="8" step="1" value="2"><b id="plan-hours-v"></b></label>
         <p class="plan-out" aria-live="polite"><b id="plan-result"></b><span id="plan-sub"></span></p>
@@ -86,7 +86,7 @@
     return t > 0 ? Math.round(t * 100) / 100 : 0;
   }
 
-  // The practice calculator under Juggling time: whole list / (days x hours) weeks, as years and weeks
+  // The practice calculator under Juggling time: time to go / (days x hours) weeks, as years and weeks
   const WEEKS_PER_YEAR = 365.25 / 7;
   const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
   function updatePlan() {

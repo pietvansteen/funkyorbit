@@ -21,7 +21,7 @@
       const p = { a: parts[0], b: parts[1] };
       return syncValid(p) ? p : null;
     }
-    if (parts.length !== 1 || !/^[0-9a-z]{1,15}$/.test(s)) return null;
+    if (parts.length !== 1 || !/^[0-9a-oq-z]{1,15}$/.test(s)) return null; // no p: that is a pass, in sync only
     const n = s.length, seen = new Set([...s].map((c, i) => (i + val(c)) % n));
     if (seen.size !== n) return null;
     if ([...s].reduce((sum, c) => sum + val(c), 0) === 0) return null;
