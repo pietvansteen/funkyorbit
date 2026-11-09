@@ -360,10 +360,14 @@
 
   // ---------- tell me about new cards: a push or a mail, per person ----------
   let alerts = { email: null, endpoints: [] }, myPush = "";
-  function alertMsg(text) {
+  const alertBox = $("#alert-dialog");
+  const alertsOn = () => !!alerts.email || alerts.endpoints.length > 0;
+  function alertMsg(text, ok) {
     $("#alert-msg").textContent = text;
     $("#alert-msg").hidden = !text;
+    $("#alert-msg").classList.toggle("ok", !!ok);
   }
+  const alertSaved = () => alertMsg("Saved! We'll let you know when there are new cards.", true);
   async function loadAlerts() {
     const who = person;
     await notify.load();
@@ -372,11 +376,15 @@
     if (!r || !r.ok || who !== person) return;
     alerts = await r.json();
     myPush = notify.push() ? await notify.current() : "";
-    if (who === person) paintAlerts();
+    if (who !== person) return;
+    paintAlerts();
+    // by itself once, for who has not chosen yet; New card alerts at the bottom of the page opens it again
+    if ((notify.push() || notify.email()) && !alertsOn() && !stored(`fo_alert_hidden_${person}`) && !alertBox.open) alertBox.showModal();
   }
   function paintAlerts() {
     const push = notify.push(), mail = notify.email();
-    $("#alert").hidden = !push && !mail;
+    $("#alert-open").hidden = !push && !mail;
+    $("#alert-close").textContent = alertsOn() ? "Done" : "Not now";
     $("#alert-push-row").hidden = !push;
     $("#alert-push").checked = !!myPush && alerts.endpoints.includes(myPush);
     $("#alert-ios").hidden = !notify.homeScreenFirst();
@@ -400,7 +408,7 @@
     try {
       if (on) {
         myPush = await notify.endpoint();
-        if (await saveAlert("POST", { push: myPush })) alerts.endpoints.push(myPush);
+        if (await saveAlert("POST", { push: myPush })) { alerts.endpoints.push(myPush); alertSaved(); }
       } else if (await saveAlert("DELETE", { push: myPush })) {
         alerts.endpoints = alerts.endpoints.filter((e) => e !== myPush);
       }
@@ -416,6 +424,7 @@
     if (await saveAlert("POST", { email })) {
       alerts.email = email;
       $("#alert-email").value = "";
+      alertSaved();
       paintAlerts();
     }
   });
@@ -425,6 +434,10 @@
       paintAlerts();
     }
   });
+
+  $("#alert-open").addEventListener("click", () => alertBox.showModal());
+  alertBox.addEventListener("click", (ev) => { if (ev.target === alertBox || ev.target.closest("[data-alert-close]")) alertBox.close(); });
+  alertBox.addEventListener("close", () => { store(`fo_alert_hidden_${person}`, "1"); alertMsg(""); });
 
   // ---------- start ----------
   async function start() {

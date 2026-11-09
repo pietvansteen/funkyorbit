@@ -15,16 +15,16 @@
 <title>Catch or Drop · Project Funky Orbit</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Rating our patterns for a show.">
-<link rel="icon" href="/favicon.svg?v=3.6.0-162741" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg?v=3.6.1-433af4" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@300;500;600&display=swap">
-<link rel="stylesheet" href="/style.css?v=3.6.0-162741">
+<link rel="stylesheet" href="/style.css?v=3.6.1-433af4">
 </head>
 <body>
 <header class="wrap top">
   <a class="brand" href="/" aria-label="Funky Orbit, home">
-    <img src="/favicon.svg?v=3.6.0-162741" width="46" height="46" alt="">
+    <img src="/favicon.svg?v=3.6.1-433af4" width="46" height="46" alt="">
     <b>Funky Orbit</b>
   </a>
   <nav class="nav" aria-label="Pages">
@@ -84,8 +84,13 @@
       <p class="swipe-over-note" id="over-note" hidden></p>
       <div id="over-list"></div>
     </section>
-    <section class="swipe-alert" id="alert" hidden>
-      <h2>Tell me about new cards</h2>
+    <p class="swipe-logout"><button type="button" class="reset" id="alert-open" hidden>New card alerts</button> <button type="button" class="reset" id="logout">Log out on this device</button></p>
+  </div>
+
+  <dialog class="modal wish-dialog" id="alert-dialog" aria-labelledby="alert-title">
+    <div class="wish-form swipe-alert">
+      <button type="button" class="modal-close" data-alert-close aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+      <h2 id="alert-title">Tell me about new cards</h2>
       <p>Get a message each time 5 new patterns are waiting for you.</p>
       <label class="opt check" id="alert-push-row"><input type="checkbox" id="alert-push"><span class="opt-name">Push notification on this device</span></label>
       <p class="wish-note" id="alert-ios" hidden>On iPhone and iPad, push notifications only work once this site is on your home screen (Share → <b>Add to Home Screen</b>).</p>
@@ -95,13 +100,13 @@
       </form>
       <p class="swipe-alert-on" id="alert-mail-on" hidden><span id="alert-mail-to"></span> <button type="button" class="reset" id="alert-mail-off">Stop</button></p>
       <p class="req-msg" id="alert-msg" role="status" hidden></p>
-    </section>
-    <p class="swipe-logout"><button type="button" class="reset" id="logout">Log out on this device</button></p>
-  </div>
+      <button type="button" class="reset swipe-alert-close" id="alert-close" data-alert-close>Not now</button>
+    </div>
+  </dialog>
 </main>
 
-<footer class="wrap"><span>funkyorbit.nl</span> <span class="foot-links"><a class="version" href="/changes/">v3.6.0 · What's new</a> · <a href="/rules/">How it works</a> · <a class="request-link" href="/request/">Request a feature</a></span></footer>
-<script src="/shared.js?v=3.6.0-162741"></script>
-<script src="/catch/catch.js?v=3.6.0-162741"></script>
+<footer class="wrap"><span>funkyorbit.nl</span> <span class="foot-links"><a class="version" href="/changes/">v3.6.1 · What's new</a> · <a href="/rules/">How it works</a> · <a class="request-link" href="/request/">Request a feature</a></span></footer>
+<script src="/shared.js?v=3.6.1-433af4"></script>
+<script src="/catch/catch.js?v=3.6.1-433af4"></script>
 </body>
 </html>

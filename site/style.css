@@ -931,9 +931,8 @@ body:has(.swipe-page) #modal .start { display: none; }
 .swipe-who-chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: end; }
 .swipe-who-chips span { padding: 2px 8px; border-radius: 99px; background: var(--orbit-soft); color: var(--orbit); font-size: 12px; font-weight: 600; }
 .swipe-logout { text-align: center; margin: 24px 0 40px; }
-.swipe-alert { display: grid; gap: 12px; max-width: 560px; margin: 28px auto 0; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-.swipe-alert[hidden], .swipe-alert [hidden] { display: none; }
-.swipe-alert h2, .swipe-alert p { margin: 0; }
+.swipe-alert [hidden] { display: none; }
+.swipe-alert-close { justify-self: end; }
 .swipe-alert-mail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
 .swipe-alert-on { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; overflow-wrap: anywhere; }
 @media (max-width: 560px) {

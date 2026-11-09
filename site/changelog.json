@@ -1,5 +1,12 @@
 [
   {
+    "version": "3.6.1",
+    "date": "2026-11-09",
+    "changes": [
+      "Catch or Drop asks about new card alerts in a pop-up you can close, and you can open it again at the bottom of the page"
+    ]
+  },
+  {
     "version": "3.6.0",
     "date": "2026-11-09",
     "changes": [
