@@ -1,26 +1,26 @@
 /* Funky Orbit web app: works offline in a sports hall without (good) wifi, on every page.
    Pages and data.json come from the network when possible, otherwise the last copy we got.
    Scripts, styles and fonts come from the cache first. The cache name is set by tools/release.py. */
-const VERSION = "fo-site-3.5.0-27768b";
+const VERSION = "fo-site-3.6.0-162741";
 const PAGES = ["/", "/stats/", "/patterns/", "/gen/", "/names/", "/wish/", "/rules/", "/changes/", "/request/"];
 const FILES = [
   ...PAGES,
-  "/app.js?v=3.5.0-27768b",
-  "/stats/stats.js?v=3.5.0-27768b",
-  "/patterns/patterns.js?v=3.5.0-27768b",
-  "/gen/gen.js?v=3.5.0-27768b",
-  "/map/map.js?v=3.5.0-27768b",
-  "/map/leaflet.js?v=3.5.0-27768b",
-  "/map/leaflet.css?v=3.5.0-27768b",
-  "/names/names.js?v=3.5.0-27768b",
-  "/changes/changes.js?v=3.5.0-27768b",
-  "/request/request.js?v=3.5.0-27768b",
-  "/wish/wish.js?v=3.5.0-27768b",
-  "/rules/rules.js?v=3.5.0-27768b",
-  "/rules/engine.js?v=3.5.0-27768b",
-  "/shared.js?v=3.5.0-27768b",
-  "/style.css?v=3.5.0-27768b",
-  "/favicon.svg?v=3.5.0-27768b",
+  "/app.js?v=3.6.0-162741",
+  "/stats/stats.js?v=3.6.0-162741",
+  "/patterns/patterns.js?v=3.6.0-162741",
+  "/gen/gen.js?v=3.6.0-162741",
+  "/map/map.js?v=3.6.0-162741",
+  "/map/leaflet.js?v=3.6.0-162741",
+  "/map/leaflet.css?v=3.6.0-162741",
+  "/names/names.js?v=3.6.0-162741",
+  "/changes/changes.js?v=3.6.0-162741",
+  "/request/request.js?v=3.6.0-162741",
+  "/wish/wish.js?v=3.6.0-162741",
+  "/rules/rules.js?v=3.6.0-162741",
+  "/rules/engine.js?v=3.6.0-162741",
+  "/shared.js?v=3.6.0-162741",
+  "/style.css?v=3.6.0-162741",
+  "/favicon.svg?v=3.6.0-162741",
   "/manifest.webmanifest",
   "/changelog.json",
   "/icons/icon-192.png?v=2",
@@ -78,7 +78,7 @@ self.addEventListener("fetch", (ev) => {
   );
 });
 
-// Wish Tricks: a push has no content (see likes/webpush.py), so ask what the news is. Always show something: browsers insist.
+// Wish Tricks and new cards on Catch or Drop: a push has no content (see likes/webpush.py), so ask what the news is. Always show something: browsers insist.
 self.addEventListener("push", (ev) => {
   ev.waitUntil(
     self.registration.pushManager.getSubscription()
@@ -89,7 +89,10 @@ self.addEventListener("push", (ev) => {
       .catch(() => ({ news: [] }))
       .then((j) => {
         const news = j.news && j.news.length ? j.news : [{ key: "", title: "" }];
-        return Promise.all(news.map((n) => self.registration.showNotification(
+        return Promise.all(news.map((n) => n.cards ? self.registration.showNotification(
+          "New cards on Catch or Drop!",
+          { body: `${n.cards} patterns are waiting for you.`, icon: "/icons/icon-192.png?v=2", tag: "catch-cards", data: { url: "/catch/" } }
+        ) : self.registration.showNotification(
           n.title ? `Your wish trick ${n.title} is online!` : "Your wish trick is online!",
           { body: "Tap to watch the video.", icon: "/icons/icon-192.png?v=2", tag: `wish-${n.key}`, data: { url: n.key ? `/wish/?open=${encodeURIComponent(n.key)}` : "/wish/" } }
         )));

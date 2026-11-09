@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { esc, stars, player, track, initPopup, openPattern, doneRow, patternHtml, familiesOf, likes } = window.FO;
+  const { esc, stars, player, track, initPopup, openPattern, doneRow, patternHtml, familiesOf, likes, notify } = window.FO;
   const $ = (sel, el = document) => el.querySelector(sel);
 
   const PERSON = "fo_person";
@@ -83,6 +83,7 @@
     $("#as").textContent = `Playing as ${person}`;
     showOnly("deck");
     render();
+    loadAlerts();
   }
 
   const rate = (label, value, empty) => `<span class="swipe-rate"><small>${label}</small>${value == null ? `<span class="unrated">${empty}</span>` : stars(value)}</span>`;
@@ -355,6 +356,74 @@
   $("#over-list").addEventListener("keydown", (ev) => {
     const el = ev.target.closest("[data-open]");
     if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openPattern(el.dataset.open); }
+  });
+
+  // ---------- tell me about new cards: a push or a mail, per person ----------
+  let alerts = { email: null, endpoints: [] }, myPush = "";
+  function alertMsg(text) {
+    $("#alert-msg").textContent = text;
+    $("#alert-msg").hidden = !text;
+  }
+  async function loadAlerts() {
+    const who = person;
+    await notify.load();
+    let r = null;
+    try { r = await api("GET", `/api/swipe/alerts?person=${encodeURIComponent(who)}`); } catch (e) {}
+    if (!r || !r.ok || who !== person) return;
+    alerts = await r.json();
+    myPush = notify.push() ? await notify.current() : "";
+    if (who === person) paintAlerts();
+  }
+  function paintAlerts() {
+    const push = notify.push(), mail = notify.email();
+    $("#alert").hidden = !push && !mail;
+    $("#alert-push-row").hidden = !push;
+    $("#alert-push").checked = !!myPush && alerts.endpoints.includes(myPush);
+    $("#alert-ios").hidden = !notify.homeScreenFirst();
+    $("#alert-mail").hidden = !mail || !!alerts.email;
+    $("#alert-mail-on").hidden = !mail || !alerts.email;
+    $("#alert-mail-to").textContent = alerts.email ? `Mails go to ${alerts.email}` : "";
+  }
+  // true when the server took it; says what went wrong otherwise
+  async function saveAlert(method, body) {
+    alertMsg("");
+    let r = null;
+    try { r = await api(method, "/api/swipe/alerts", { person, ...body }); } catch (e) {}
+    if (r && r.ok) return true;
+    const j = r ? await r.json().catch(() => ({})) : {};
+    alertMsg(j.error || "That could not be saved. Please try again in a moment.");
+    return false;
+  }
+  $("#alert-push").addEventListener("change", async (ev) => {
+    const box = ev.target, on = box.checked;
+    box.disabled = true;
+    try {
+      if (on) {
+        myPush = await notify.endpoint();
+        if (await saveAlert("POST", { push: myPush })) alerts.endpoints.push(myPush);
+      } else if (await saveAlert("DELETE", { push: myPush })) {
+        alerts.endpoints = alerts.endpoints.filter((e) => e !== myPush);
+      }
+    } catch (e) {
+      alertMsg(/blocked/.test(e.message) ? e.message : "Push notifications could not be switched on here. You can use email instead.");
+    }
+    box.disabled = false;
+    paintAlerts();
+  });
+  $("#alert-mail").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const email = $("#alert-email").value.trim().toLowerCase();
+    if (await saveAlert("POST", { email })) {
+      alerts.email = email;
+      $("#alert-email").value = "";
+      paintAlerts();
+    }
+  });
+  $("#alert-mail-off").addEventListener("click", async () => {
+    if (await saveAlert("DELETE", { email: true })) {
+      alerts.email = null;
+      paintAlerts();
+    }
   });
 
   // ---------- start ----------

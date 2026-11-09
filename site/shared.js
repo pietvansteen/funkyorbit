@@ -657,6 +657,15 @@
     return sub.endpoint;
   }
 
+  // this device's subscription, without asking for permission
+  async function currentPush() {
+    try {
+      const reg = await Promise.race([navigator.serviceWorker.ready, new Promise((ok) => setTimeout(ok, 3000))]);
+      const sub = reg && await reg.pushManager.getSubscription();
+      return sub ? sub.endpoint : "";
+    } catch (e) { return ""; }
+  }
+
   const storedName = () => stored("fo_wish_name");
   async function sendWish(key) {
     const dlg = document.getElementById("wish-dialog");
@@ -761,7 +770,7 @@
     bar.setAttribute("aria-label", "Pages");
     document.body.appendChild(bar);
     if (!LOGGED_IN) { bar.innerHTML = [...TABS, STORIES_TAB].map(tab).join(""); return; }
-    const more = [STORIES_TAB, ...extra];
+    const more = [STORIES_TAB, ...extra, ...(ADMIN ? [{ href: "/requests/", label: "Requests" }] : [])]; // on wide screens Requests is in the footer
     bar.innerHTML = TABS.map(tab).join("") +
       `<button type="button" id="tab-more" aria-expanded="false" aria-controls="more-sheet"${more.some((l) => isHere(l.href)) ? ' class="here"' : ""}>${tabIcon("M5 12h.01M12 12h.01M19 12h.01")}<span>More</span></button>
       <div class="more-sheet" id="more-sheet" hidden>${more.map((l) => `<a href="${l.href}"${here(l.href)}>${l.label}</a>`).join("")}</div>`;
@@ -806,5 +815,6 @@
 
   window.FO = { esc, fmt, CLUB, siteswap, syncPattern, cyclicIncludes, clubsOf, dragonsOf, throwsOf, localSiteswap, matchesLocal, localTag, updated, stars, difficulty, startHtml, day, ago, when, player, thumb, likes, initPopup, openPattern, doneRow, patternHtml, familiesOf, isKnown, setStories, nameLinks, storySlug, clubIcon, videoIcon, track, trackSearch,
     saved: { keys: () => [...SAVED], load: loadSaved, set: setSaved, button: saveButton },
+    notify: { load: loadWishes, push: canPush, email: () => !!WISH.email, homeScreenFirst: () => IOS && !STANDALONE && !!WISH.push && !canPush(), endpoint: pushEndpoint, current: currentPush },
     wishes: { load: loadWishes, button: wishButton, by: wishedBy, list: myWishes, has: hasWish, count: wishCount, order: wishOrder, word: wishWord, remove: removeWish, open: openWish, topHtml: wishTopHtml } };
 })();

@@ -1,5 +1,13 @@
 [
   {
+    "version": "3.6.0",
+    "date": "2026-11-09",
+    "changes": [
+      "Catch or Drop can tell you by push or email each time 5 new patterns are waiting for you",
+      "On phones, Requests is in the More menu on our own devices"
+    ]
+  },
+  {
     "version": "3.5.0",
     "date": "2026-11-08",
     "changes": [

@@ -35,6 +35,10 @@ Rating patterns for a show (hidden Catch or Drop page; ADMIN_TOKEN, or a person'
   POST   /api/swipe                 body {"person", "key", "choice": "right" | "left"}
   DELETE /api/swipe                 body {"person", "key"}: undo
                                     A personal password can only swipe as that person.
+  GET    /api/swipe/alerts?person=  {"email": address or null, "endpoints": [...]}: how this person hears about new cards
+  POST   /api/swipe/alerts          body {"person", "email" | "push": endpoint}: a push or mail each time SWIPE_ALERT_AT new cards are waiting
+  DELETE /api/swipe/alerts          body {"person", "email": true | "push": endpoint}
+                                    Stored in SWIPES_DB. Every mail has a link to stop (/api/wishes/stop with the alert's token).
 
 Wish Tricks (#61): visitors wish for a pattern without a video, and hear from us when its video is online (stored in WISHES_DB):
 
@@ -94,6 +98,8 @@ MAIL_FROM = os.environ.get("MAIL_FROM", "Funky Orbit <wishes@mail.funkyorbit.nl>
 SITE_URL = os.environ.get("SITE_URL", "https://funkyorbit.nl").rstrip("/")
 WISH_LOOP = int(os.environ.get("WISH_LOOP", "60"))  # seconds between looks at data.json
 PEOPLE = ["Piet", "Mees", "Hanna", "Uwe", "Wiebke", "Markus"]  # who can swipe on the Catch or Drop page
+SWIPE_ALERT_AT = 5  # new cards waiting before someone who asked for it hears about them
+SWIPE_ALERT_RETRY = 900  # seconds before trying again when a push or mail did not get through
 
 
 def swipe_tokens():
@@ -168,6 +174,13 @@ def swipes_db():
         "CREATE TABLE IF NOT EXISTS swipes ("
         " person TEXT NOT NULL, key TEXT NOT NULL, choice TEXT NOT NULL, at INTEGER NOT NULL,"
         " PRIMARY KEY (person, key))"
+    )
+    # One row per way of telling a person: a device (endpoint) or the address (email).
+    # base: the cards this person had left when last told (or lower, once they have swiped); news: what the next push has to say.
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS swipe_alerts ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT, person TEXT NOT NULL, token TEXT NOT NULL UNIQUE, endpoint TEXT, email TEXT,"
+        " base INTEGER NOT NULL DEFAULT 0, news INTEGER NOT NULL DEFAULT 0, UNIQUE (person, endpoint), UNIQUE (person, email))"
     )
     return con
 
@@ -316,12 +329,58 @@ def tell_wishers():
             print(f"wishes: gave up telling a wisher about {key}", flush=True)
 
 
+# ---------- Catch or Drop: telling people there are new cards ----------
+def cards_left(con, person, videos):
+    swiped = {r[0] for r in con.execute("SELECT key FROM swipes WHERE person = ?", (person,))}
+    return len(set(videos) - swiped)
+
+
+_alert_wait = {}  # alert id -> when to try again after a push or mail that did not get through (in memory only)
+
+
+def tell_swipers():
+    """Each person who asked for it hears when SWIPE_ALERT_AT new cards have come in since the last time. Swiping lowers the
+    base, so someone who has finished and gets 5 new videos is told, and so is someone who left a few cards for what they are."""
+    videos = load_known()["videos"]
+    if not videos:  # no data yet: everything would look swiped, and the base would drop to 0
+        return
+    with lock, swipes_db() as con:
+        rows = con.execute("SELECT id, person, token, endpoint, email, base FROM swipe_alerts").fetchall()
+        left = {person: cards_left(con, person, videos) for person in {r[1] for r in rows}}
+    for aid, person, token, endpoint, email, base in rows:
+        n, base = left[person], min(base, left[person])
+        if n - base >= SWIPE_ALERT_AT and time.time() >= _alert_wait.get(aid, 0):
+            told = False
+            if endpoint and VAPID_PRIVATE_KEY:
+                with lock, swipes_db() as con:  # first: the service worker asks for the news as soon as the push arrives
+                    con.execute("UPDATE swipe_alerts SET news = ? WHERE id = ?", (n, aid))
+                result = webpush.send(endpoint, VAPID_PRIVATE_KEY, SITE_URL)
+                if result == "gone":
+                    with lock, swipes_db() as con:
+                        con.execute("DELETE FROM swipe_alerts WHERE id = ?", (aid,))
+                    continue
+                told = result == "ok"
+            elif email and RESEND_API_KEY:
+                told = send_mail(email, f"New cards on Catch or Drop: {n} waiting for you", [
+                    f"Hi {person}, new videos are online: {n} patterns are waiting for you on Catch or Drop.",
+                    f"Start swiping: {SITE_URL}/catch/",
+                ], token)
+            if told:
+                base = n
+                _alert_wait.pop(aid, None)
+            else:
+                _alert_wait[aid] = time.time() + SWIPE_ALERT_RETRY
+        with lock, swipes_db() as con:
+            con.execute("UPDATE swipe_alerts SET base = ? WHERE id = ?", (base, aid))
+
+
 def wish_loop():
     while True:
-        try:
-            tell_wishers()
-        except Exception as e:  # a bad moment must never stop the loop
-            print(f"wishes: {e}", flush=True)
+        for job in (tell_wishers, tell_swipers):
+            try:
+                job()
+            except Exception as e:  # a bad moment must never stop the loop
+                print(f"{job.__name__}: {e}", flush=True)
         time.sleep(WISH_LOOP)
 
 
@@ -438,10 +497,19 @@ class Handler(BaseHTTPRequestHandler):
             rows = con.execute("SELECT key, id FROM wishes WHERE endpoint = ? AND news_read = 0", (endpoint,)).fetchall() if endpoint else []
             rows = [r for r in rows if r[0] in videos]
             con.executemany("UPDATE wishes SET news_read = 1 WHERE id = ?", [(r[1],) for r in rows])
-        self._send(200, {"news": [{"key": r[0], "title": wish_title(r[0])} for r in rows]})
+        with lock, swipes_db() as con:
+            cards = con.execute("SELECT news FROM swipe_alerts WHERE endpoint = ? AND news > 0", (endpoint,)).fetchall() if endpoint else []
+            if cards:
+                con.execute("UPDATE swipe_alerts SET news = 0 WHERE endpoint = ?", (endpoint,))
+        self._send(200, {"news": [{"key": r[0], "title": wish_title(r[0])} for r in rows] + [{"cards": r[0]} for r in cards]})
 
     def _wish_link(self, path, query):
         token = (parse_qs(query).get("t") or [""])[0]
+        if path.endswith("/stop"):  # the stop link in a mail about new cards on Catch or Drop
+            with lock, swipes_db() as con:
+                stopped = con.execute("DELETE FROM swipe_alerts WHERE token = ?", (token,)).rowcount
+            if stopped:
+                return self._send_html(200, "You are unsubscribed", "We removed your address. You won't get mail about new cards any more.")
         with lock, wishes_db() as con:
             row = con.execute("SELECT id, email FROM wishes WHERE token = ?", (token,)).fetchone()
             if path.endswith("/confirm"):
@@ -560,6 +628,47 @@ class Handler(BaseHTTPRequestHandler):
         with lock, swipes_db() as con:
             con.execute("INSERT OR REPLACE INTO swipes VALUES (?, ?, ?, ?)", (person, key, choice, int(time.time())))
         self._send(200, {"ok": True})
+
+    def _swipe_alerts(self, method, query=""):
+        who = self._swiper()
+        if not who:
+            return
+        body = {"person": (parse_qs(query).get("person") or [""])[0]} if method == "GET" else self._body(2048)
+        if body is None:
+            return self._send(400, {"error": "invalid JSON"})
+        person = body.get("person")
+        if person not in PEOPLE:
+            return self._send(400, {"error": "unknown person"})
+        if who["person"] and person != who["person"]:
+            return self._send(403, {"error": "this password can only be used for " + who["person"]})
+        if method == "GET":
+            with lock, swipes_db() as con:
+                rows = con.execute("SELECT endpoint, email FROM swipe_alerts WHERE person = ?", (person,)).fetchall()
+            return self._send(200, {"email": next((r[1] for r in rows if r[1]), None), "endpoints": [r[0] for r in rows if r[0]]})
+        endpoint, email = body.get("push"), body.get("email")
+        if method == "DELETE":
+            with lock, swipes_db() as con:
+                if endpoint:
+                    con.execute("DELETE FROM swipe_alerts WHERE person = ? AND endpoint = ?", (person, str(endpoint)))
+                if email:
+                    con.execute("DELETE FROM swipe_alerts WHERE person = ? AND email IS NOT NULL", (person,))
+            return self._send(200, {"ok": True})
+        if endpoint:
+            if not (VAPID_PRIVATE_KEY and webpush.allowed_endpoint(endpoint)):
+                return self._send(400, {"error": "Push notifications do not work in this browser. Please try email."})
+        else:
+            email = str(email or "").strip().lower()
+            if len(email) > 120 or not EMAIL_RE.match(email):
+                return self._send(400, {"error": "Please enter a valid email address."})
+            if not RESEND_API_KEY:
+                return self._send(503, {"error": "Email is not available yet."})
+        with lock, swipes_db() as con:
+            left = cards_left(con, person, load_known()["videos"])  # what is waiting now is known: only what comes after it counts
+            if not endpoint:
+                con.execute("DELETE FROM swipe_alerts WHERE person = ? AND email IS NOT NULL", (person,))  # one address per person
+            con.execute("INSERT OR IGNORE INTO swipe_alerts (person, token, endpoint, email, base) VALUES (?, ?, ?, ?, ?)",
+                        (person, secrets.token_urlsafe(24), endpoint or None, None if endpoint else email, left))
+        self._send(201, {"ok": True})
 
     def _body(self, limit):
         try:
@@ -693,6 +802,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._requests_get(path)
         if path == "/api/swipes":
             return self._swipes_get()
+        if path == "/api/swipe/alerts":
+            return self._swipe_alerts("GET", url.query)
         if path == "/api/wishes":
             return self._wishes_admin()
         if path == "/api/saved":
@@ -728,6 +839,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._done_post()
         if path == "/api/swipe":
             return self._swipe_write(False)
+        if path == "/api/swipe/alerts":
+            return self._swipe_alerts("POST")
         if path == "/api/saved":
             return self._saved("POST")
         if path == "/api/wishes":
@@ -760,6 +873,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, {"video": video, "count": count, "liked": liked})
 
     def do_DELETE(self):
+        if urlparse(self.path).path.rstrip("/") == "/api/swipe/alerts":
+            return self._swipe_alerts("DELETE")
         if urlparse(self.path).path.rstrip("/") == "/api/swipe":
             return self._swipe_write(True)
         if urlparse(self.path).path.rstrip("/") == "/api/saved":
