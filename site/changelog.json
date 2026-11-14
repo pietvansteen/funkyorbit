@@ -1,5 +1,13 @@
 [
   {
+    "version": "3.6.2",
+    "date": "2026-11-14",
+    "changes": [
+      "The fonts now come from our own server instead of Google's: a quicker first visit, and nothing about your visit goes to Google",
+      "The app takes less data to install: the map is only fetched when you look at it"
+    ]
+  },
+  {
     "version": "3.6.1",
     "date": "2026-11-09",
     "changes": [

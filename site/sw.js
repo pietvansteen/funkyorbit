@@ -1,35 +1,37 @@
 /* Funky Orbit web app: works offline in a sports hall without (good) wifi, on every page.
    Pages and data.json come from the network when possible, otherwise the last copy we got.
-   Scripts, styles and fonts come from the cache first. The cache name is set by tools/release.py. */
-const VERSION = "fo-site-3.6.1-433af4";
+   Scripts, styles and fonts (all our own) come from the cache first. The cache name is set by tools/release.py. */
+const VERSION = "fo-site-3.6.2-e08496";
 const PAGES = ["/", "/stats/", "/patterns/", "/gen/", "/names/", "/wish/", "/rules/", "/changes/", "/request/"];
 const FILES = [
   ...PAGES,
-  "/app.js?v=3.6.1-433af4",
-  "/stats/stats.js?v=3.6.1-433af4",
-  "/patterns/patterns.js?v=3.6.1-433af4",
-  "/gen/gen.js?v=3.6.1-433af4",
-  "/map/map.js?v=3.6.1-433af4",
-  "/map/leaflet.js?v=3.6.1-433af4",
-  "/map/leaflet.css?v=3.6.1-433af4",
-  "/names/names.js?v=3.6.1-433af4",
-  "/changes/changes.js?v=3.6.1-433af4",
-  "/request/request.js?v=3.6.1-433af4",
-  "/wish/wish.js?v=3.6.1-433af4",
-  "/rules/rules.js?v=3.6.1-433af4",
-  "/rules/engine.js?v=3.6.1-433af4",
-  "/shared.js?v=3.6.1-433af4",
-  "/style.css?v=3.6.1-433af4",
-  "/favicon.svg?v=3.6.1-433af4",
+  "/app.js?v=3.6.2-e08496",
+  "/stats/stats.js?v=3.6.2-e08496",
+  "/patterns/patterns.js?v=3.6.2-e08496",
+  "/gen/gen.js?v=3.6.2-e08496",
+  "/map/map.js?v=3.6.2-e08496",
+  "/names/names.js?v=3.6.2-e08496",
+  "/changes/changes.js?v=3.6.2-e08496",
+  "/request/request.js?v=3.6.2-e08496",
+  "/wish/wish.js?v=3.6.2-e08496",
+  "/rules/rules.js?v=3.6.2-e08496",
+  "/rules/engine.js?v=3.6.2-e08496",
+  "/shared.js?v=3.6.2-e08496",
+  "/style.css?v=3.6.2-e08496",
+  "/favicon.svg?v=3.6.2-e08496",
   "/manifest.webmanifest",
   "/changelog.json",
   "/icons/icon-192.png?v=2",
   "/icons/icon-512.png?v=2",
   "/icons/apple-touch-icon.png?v=2",
+  "/fonts/figtree-latin.woff2",
+  "/fonts/unbounded-latin.woff2",
+  "/fonts/ibm-plex-mono-500-latin.woff2",
+  "/fonts/ibm-plex-mono-600-latin.woff2",
   "/data.json",
 ];
-// Fonts are the only files from elsewhere we keep; videos, thumbnails and the like API always go to the network.
-const FONTS = ["https://fonts.googleapis.com", "https://fonts.gstatic.com"];
+// Nothing from elsewhere is kept: videos, thumbnails and map tiles always go to the network, and so does the like API.
+// The map (Leaflet) is not fetched ahead: it is kept once the Stats page has shown it.
 
 self.addEventListener("install", (ev) => {
   ev.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
@@ -66,10 +68,10 @@ self.addEventListener("fetch", (ev) => {
   }
 
   // scripts, styles, icons and fonts: cache first, and remember what we fetch
-  if (!own && !FONTS.includes(url.origin)) return;
+  if (!own) return;
   ev.respondWith(
     caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      if (res.ok || res.type === "opaque") {
+      if (res.ok) {
         const copy = res.clone();
         caches.open(VERSION).then((c) => c.put(req, copy));
       }
